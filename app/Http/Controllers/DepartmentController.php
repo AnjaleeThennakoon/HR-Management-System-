@@ -8,7 +8,8 @@ use App\UseCases\Department\ListDepartmentInteractors;
 use App\UseCases\Department\Requests\DepartmentRequest;
 use App\UseCases\Department\UpdateDepartmentInteractors;
 use Illuminate\Http\RedirectResponse;
-use
+
+
 
 class DepartmentController extends Controller
 {
@@ -19,8 +20,7 @@ class DepartmentController extends Controller
             request('per_page')
         );
 
-        return view('DepartmentDashBord', compact('departments'));
-    }
+        return view('Department.DepartmentDashBord', compact('departments'));    }
 
     public function store(DepartmentRequest $DepartmentRequest, CreateDepartmentInteractor $CreateDepartmentInteractor): RedirectResponse
     {
