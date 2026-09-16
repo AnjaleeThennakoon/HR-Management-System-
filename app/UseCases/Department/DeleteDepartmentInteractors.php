@@ -1,6 +1,7 @@
 <?php
 
 namespace App\UseCases\Department;
+
 use App\Models\Department;
 
 class DeleteDepartmentInteractors

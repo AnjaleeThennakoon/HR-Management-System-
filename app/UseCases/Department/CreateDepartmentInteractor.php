@@ -8,8 +8,6 @@ class CreateDepartmentInteractor
 {
     public function execute(array $data): Department
     {
-        return Department::create([
-            'name' => $data['name'],
-        ]);
+        return Department::create($data);
     }
 }

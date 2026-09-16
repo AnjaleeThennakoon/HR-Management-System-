@@ -1,25 +1,26 @@
 <?php
 
-namespace App\UseCases\Department\Requests;
-use Dflydev\DotAccessData\Data;
+namespace App\UseCases\Department\Request;
+
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class DepartmentRequest extends Data
+class DepartmentRequest extends FormRequest
 {
-    public ?string $id;
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    public ?string $department;
-
-    public static function rules(): array
+    public function rules(): array
     {
         return [
-            'department' => [
+            'name' => [
                 'required',
                 'string',
                 'max:255',
-                Rule::unique('departments', 'department')->ignore(request()->input('id')),
+                Rule::unique('departments', 'name')->ignore($this->route('id')),
             ],
         ];
     }
-
 }

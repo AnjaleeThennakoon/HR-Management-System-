@@ -10,12 +10,9 @@ class UpdateDepartmentInteractors
     {
         $department = Department::findOrFail($id);
 
-        $department->update([
-            'department' => $data['department'],
-        ]);
+        $department->update($data);
 
-
-        return Department::create($department->toArray());
+        return $department->refresh();
 
     }
 }

@@ -19,8 +19,7 @@ class ListDepartmentInteractors
         if ($perPage) {
             return $query->paginate($perPage);
         }
+
         return $query->get();
     }
-
-
 }

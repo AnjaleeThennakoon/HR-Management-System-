@@ -125,8 +125,6 @@
 
     </div>
 
-    {{-- ==================== ADD MODAL ==================== --}}
-
     @include('Department.partials.add-modal')
     @include('Department.partials.edit-modal')
 
