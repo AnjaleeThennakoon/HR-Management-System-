@@ -9,4 +9,6 @@ class Designation extends Model
 {
     /** @use HasFactory<\Database\Factories\DesignationFactory> */
     use HasFactory;
+    protected $fillable = ['name'];
+
 }
