@@ -2,9 +2,11 @@
 
 namespace Database\Seeders;
 
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,11 +17,29 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        User::create([
+            'name' => 'Admin User',
+            'email' => 'admin@hr.com',
+            'password' => Hash::make('password123'),
+            'role' => 'admin',
         ]);
+
+        // Departments
+        $departments = [
+            'Human Resources',
+            'Information Technology',
+            'Finance',
+            'Marketing',
+            'Sales',
+            'Operations',
+            'Customer Service',
+            'Research & Development',
+            'Legal',
+            'Administration',
+        ];
+
+        foreach ($departments as $name) {
+            Department::create(['name' => $name]);
+        }
     }
 }

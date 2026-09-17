@@ -27,7 +27,7 @@ Use a view composer to centralize data needed whenever one or more named Blade v
 A route can return either a full view or a named fragment for clients such as htmx or Turbo.
 
 ```php
-return view('dashboard', compact('users'))
+return view('AdminDashboard', compact('users'))
     ->fragmentIf($request->hasHeader('HX-Request'), 'user-list');
 ```
 

@@ -10,4 +10,5 @@ class Employee extends Model
 {
     /** @use HasFactory<EmployeeFactory> */
     use HasFactory;
+    protected $fillable = ['name'];
 }

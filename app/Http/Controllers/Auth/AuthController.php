@@ -5,10 +5,11 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 
+use App\UseCases\Auth\LoginInteractor;
+use App\UseCases\Auth\LogoutInteractor;
 use App\UseCases\Auth\Requests\LoginRequest;
 use Illuminate\Http\RedirectResponse;
-use LoginInteractor;
-use LogoutInteractor;
+
 
 class AuthController extends Controller
 {
@@ -21,7 +22,12 @@ class AuthController extends Controller
     {
         if ($loginInteractor->execute($request->toArray())) {
             $request->session()->regenerate();
-            return redirect('/dashboard');
+            $user = auth()->user();
+            if ($user->role === 'admin') {
+                return redirect('/dashboard');
+            }
+
+            return redirect('/employee/dashboard');
         }
 
         return back()->withErrors([
