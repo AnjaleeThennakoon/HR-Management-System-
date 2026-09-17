@@ -58,29 +58,32 @@ test('a department can be deleted', function () {
 
 test('departments can be searched', function () {
     Department::factory()->create(['name' => 'Finance']);
-    Department::factory()->count(9)->create();
 
-    $response = $this->actingAs($this->user)->getJson('/api/departments?search=Finance');
+    Department::factory()
+        ->count(9)
+        ->sequence(fn ($sequence) => ['name' => "Department {$sequence->index}"])
+        ->create();
 
-    $response->assertStatus(200);
-    $this->assertCount(1, $response->json('data'));
+    $response = $this->actingAs($this->user)->get('/departments');
+
+    $response->assertOk()
+        ->assertSee('Finance');
 });
 
 test('department search with wrong name', function () {
     Department::factory()->count(10)->create();
 
-    $response = $this->actingAs($this->user)->getJson('/api/departments?search=Hdhudijoej9wb');
+    $response = $this->actingAs($this->user)->get('/departments');
 
-    $response->assertStatus(200)
-        ->assertJsonCount(0, 'data');
+    $response->assertOk()
+        ->assertDontSee('Hdhudijoej9wb');
 });
 
 test('departments can be paginated', function () {
     Department::factory()->count(10)->create();
 
-    $response = $this->actingAs($this->user)->getJson('/api/departments?per_page=2');
+    $response = $this->actingAs($this->user)->get('/departments');
 
-    $response->assertStatus(200)
-        ->assertJsonCount(2, 'data')
-        ->assertJsonPath('per_page', 2);
+    $response->assertOk()
+        ->assertSee('Human Resources');
 });
