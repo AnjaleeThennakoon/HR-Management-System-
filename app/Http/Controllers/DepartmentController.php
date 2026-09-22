@@ -22,10 +22,8 @@ class DepartmentController extends Controller
         return view('Department.DepartmentDashBord', compact('departments'));
     }
 
-    public function store(
-        DepartmentRequest $departmentRequest,
-        CreateDepartmentInteractor $createDepartmentInteractor
-    ): RedirectResponse {
+    public function store(DepartmentRequest $departmentRequest, CreateDepartmentInteractor $createDepartmentInteractor): RedirectResponse
+    {
         $createDepartmentInteractor->execute($departmentRequest->validated());
 
         return redirect('/departments');
