@@ -9,17 +9,21 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', function () {return view('Auth.register');})->name('register');});
+    Route::get('/register', function () {
+        return view('Auth.register');
+    })->name('register');
+});
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function () {return view('AdminDashboard');})->name('dashboard');
+    Route::get('/dashboard', function () {
+        return view('AdminDashboard');
+    })->name('dashboard');
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
     Route::put('/departments/{id}', [DepartmentController::class, 'update'])->name('departments.update');
@@ -30,10 +34,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/designations/{id}', [DesignationController::class, 'update'])->name('designations.update');
     Route::delete('/designations/{id}', [DesignationController::class, 'destroy'])->name('designations.destroy');
 
-
-
 });
 
-Route::get('/employee/dashboard', function () {return view('Employee.employee');})->name('employee.dashboard');
-
-
+Route::get('/employee/dashboard', function () {
+    return view('Employee.employee');
+})->name('employee.dashboard');
