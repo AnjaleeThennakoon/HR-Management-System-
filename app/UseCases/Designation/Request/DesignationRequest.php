@@ -2,16 +2,17 @@
 
 namespace App\UseCases\Designation\Request;
 
-use Dflydev\DotAccessData\Data;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class DesignationRequest extends Data
+class DesignationRequest extends FormRequest
 {
-    public ?string $id = null;
+    public function authorize(): bool
+    {
+        return true;
+    }
 
-    public string $name;
-
-    public static function rules(): array
+    public function rules(): array
     {
         return [
             'name' => [
@@ -19,8 +20,9 @@ class DesignationRequest extends Data
                 'string',
                 'max:255',
                 Rule::unique('designations', 'name')
-                    ->ignore(request()->input('id')),
+                    ->ignore($this->route('id')),
             ],
+
         ];
     }
 }

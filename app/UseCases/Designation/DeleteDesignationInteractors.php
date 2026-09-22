@@ -1,10 +1,10 @@
 <?php
 
-
+namespace App\UseCases\Designation;
 
 use App\Models\Designation;
 
-class DeleteDesignationInteractor
+class DeleteDesignationInteractors
 {
     public function execute(string $id): void
     {

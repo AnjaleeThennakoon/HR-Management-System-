@@ -2,38 +2,31 @@
 
 namespace App\Http\Controllers;
 
-
+use App\UseCases\Designation\DeleteDesignationInteractors;
+use App\UseCases\Designation\ListDesignationInteractors;
 use App\UseCases\Designation\Request\DesignationRequest;
-use CreateDesignationInteractor;
-use DeleteDesignationInteractor;
+use App\UseCases\Designation\StoreDesignationInteractors;
+use App\UseCases\Designation\UpdateDesignationInteractor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use App\UseCases\Designation\DeleteDesignationInteractor;
-use App\UseCases\Designation\ListDesignationInteractors;
-use UpdateDesignationInteractor;
-
 
 class DesignationController extends Controller
 {
     public function index(
-        ListDesignationInteractors $listDesignationInteractor
-    ): View {
+        ListDesignationInteractors $listDesignationInteractor): View
+    {
         $designations = $listDesignationInteractor->execute(
             request('search'),
             request('per_page')
         );
 
-        return view(
-            'Designation.DesignationDashBord',
-            compact('designations')
-        );
+        return view('Designation.Dashbord', ['designations' => $designations]);
+
     }
 
-    public function store(
-        DesignationRequest $request,
-        CreateDesignationInteractor $createDesignationInteractor
+    public function store(DesignationRequest $designationRequest, StoreDesignationInteractors $storeDesignationInteractors
     ): RedirectResponse {
-        $createDesignationInteractor->execute($request);
+        $storeDesignationInteractors->execute($designationRequest->validated());
 
         return redirect()
             ->route('designations.index')
@@ -45,11 +38,9 @@ class DesignationController extends Controller
         string $id,
         UpdateDesignationInteractor $updateDesignationInteractor
     ): RedirectResponse {
-        $request->id = $id;
-
         $updateDesignationInteractor->execute(
-            $request,
-            $id
+            $id,
+            $request->validated()
         );
 
         return redirect()
@@ -59,7 +50,7 @@ class DesignationController extends Controller
 
     public function destroy(
         string $id,
-        DeleteDesignationInteractor $deleteDesignationInteractor
+        DeleteDesignationInteractors $deleteDesignationInteractor
     ): RedirectResponse {
         $deleteDesignationInteractor->execute($id);
 
