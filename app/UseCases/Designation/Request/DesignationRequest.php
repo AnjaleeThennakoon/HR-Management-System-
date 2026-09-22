@@ -22,6 +22,12 @@ class DesignationRequest extends FormRequest
                 Rule::unique('designations', 'name')
                     ->ignore($this->route('id')),
             ],
+            'level' => [
+                'required',
+                Rule::unique('designations', 'level')
+                    ->ignore($this->route('id')),
+            ],
+
 
         ];
     }

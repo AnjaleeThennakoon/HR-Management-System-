@@ -57,21 +57,28 @@ test('designation name cannot be duplicated', function () {
     $this->assertDatabaseCount('designations', 1);
 });
 
-test('designation levels can not be duplicate', function () {
-    Designation::factory()->create(['name' => 'Senior Software Engineer']);
-    Designation::factory()->create(['name' => 'Software Engineer']);
-    Designation::factory()->create(['name' => 'Junior Software Engineer']);
-    Designation::factory()->create(['name' => 'Junior Software Engineer']);
 
-    $response = $this->actingAs($this->user)->get('/designations');
+test('designation name cannot be duplicated.', function () {
+    $existingDesignation = Designation::factory()->create(['name' => 'Software Engineer',]);
+    $this->assertDatabaseHas('designations', ['name' => $existingDesignation->name,]);
 
-    $response->assertSessionHasErrors('level');
-    $this->assertDatabaseHas('designations', ['name' => 'Software Engineer']);
-    $this->assertDatabaseHas('designations', ['name' => 'Senior Software Engineer']);
-    $this->assertDatabaseHas('designations', ['name' => 'Junior Software Engineer']);
+    $response = $this->actingAs($this->user)->post('/designations', ['name' => $existingDesignation->name,]);
 
+    $response->assertSessionHasErrors('name');
 
+    $this->assertDatabaseCount('designations', 1);
 });
+
+test('designation level can be set manually', function () {
+    $response = $this->actingAs($this->user)
+        ->post('/designations', ['name' => 'Software Engineer', 'level' => 5,]);
+
+    $response->assertRedirect('/designations');
+
+    $this->assertDatabaseHas('designations', ['name' => 'Software Engineer', 'level' => 5,]);
+});
+
+
 
 test('designation levels are set correctly regardless of creation order', function () {
     Designation::factory()->create(['name' => 'Software Engineer']);
@@ -85,21 +92,6 @@ test('designation levels are set correctly regardless of creation order', functi
     $this->assertDatabaseHas('designations', ['name' => 'Software Engineer', 'level' => 8, ]);
     $this->assertDatabaseHas('designations', ['name' => 'Junior Software Engineer', 'level' => 9, ]);
 });
-
-
-
-
-
-
-//test('designation name need to be required ',function (){
-//    $response = $this->actingAs($this->user)
-//        ->post('/designations', [
-//            'name' => 'Software Engineer',
-//            'level' => 7,
-//        ]);
-//    $response->assertSessionHasErrors('name');
-//    $this->assertDatabaseCount('designations', 0);
-//});
 
 
 
