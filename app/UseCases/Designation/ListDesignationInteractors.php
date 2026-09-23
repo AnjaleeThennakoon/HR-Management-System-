@@ -13,7 +13,8 @@ class ListDesignationInteractors
             ->when($search, function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%");
             })
-            ->orderByDesc('level')
+            ->orderBy('level')
+            ->orderBy('upper_level')
             ->orderBy('name')
             ->paginate($perPage);
     }

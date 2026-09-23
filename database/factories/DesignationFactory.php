@@ -9,23 +9,15 @@ class DesignationFactory extends Factory
 {
     protected $model = Designation::class;
 
-    private const DEFINITIONS = [
-        'Chief Executive Officer',
-        'Chief Technology Officer',
-        'General Manager',
-        'Human Resources Manager',
-        'Finance Manager',
-        'Project Manager',
-        'Senior Software Engineer',
-        'Software Engineer',
-        'Junior Software Engineer',
-        'Software Engineering Intern',
-    ];
+
 
     public function definition(): array
     {
         return [
-            'name' => $this->faker->randomElement(self::DEFINITIONS),
+            'name' => $this->faker->unique()->name(),
+            'level' => 1,
+            'upper_level' => null,
         ];
     }
 }
+

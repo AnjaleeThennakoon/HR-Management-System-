@@ -33,7 +33,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/designations', [DesignationController::class, 'store'])->name('designations.store');
     Route::put('/designations/{id}', [DesignationController::class, 'update'])->name('designations.update');
     Route::delete('/designations/{id}', [DesignationController::class, 'destroy'])->name('designations.destroy');
-
 });
 
 Route::get('/employee/dashboard', function () {

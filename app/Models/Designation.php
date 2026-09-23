@@ -10,6 +10,6 @@ class Designation extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'level'];
+    protected $fillable = ['name', 'upper_level', 'level'];
 
 }
