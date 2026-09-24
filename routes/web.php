@@ -37,4 +37,5 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/designations/{id}', [DesignationController::class, 'destroy'])->name('designations.destroy');
 
     Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+    Route::post('/employees', [EmployeeController::class, 'store'])->name('employees.store');
 });

@@ -25,8 +25,10 @@ class EmployeeFactory extends Factory
             'nic' => $this->faker->unique()->numerify('############'),
             'phone' => $this->faker->phoneNumber(),
             'address' => $this->faker->address(),
+
             'department_id' => Department::factory(),
             'designation_id' => Designation::factory(),
+
         ];
     }
 }
