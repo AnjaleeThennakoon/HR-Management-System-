@@ -17,7 +17,6 @@ test('designation list page loads successfully', function () {
     $response->assertViewHas('designations', function ($designations) {return count($designations) == 10;});
 });
 
-
 test('designation can be created without a upper level', function () {
     $designation = ['name' => 'Software Engineer', 'upper_level' => null];
 
@@ -52,9 +51,28 @@ test('a designation can be created when upper level is given', function () {
     $this->assertDatabaseHas('designations', ['name' => 'Intern Software Engineer', 'upper_level' => $upperLevelDesignation->id,]);
 });
 
+test('a designation name can be updated', function () {
+    $designation = Designation::factory()->create(['name' => 'Intern Software Engineer', 'level' => 1,]);
+    $designationData= ['name' => 'Software Engineer', 'level' => 1,];
+
+    $response = $this->actingAs($this->user)->put("/designations/{$designation->id}", $designationData);
+
+    $response->assertStatus(302);
+    $response->assertRedirect('/designations');
+    $this->assertDatabaseHas('designations', ['id' => $designation->id, 'name' => 'Software Engineer', 'level' => 1,]);
+});
+test('a designation level can be updated', function () {
+    $designation = Designation::factory()->create(['name' => 'Software Engineer', 'level' => 4,]);
+    $designationData= ['name' => 'Software Engineer', 'level' => 5,];
+
+    $response = $this->actingAs($this->user)->put("/designations/{$designation->id}", $designationData);
+
+    $response->assertStatus(302);
+    $response->assertRedirect('/designations');
+    $this->assertDatabaseHas('designations', ['id' => $designation->id, 'name' => 'Software Engineer', 'level' => 5,]);
+});
 
 
-//
 //test('a designation can be updated', function () {
 //    $designation = Designation::factory()->create(['name' => 'Software Engineer',]);
 //

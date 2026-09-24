@@ -6,11 +6,11 @@ use App\Models\Department;
 
 class UpdateDepartmentInteractors
 {
-    public function execute(string $id, array $data): Department
+    public function execute(string $id, array $departmentData): Department
     {
         $department = Department::findOrFail($id);
 
-        $department->update($data);
+        $department->update($departmentData);
 
         return $department->refresh();
 

@@ -1,19 +1,12 @@
 <?php
 
 namespace App\UseCases\Designation;
-
 use App\Models\Designation;
-
 class UpdateDesignationInteractor
 {
-    public function execute(
-        string $id,
-        array $data
-    ): Designation {
+    public function execute(string $id, array $designationData): Designation {
         $designation = Designation::findOrFail($id);
-
-        $designation->update($data);
-
+        $designation->update($designationData);
         return $designation->refresh();
     }
 }

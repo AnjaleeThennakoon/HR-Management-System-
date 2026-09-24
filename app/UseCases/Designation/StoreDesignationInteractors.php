@@ -19,16 +19,9 @@ class StoreDesignationInteractors
     public function getDesignationWithNewLevel(array $designation): array
     {
         if (isset($designation['upper_level'])) {
-            $upperLevelDesignation = Designation::findOrfail(
-                $designation['upper_level']
-            );
-            $designation['level'] = $upperLevelDesignation->level + 1;
-        }
-
-        if (Designation::count() == 0) {
-            $designation['level'] = 1;
-        } else {
-            $designation['level'] = Designation::max('level') + 1;
+            $designation['level'] = Designation::findOrFail($designation['upper_level'])->level + 1;
+        }else{
+            $designation['level'] =  (Designation::max('level') ?? 0) + 1;
         }
 
         return $designation;
