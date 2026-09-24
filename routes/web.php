@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
+use App\Http\Controllers\EmployeeController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -24,6 +25,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', function () {
         return view('AdminDashboard');
     })->name('dashboard');
+
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
     Route::put('/departments/{id}', [DepartmentController::class, 'update'])->name('departments.update');
@@ -33,8 +35,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/designations', [DesignationController::class, 'store'])->name('designations.store');
     Route::put('/designations/{id}', [DesignationController::class, 'update'])->name('designations.update');
     Route::delete('/designations/{id}', [DesignationController::class, 'destroy'])->name('designations.destroy');
-});
 
-Route::get('/employee/dashboard', function () {
-    return view('Employee.employee');
-})->name('employee.dashboard');
+    Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.index');
+});

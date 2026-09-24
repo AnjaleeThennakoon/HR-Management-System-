@@ -1,6 +1,5 @@
 <?php
 
-
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -11,9 +10,17 @@ beforeEach(function () {
     $this->user = User::factory()->create();
 });
 
-test('department list page loads successfully', function () {
-    Employee ::factory()->count(4)->create();
+test('employee list page loads successfully', function () {
+    Employee::factory()->count(10)->create();
 
     $response = $this->actingAs($this->user)->get('/employees');
-    $response->assertStatus(200);
+
+    $response->assertOk()
+        ->assertViewHas('employees', function ($employees): bool {
+            return $employees->count() === 10;
+        });
 });
+
+// test('employee can be create ', function () {
+//    $employeedata = ['employee_id' => '001']
+// )};
