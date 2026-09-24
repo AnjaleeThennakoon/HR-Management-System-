@@ -29,10 +29,7 @@ class DepartmentController extends Controller
         return redirect('/departments');
     }
 
-    public function update(
-        DepartmentRequest $request,
-        string $id,
-        UpdateDepartmentInteractors $updateDepartmentInteractor
+    public function update(DepartmentRequest $request, string $id, UpdateDepartmentInteractors $updateDepartmentInteractor
     ): RedirectResponse {
         $updateDepartmentInteractor->execute($id, $request->validated());
 

@@ -18,13 +18,18 @@ class EmployeeController extends Controller
     }
 
     public function store(
-        EmployeeRequest $employeeRequest,
-        StoreEmployeeInteractors $storeEmployeeInteractors
-    ): RedirectResponse {
+        EmployeeRequest $employeeRequest, StoreEmployeeInteractors $storeEmployeeInteractors): RedirectResponse {
         $storeEmployeeInteractors->execute($employeeRequest->validated());
 
-        return redirect()->route('employees.index');
+        return redirect()->route('employees.index')
+            ->with('success', 'Employee has been successfully created.');
     }
 
-    public function create() {}
+    public function update(EmployeeRequest $employeeRequest, string $id,UpdateEmployeeInteractor  $updateEmployeeInteractors): RedirectResponse {
+        $updateEmployeeInteractors->execute($id, $employeeRequest->validated());
+
+        return redirect()->route('employees.index')
+            ->with('success', 'Employee has been successfully updated.');
+
+    }
 }

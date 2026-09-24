@@ -56,3 +56,7 @@ test('an employee can be created', function () {
         'address' => 'Colombo, Sri Lanka',
     ]);
 });
+
+test('an employee can be updated', function () {
+
+})

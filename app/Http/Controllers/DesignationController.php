@@ -25,7 +25,6 @@ class DesignationController extends Controller
     }
 
     public function store(DesignationRequest $designationRequest, StoreDesignationInteractors $storeDesignationInteractors): RedirectResponse {
-
         $storeDesignationInteractors->execute($designationRequest);
 
         return redirect()
@@ -33,10 +32,7 @@ class DesignationController extends Controller
             ->with('success', 'Designation created successfully.');
     }
 
-    public function update(DesignationRequest $request,
-        string $id,
-        UpdateDesignationInteractor $updateDesignationInteractor
-    ): RedirectResponse {
+    public function update(DesignationRequest $request, string $id, UpdateDesignationInteractor $updateDesignationInteractor): RedirectResponse {
         $updateDesignationInteractor->execute(
             $id,
             $request->validated()
