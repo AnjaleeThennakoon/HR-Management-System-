@@ -19,7 +19,7 @@ class EmployeeRequest extends FormRequest
                 'required',
                 'string',
                 'max:50',
-                'unique:employees,employee_id',
+                'unique:employees,employee_id,'.$this->id,
             ],
 
             'department_id' => [
@@ -61,7 +61,7 @@ class EmployeeRequest extends FormRequest
                 'required',
                 'string',
                 'max:20',
-                'unique:employees,nic',
+                'unique:employees,nic,' . $this->id,
             ],
 
             'phone' => [

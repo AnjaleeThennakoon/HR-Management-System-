@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\UseCases\Employee\Request\EmployeeRequest;
 use App\UseCases\Employee\StoreEmployeeInteractors;
+use App\UseCases\Employee\UpdateEmployeeInteractors;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -25,7 +26,7 @@ class EmployeeController extends Controller
             ->with('success', 'Employee has been successfully created.');
     }
 
-    public function update(EmployeeRequest $employeeRequest, string $id,UpdateEmployeeInteractor  $updateEmployeeInteractors): RedirectResponse {
+    public function update(EmployeeRequest $employeeRequest, string $id,UpdateEmployeeInteractors  $updateEmployeeInteractors): RedirectResponse {
         $updateEmployeeInteractors->execute($id, $employeeRequest->validated());
 
         return redirect()->route('employees.index')

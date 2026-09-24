@@ -58,5 +58,46 @@ test('an employee can be created', function () {
 });
 
 test('an employee can be updated', function () {
+    $employee = Employee::factory()->create([
+        'employee_id' => 'EMP001',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'date_of_birth' => '1995-05-15',
+        'gender' => 'Male',
+        'nic' => '951234567V',
+        'phone' => '0771234567',
+        'address' => 'Colombo, Sri Lanka',
+    ]);
+    $department = Department::factory()->create();
+    $designation = Designation::factory()->create();
 
-})
+    $response = $this->actingAs($this->user)->put(
+        '/employees/' . $employee->id,
+        [
+            'employee_id' => 'EMP001',
+            'department_id' => $department->id,
+            'designation_id' => $designation->id,
+            'first_name' => 'Bob',
+            'last_name' => 'crime',
+            'date_of_birth' => '1995-05-15',
+            'gender' => 'Male',
+            'nic' => '951234567V',
+            'phone' => '+93771234567',
+            'address' => 'australia',
+        ]
+    );
+
+    $response->assertStatus(302);
+    $this->assertDatabaseHas('employees', [
+        'employee_id' => 'EMP001',
+        'department_id' => $department->id,
+        'designation_id' => $designation->id,
+        'first_name' => 'Bob',
+        'last_name' => 'crime',
+        'date_of_birth' => '1995-05-15',
+        'gender' => 'Male',
+        'nic' => '951234567V',
+        'phone' => '+93771234567',
+        'address' => 'australia',
+    ]);
+});
