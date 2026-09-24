@@ -3,16 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
+use Illuminate\Contracts\View\View;
 
 class EmployeeController extends Controller
 {
-    public function index(){
-        $employees = Employee::all();
+    public function index(): View
+    {
+        $employees = Employee::query()->get();
 
-        return view('Employee.employee',compact('employees'));
+        return view('Employee.Employee', compact('employees'));
     }
 
-    public function create(){
-
-    }
+    public function create() {}
 }

@@ -9,8 +9,6 @@ class DesignationFactory extends Factory
 {
     protected $model = Designation::class;
 
-
-
     public function definition(): array
     {
         return [
@@ -20,4 +18,3 @@ class DesignationFactory extends Factory
         ];
     }
 }
-
