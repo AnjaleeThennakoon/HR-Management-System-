@@ -18,9 +18,9 @@ test('department list page loads successfully', function () {
 });
 
 test('a department can be created', function () {
-    $data = ['name' => 'HR'];
+    $departmentdata = ['name' => 'HR'];
 
-    $response = $this->actingAs($this->user)->post('/departments', $data);
+    $response = $this->actingAs($this->user)->post('/departments', $departmentdata);
 
     $response->assertStatus(302);
     $response->assertRedirect('/departments');

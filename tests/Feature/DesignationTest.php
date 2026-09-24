@@ -37,7 +37,6 @@ test('a designation is added to the end of the list when only the name is given'
     $response->assertStatus(302);
     $response->assertRedirect('/designations');
     $this->assertDatabaseHas('designations',['name'=>'Intern Software Engineer','level'=>3,]);
-
 });
 
 test('a designation can be created when upper level is given', function () {
@@ -61,84 +60,45 @@ test('a designation name can be updated', function () {
     $response->assertRedirect('/designations');
     $this->assertDatabaseHas('designations', ['id' => $designation->id, 'name' => 'Software Engineer', 'level' => 1,]);
 });
-test('a designation level can be updated', function () {
-    $designation = Designation::factory()->create(['name' => 'Software Engineer', 'level' => 4,]);
-    $designationData= ['name' => 'Software Engineer', 'level' => 5,];
 
-    $response = $this->actingAs($this->user)->put("/designations/{$designation->id}", $designationData);
+test('a designation upper level can be updated', function () {
+    $senior = Designation::factory()->create(['name' => 'Senior Software Engineer', 'upper_level' => null,]);
+    $software = Designation::factory()->create(['name' => 'Software Engineer', 'upper_level' => $senior->id,]);
+    $junior = Designation::factory()->create(['name' => 'Junior Software Engineer', 'upper_level' => $software->id,]);
+    $intern = Designation::factory()->create(['name' => 'Intern Software Engineer', 'upper_level' => $junior->id,]);
+
+    $designationData = ['name' => 'Junior Software Engineer', 'upper_level' => $senior->id,];
+
+    $response = $this->actingAs($this->user)->put("/designations/{$junior->id}", $designationData);
 
     $response->assertStatus(302);
     $response->assertRedirect('/designations');
-    $this->assertDatabaseHas('designations', ['id' => $designation->id, 'name' => 'Software Engineer', 'level' => 5,]);
+    $this->assertDatabaseHas('designations', ['id' => $senior->id, 'name' => 'Senior Software Engineer', 'upper_level' => null,]);
+    $this->assertDatabaseHas('designations', ['id' => $software->id, 'name' => 'Software Engineer', 'upper_level' => $junior->id,]);
+    $this->assertDatabaseHas('designations', ['id' => $junior->id, 'name' => 'Junior Software Engineer', 'upper_level' => $senior->id,]);
+    $this->assertDatabaseHas('designations', ['id' => $intern->id, 'name' => 'Intern Software Engineer', 'upper_level' => $software->id,]);
 });
 
+test('a designation can be deleted', function () {
+    $designation = Designation::factory()->create(['name' => 'Software Engineer', 'level' => 1,]);
 
-//test('a designation can be updated', function () {
-//    $designation = Designation::factory()->create(['name' => 'Software Engineer',]);
-//
-//    $response = $this->actingAs($this->user)->put("/designations/{$designation->id}",
-//        ['name' => 'Senior Software Engineer', 'level' => 8,]);
-//
-//    $response->assertStatus(302);
-//    $this->assertDatabaseHas('designations', ['id' => $designation->id, 'name' => 'Senior Software Engineer',]);
-//});
-//
-//test('a designation can be deleted', function () {
-//    $designation = Designation::factory()->create(['name' => 'Software Engineer',]);
-//
-//    $response = $this->actingAs($this->user)->delete("/designations/{$designation->id}");
-//
-//    $response->assertStatus(302);
-//    $this->assertDatabaseMissing('designations', ['id' => $designation->id,]);
-//});
-//
-//
-//test('designation name cannot be duplicated', function () {
-//    $designation = Designation::factory()->create(['name' => 'Software Engineer',]);
-//
-//    $response = $this->actingAs($this->user)
-//        ->post('/designations', ['name' => $designation->name,]);
-//
-//    $response->assertSessionHasErrors('name');
-//    $this->assertDatabaseCount('designations', 1);
-//});
-//
-//
-//test('designation name cannot be duplicated.', function () {
-//    $existingDesignation = Designation::factory()->create(['name' => 'Software Engineer',]);
-//    $this->assertDatabaseHas('designations', ['name' => $existingDesignation->name,]);
-//
-//    $response = $this->actingAs($this->user)->post('/designations', ['name' => $existingDesignation->name,]);
-//
-//    $response->assertSessionHasErrors('name');
-//
-//    $this->assertDatabaseCount('designations', 1);
-//});
-//
-//test('designation level can be set manually', function () {
-//    $response = $this->actingAs($this->user)
-//        ->post('/designations', ['name' => 'Software Engineer', 'level' => 5,]);
-//
-//    $response->assertRedirect('/designations');
-//
-//    $this->assertDatabaseHas('designations', ['name' => 'Software Engineer', 'level' => 5,]);
-//});
-//
-//
-//
-//test('designation levels are auto generated', function () {
-//    $this->actingAs($this->user)->post('/designations', ['name' => 'Software Engineer']);
-//    $this->actingAs($this->user)->post('/designations', ['name' => 'Junior Software Engineer']);
-//    $this->actingAs($this->user)->post('/designations', ['name' => 'Senior Software Engineer']);
-//
-//    $response = $this->actingAs($this->user)->get('/designations');
-//
-//    $response->assertOk();
-//    $this->assertDatabaseHas('designations', ['name' => 'Senior Software Engineer', 'level' => 7, ]);
-//    $this->assertDatabaseHas('designations', ['name' => 'Software Engineer', 'level' => 8, ]);
-//    $this->assertDatabaseHas('designations', ['name' => 'Junior Software Engineer', 'level' => 9, ]);
-//});
+    $this->actingAs($this->user)
+        ->delete("/designations/{$designation->id}")
+        ->assertRedirect();
 
+    $this->assertDatabaseMissing('designations', ['id' => $designation->id,]);
+});
+
+test('designation name cannot be duplicated.', function () {
+    $existingDesignation = Designation::factory()->create(['name' => 'Software Engineer',]);
+    $newDesignation =['name' => 'Software Engineer','upper_level' => null,];
+
+    $response = $this->actingAs($this->user)->post('/designations', $newDesignation);
+
+    $response->assertStatus(302);
+    $response->assertSessionHasErrors('name');
+    $this->assertDatabaseCount('designations', 1);
+});
 
 
 
