@@ -13,6 +13,8 @@ class Employee extends Model
 
     protected $fillable = [
         'employee_id',
+        'department_id',
+        'designation_id',
         'first_name',
         'last_name',
         'date_of_birth',
@@ -20,7 +22,5 @@ class Employee extends Model
         'nic',
         'phone',
         'address',
-        'department_id',
-        'designation_id',
     ];
 }

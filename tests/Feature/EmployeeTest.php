@@ -24,80 +24,138 @@ test('employee list page loads successfully', function () {
 });
 
 test('an employee can be created', function () {
-    $employeeData = [
+
+    $employee = Employee::factory()->make([
         'employee_id' => 'EMP001',
-        'department_id' => Department::factory()->create()->id,
-        'designation_id' => Designation::factory()->create()->id,
         'first_name' => 'John',
         'last_name' => 'Doe',
         'date_of_birth' => '1995-05-15',
         'gender' => 'Male',
-        'nic' => '951234567V',
+        'nic' => '123456789012',
         'phone' => '0771234567',
         'address' => 'Colombo, Sri Lanka',
-    ];
+    ]);
 
-    $response = $this->actingAs($this->user)
-        ->post('/employees', $employeeData);
-
+    $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
     $response->assertStatus(302);
+
     $response->assertRedirect('/employees');
     $this->assertDatabaseCount('employees', 1);
     $this->assertDatabaseHas('employees', [
         'employee_id' => 'EMP001',
-        'department_id' => $employeeData['department_id'],
-        'designation_id' => $employeeData['designation_id'],
         'first_name' => 'John',
         'last_name' => 'Doe',
+        'department_id' => $employee->department_id,
+        'designation_id' => $employee->designation_id,
         'date_of_birth' => '1995-05-15',
         'gender' => 'Male',
-        'nic' => '951234567V',
+        'nic' => '123456789012',
         'phone' => '0771234567',
         'address' => 'Colombo, Sri Lanka',
     ]);
 });
 
 test('an employee can be updated', function () {
-    $employee = Employee::factory()->create([
-        'employee_id' => 'EMP001',
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'date_of_birth' => '1995-05-15',
-        'gender' => 'Male',
-        'nic' => '951234567V',
-        'phone' => '0771234567',
-        'address' => 'Colombo, Sri Lanka',
-    ]);
+    $employee = Employee::factory()->create();
     $department = Department::factory()->create();
     $designation = Designation::factory()->create();
-
-    $response = $this->actingAs($this->user)->put(
-        '/employees/' . $employee->id,
-        [
-            'employee_id' => 'EMP001',
-            'department_id' => $department->id,
-            'designation_id' => $designation->id,
-            'first_name' => 'Bob',
-            'last_name' => 'crime',
-            'date_of_birth' => '1995-05-15',
-            'gender' => 'Male',
-            'nic' => '951234567V',
-            'phone' => '+93771234567',
-            'address' => 'australia',
-        ]
-    );
-
-    $response->assertStatus(302);
-    $this->assertDatabaseHas('employees', [
-        'employee_id' => 'EMP001',
+    $employeedata = [
+        'employee_id' => $employee->employee_id,
         'department_id' => $department->id,
         'designation_id' => $designation->id,
         'first_name' => 'Bob',
-        'last_name' => 'crime',
-        'date_of_birth' => '1995-05-15',
-        'gender' => 'Male',
-        'nic' => '951234567V',
-        'phone' => '+93771234567',
-        'address' => 'australia',
+        'last_name' => 'Crime',
+        'date_of_birth' => $employee->date_of_birth,
+        'gender' => $employee->gender,
+        'nic' => $employee->nic,
+        'phone' => '0771234567',
+        'address' => 'Australia',
+    ];
+
+    $response = $this->actingAs($this->user)->put("/employees/{$employee->id}", $employeedata);
+
+    $response->assertStatus(302);
+    $this->assertDatabaseHas('employees', [
+        'id' => $employee->id,
+        'department_id' => $department->id,
+        'designation_id' => $designation->id,
+        'first_name' => 'Bob',
+        'last_name' => 'Crime',
+        'phone' => '0771234567',
+        'address' => 'Australia',
     ]);
+});
+
+test('an employee can be deleted', function () {
+    $employee = Employee::factory()->create();
+
+    $this->assertDatabaseHas('employees', ['id' => $employee->id]);
+    $this->actingAs($this->user)->delete("/employees/{$employee->id}");
+
+    $this->assertDatabaseMissing('employees', ['id' => $employee->id]);
+});
+
+test('employee nic must be 12 digits or 10 digits followed by v', function () {
+    $employee = Employee::factory()->make(['nic' => '1234561']);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
+
+    $response->assertSessionHasErrors('nic');
+});
+
+test('employee nic accepts 10 digits followed by v', function () {
+    $employee = Employee::factory()->make(['nic' => '1234567890v']);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
+
+    $response->assertRedirect('/employees');
+    $this->assertDatabaseHas('employees', ['nic' => '1234567890v']);
+});
+
+test('employee phone must contain 10 digits', function () {
+    $employee = Employee::factory()->make(['phone' => '1234561']);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
+
+    $response->assertSessionHasErrors('phone');
+
+});
+
+test('employee nic must be unique', function () {
+    $employee1 = Employee::factory()->create(['nic' => '123456789012']);
+    $employee2 = Employee::factory()->make(['nic' => $employee1->nic]);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee2->toArray());
+
+    $response->assertStatus(302);
+    $response->assertSessionHasErrors('nic');
+    $this->assertDatabaseCount('employees', 1);
+
+});
+
+test('employee id  must be unique', function () {
+    $employee1 = Employee::factory()->create(['employee_id' => 'EMP001']);
+    $employee2 = Employee::factory()->make(['employee_id' => $employee1->employee_id]);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee2->toArray());
+
+    $response->assertSessionHasErrors('employee_id');
+    $this->assertDatabaseCount('employees', 1);
+});
+
+
+test('employee date of birth must be valid', function () {
+    $employee = Employee::factory()->make(['date_of_birth' => '2027-08-08']);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
+
+    $response->assertSessionHasErrors('date_of_birth');
+});
+
+test('employee gender must be valid', function () {
+    $employee = Employee::factory()->make(['gender' => 'Other']);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
+
+    $response->assertSessionHasErrors('gender');
 });

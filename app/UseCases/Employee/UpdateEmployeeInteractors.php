@@ -1,13 +1,16 @@
 <?php
+
 namespace App\UseCases\Employee;
+
 use App\Models\Employee;
+use App\UseCases\Employee\Request\EmployeeRequest;
 
-class UpdateEmployeeInteractors{
-    public function execute(string $id, array $employeeData): Employee
+class UpdateEmployeeInteractors
+{
+    public function execute(EmployeeRequest $employeeRequest, Employee $employee)
     {
-        $employee = Employee::findOrFail($id);
-        $employee->update($employeeData);
-        return $employee->refresh();
-    }
+        $employee->update($employeeRequest->validated());
 
+        return $employee->fresh();
+    }
 }

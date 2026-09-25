@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\UseCases\Department\CreateDepartmentInteractor;
-use App\UseCases\Department\DeleteDepartmentInteractors;
+use App\UseCases\Department\DeleteEmployeeInteractors;
 use App\UseCases\Department\ListDepartmentInteractors;
 use App\UseCases\Department\Request\DepartmentRequest;
 use App\UseCases\Department\UpdateDepartmentInteractors;
@@ -36,7 +36,7 @@ class DepartmentController extends Controller
         return redirect('/departments');
     }
 
-    public function destroy(string $id, DeleteDepartmentInteractors $deleteDepartmentInteractor): RedirectResponse
+    public function destroy(string $id, DeleteEmployeeInteractors $deleteDepartmentInteractor): RedirectResponse
     {
         $deleteDepartmentInteractor->execute($id);
 

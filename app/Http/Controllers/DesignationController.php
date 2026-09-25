@@ -17,14 +17,13 @@ class DesignationController extends Controller
     {
         $designations = $listDesignationInteractor->execute(
             request('search'),
-            request('per_page')
-        );
+            request('per_page'));
 
         return view('Designation.Dashbord', ['designations' => $designations]);
-
     }
 
-    public function store(DesignationRequest $designationRequest, StoreDesignationInteractors $storeDesignationInteractors): RedirectResponse {
+    public function store(DesignationRequest $designationRequest, StoreDesignationInteractors $storeDesignationInteractors): RedirectResponse
+    {
         $storeDesignationInteractors->execute($designationRequest);
 
         return redirect()
@@ -32,7 +31,8 @@ class DesignationController extends Controller
             ->with('success', 'Designation created successfully.');
     }
 
-    public function update(DesignationRequest $request, string $id, UpdateDesignationInteractor $updateDesignationInteractor): RedirectResponse {
+    public function update(DesignationRequest $request, string $id, UpdateDesignationInteractor $updateDesignationInteractor): RedirectResponse
+    {
         $updateDesignationInteractor->execute(
             $id,
             $request->validated()
@@ -43,10 +43,8 @@ class DesignationController extends Controller
             ->with('success', 'Designation updated successfully.');
     }
 
-    public function destroy(
-        string $id,
-        DeleteDesignationInteractors $deleteDesignationInteractor
-    ): RedirectResponse {
+    public function destroy(string $id, DeleteDesignationInteractors $deleteDesignationInteractor): RedirectResponse
+    {
         $deleteDesignationInteractor->execute($id);
 
         return redirect()

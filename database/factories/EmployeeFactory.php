@@ -20,15 +20,16 @@ class EmployeeFactory extends Factory
             'employee_id' => $this->faker->unique()->bothify('EMP####'),
             'first_name' => $this->faker->firstName(),
             'last_name' => $this->faker->lastName(),
-            'date_of_birth' => $this->faker->date(),
+            'date_of_birth' => $this->faker->dateTimeBetween('-60 years', '-18 years')->format('Y-m-d'),
             'gender' => $this->faker->randomElement(['Male', 'Female']),
-            'nic' => $this->faker->unique()->numerify('############'),
-            'phone' => $this->faker->phoneNumber(),
+            'nic' => $this->faker->unique()->randomElement([
+                $this->faker->numerify('##########').'v',
+                $this->faker->numerify('############'),
+            ]),
+            'phone' => $this->faker->numerify('##########'),
             'address' => $this->faker->address(),
-
             'department_id' => Department::factory(),
             'designation_id' => Designation::factory(),
-
         ];
     }
 }
