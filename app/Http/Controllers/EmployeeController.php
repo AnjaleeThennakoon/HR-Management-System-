@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
+use App\Models\Designation;
 use App\Models\Employee;
 use App\UseCases\Employee\DeleteEmployeeInteractors;
 use App\UseCases\Employee\ListEmployeeInteractors;
@@ -19,7 +21,11 @@ class EmployeeController extends Controller
             request('search'),
             request('per_page'));
 
-        return view('Employee.employee', ['employees' => $employees]);
+        return view('Employee.employee', [
+            'employees' => $employees,
+            'departments' => Department::all(),
+            'designations' => Designation::all(),
+        ]);
     }
 
     public function store(

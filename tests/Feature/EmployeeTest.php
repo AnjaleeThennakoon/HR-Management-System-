@@ -55,6 +55,43 @@ test('an employee can be created', function () {
     ]);
 });
 
+test('an employee can be created without a designation', function () {
+    $employee = Employee::factory()->make(['designation_id' => null]);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
+
+    $response->assertRedirect('/employees');
+    $this->assertDatabaseHas('employees', [
+        'employee_id' => $employee->employee_id,
+        'designation_id' => null,
+    ]);
+});
+
+test('employee form errors are displayed on the employee page', function () {
+    $employee = Employee::factory()->make(['first_name' => '']);
+
+    $response = $this->from('/employees')
+        ->followingRedirects()
+        ->actingAs($this->user)
+        ->post('/employees', $employee->toArray());
+
+    $response->assertOk()
+        ->assertSeeText('The first name field is required.');
+});
+
+test('an invalid designation is rejected and its error is displayed', function () {
+    $employee = Employee::factory()->make(['designation_id' => 999999]);
+
+    $response = $this->from('/employees')
+        ->followingRedirects()
+        ->actingAs($this->user)
+        ->post('/employees', $employee->toArray());
+
+    $response->assertOk()
+        ->assertSeeText('The selected designation id is invalid.');
+    $this->assertDatabaseCount('employees', 0);
+});
+
 test('an employee can be updated', function () {
     $employee = Employee::factory()->create();
     $department = Department::factory()->create();
@@ -142,7 +179,6 @@ test('employee id  must be unique', function () {
     $response->assertSessionHasErrors('employee_id');
     $this->assertDatabaseCount('employees', 1);
 });
-
 
 test('employee date of birth must be valid', function () {
     $employee = Employee::factory()->make(['date_of_birth' => '2027-08-08']);

@@ -17,7 +17,7 @@ class EmployeeRequest extends FormRequest
         return [
             'employee_id' => ['required', 'string', 'max:50', 'unique:employees,employee_id,'.$this->id],
             'department_id' => ['required', 'integer', 'exists:departments,id'],
-            'designation_id' => ['required', 'integer', 'exists:designations,id'],
+            'designation_id' => ['nullable', 'integer', 'exists:designations,id'],
             'first_name' => ['required', 'string', 'max:100'],
             'last_name' => ['required', 'string', 'max:100'],
             'date_of_birth' => ['required', 'date', 'before:today'],

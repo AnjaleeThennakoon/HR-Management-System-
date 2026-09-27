@@ -13,7 +13,7 @@ class ListDepartmentInteractors
         $query = Department::query();
 
         if ($search) {
-            $query->where('department', 'like', "%{$search}%");
+            $query->where('name', 'like', "%{$search}%");
         }
 
         if ($perPage) {

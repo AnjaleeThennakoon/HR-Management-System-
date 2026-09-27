@@ -58,32 +58,31 @@ test('a department can be deleted', function () {
 
 test('departments can be searched', function () {
     Department::factory()->create(['name' => 'Finance']);
+    Department::factory()->create(['name' => 'Engineering']);
 
-    Department::factory()
-        ->count(9)
-        ->sequence(fn ($sequence) => ['name' => "Department {$sequence->index}"])
-        ->create();
-
-    $response = $this->actingAs($this->user)->get('/departments');
+    $response = $this->actingAs($this->user)->get('/departments?search=Finance');
 
     $response->assertOk()
-        ->assertSee('Finance');
+        ->assertSee('Finance')
+        ->assertDontSee('Engineering');
 });
 
 test('department search with wrong name', function () {
-    Department::factory()->count(10)->create();
+    Department::factory()->create(['name' => 'Finance']);
 
-    $response = $this->actingAs($this->user)->get('/departments');
+    $response = $this->actingAs($this->user)->get('/departments?search=Hdhudijoej9wb');
 
-    $response->assertOk()
-        ->assertDontSee('Hdhudijoej9wb');
+    $response->assertViewHas('departments', function ($departments): bool {
+        return $departments->isEmpty();
+    });
 });
 
 test('departments can be paginated', function () {
     Department::factory()->count(10)->create();
 
-    $response = $this->actingAs($this->user)->get('/departments');
+    $response = $this->actingAs($this->user)->get('/departments?per_page=5');
 
-    $response->assertOk()
-        ->assertSee('Human Resources');
+    $response->assertViewHas('departments', function ($departments): bool {
+        return $departments->count() === 5 && $departments->total() === 10;
+    });
 });
