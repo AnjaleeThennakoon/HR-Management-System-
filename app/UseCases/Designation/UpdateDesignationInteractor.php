@@ -4,6 +4,7 @@ namespace App\UseCases\Designation;
 
 use App\Models\Designation;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class UpdateDesignationInteractor
 {
@@ -11,18 +12,43 @@ class UpdateDesignationInteractor
     {
         return DB::transaction(function () use ($id, $designationData) {
             $designation = Designation::findOrFail($id);
-            $this->updateHierarchy($designation, $designationData['upper_level'] ?? null);
+            $newUpperLevel = $designationData['upper_level'] ?? null;
+
+            if ($newUpperLevel && $this->wouldCreateLoop($designation, $newUpperLevel)) {
+                throw ValidationException::withMessages([
+                    'upper_level' => 'This selection creates a hierarchy loop.',
+                ]);
+            }
+
+            if ($newUpperLevel) {
+                $parent = Designation::findOrFail($newUpperLevel);
+                $designationData['level'] = $parent->level + 1;
+            } else {
+                $designationData['upper_level'] = null;
+                $designationData['level'] = 1;
+            }
+
             $designation->update($designationData);
+
+            $designation->refresh()->recalculateDescendantsLevels();
+
             return $designation->refresh();
         });
     }
-    private function updateHierarchy(Designation $designation, ?int $newUpperLevel): void {
-        if ($designation->upper_level === $newUpperLevel) {return;}
-        $designationUnderNewUpper = Designation::where('upper_level', $newUpperLevel)->whereKeyNot($designation->id)->first();
-        $designationUnderCurrent = Designation::where('upper_level', $designation->id)->first();
-        $designationUnderNewUpper?->update(['upper_level' => $designation->id,]);
-        $designationUnderCurrent?->update(['upper_level' => $designationUnderNewUpper?->id,]);
+
+    private function wouldCreateLoop(Designation $designation, int $newUpperLevelId): bool
+    {
+        if ($designation->id === $newUpperLevelId) return true;
+
+        $current = $newUpperLevelId;
+        $visited = [];
+        while ($current) {
+            if ($current == $designation->id) return true;
+            if (in_array($current, $visited)) return true;
+            $visited[] = $current;
+            $parent = Designation::find($current);
+            $current = $parent?->upper_level;
+        }
+        return false;
     }
-
 }
-

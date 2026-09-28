@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Designation;
 use App\UseCases\Designation\DeleteDesignationInteractors;
 use App\UseCases\Designation\ListDesignationInteractors;
 use App\UseCases\Designation\Request\DesignationRequest;
@@ -19,7 +20,12 @@ class DesignationController extends Controller
             request('search'),
             request('per_page'));
 
-        return view('Designation.DesignationDashbord', ['designations' => $designations]);
+        $allDesignations = Designation::orderBy('level')->orderBy('name')->get();
+
+        return view('Designation.DesignationDashbord', [
+            'designations' => $designations,
+            'allDesignations' => $allDesignations,
+        ]);
     }
 
     public function store(DesignationRequest $designationRequest, StoreDesignationInteractors $storeDesignationInteractors): RedirectResponse

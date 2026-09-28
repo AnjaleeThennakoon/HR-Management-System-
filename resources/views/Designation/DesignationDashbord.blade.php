@@ -1,5 +1,5 @@
 <x-layout title="Designations - HR System">
-    <div class="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 p-8 max-w-4xl w-full">
+    <div class="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 p-8 max-w-5xl w-full">
 
         {{-- Header --}}
         <div class="flex items-center justify-between mb-6 pb-5 border-b border-gray-100">
@@ -29,8 +29,7 @@
 
         {{-- Success Message --}}
         @if(session('success'))
-            <div
-                class="mb-5 flex items-center gap-2 p-3 bg-green-50 text-green-700 text-sm rounded-lg ring-1 ring-green-100">
+            <div class="mb-5 flex items-center gap-2 p-3 bg-green-50 text-green-700 text-sm rounded-lg ring-1 ring-green-100">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round"
@@ -83,6 +82,7 @@
                     <th class="py-3 px-4 font-semibold">#</th>
                     <th class="py-3 px-4 font-semibold">Designation Name</th>
                     <th class="py-3 px-4 font-semibold">Upper Level</th>
+                    <th class="py-3 px-4 font-semibold">Level</th>
                     <th class="py-3 px-4 font-semibold text-right">Actions</th>
                 </tr>
                 </thead>
@@ -92,8 +92,7 @@
                         <td class="py-3.5 px-4 text-gray-400 font-medium">{{ $designation->id }}</td>
                         <td class="py-3.5 px-4">
                             <div class="flex items-center gap-3">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 font-semibold text-xs flex-shrink-0">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 font-semibold text-xs flex-shrink-0">
                                     {{ strtoupper(substr($designation->name, 0, 2)) }}
                                 </div>
                                 <span class="desig-name text-gray-800 font-medium">{{ $designation->name }}</span>
@@ -101,13 +100,21 @@
                         </td>
                         <td class="py-3.5 px-4">
                             <span class="desig-upper inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                                {{ $designation->upper_level ?? '-' }}
+                                {{ $designation->upperLevel->name ?? '-' }}
                             </span>
                         </td>
+
+                        {{-- ✅ NEW: Level Column --}}
+                        <td class="py-3.5 px-4">
+                            <span class="desig-level inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700">
+                                L{{ $designation->level }}
+                            </span>
+                        </td>
+
                         <td class="py-3.5 px-4 text-right">
                             <div class="inline-flex items-center gap-1">
                                 {{-- Edit Button --}}
-                                <button onclick="openEditModal({{ $designation->id }}, {{ Js::from($designation->name) }}, {{ Js::from($designation->upper_level) }})"
+                                <button onclick="openEditModal({{ $designation->id }}, {{ Js::from($designation->name) }}, {{ $designation->upper_level ?? 'null' }})"
                                         class="inline-flex items-center gap-1 px-2.5 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md text-xs font-semibold transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
                                          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -138,7 +145,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="py-12 text-center">
+                        <td colspan="5" class="py-12 text-center">
                             <div class="flex flex-col items-center gap-2 text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none"
                                      viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
