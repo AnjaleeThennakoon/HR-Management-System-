@@ -21,7 +21,12 @@ class StoreDesignationInteractors
             $upperLevelDesignation = Designation::findOrFail($designation['upper_level']);
             $newLevel = $upperLevelDesignation->level + 1;
 
-            Designation::where('level', '>=', $newLevel)->increment('level');
+            Designation::where('level', '>=', $newLevel)
+                ->where(function ($query) use ($upperLevelDesignation) {
+                    $query->whereNull('upper_level')
+                        ->orWhere('upper_level', '!=', $upperLevelDesignation->id);
+                })
+                ->increment('level');
 
             $designation['level'] = $newLevel;
         } else {
