@@ -22,8 +22,7 @@ class StoreDesignationInteractors
             $upperLevelDesignation = Designation::findOrFail($designation['upper_level']);
             $designation['level'] = $upperLevelDesignation->level + 1;
         } else {
-
-            $designation['level'] = 1;
+            $designation['level'] = (Designation::max('level') ?? 0) + 1;
         }
 
         return $designation;
