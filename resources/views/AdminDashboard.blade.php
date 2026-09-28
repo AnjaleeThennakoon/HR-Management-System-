@@ -44,6 +44,23 @@
                 </div>
             </a>
 
+            <a href="/designations"
+               class="group flex items-start gap-4 p-6 border border-gray-200 rounded-xl hover:border-indigo-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 14.15v4.073a2.25 2.25 0 01-1.35 2.07A48.108 48.108 0 0112 21.75a48.108 48.108 0 01-6.9-.457 2.25 2.25 0 01-1.35-2.07V14.15M18.75 6.75a2.25 2.25 0 00-2.25-2.25H7.5A2.25 2.25 0 005.25 6.75v9.75a2.25 2.25 0 002.25 2.25h9a2.25 2.25 0 002.25-2.25V6.75zM12 12.75a2.25 2.25 0 100-4.5 2.25 2.25 0 000 4.5z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-base font-semibold text-gray-900 mb-1">
+                        Designations
+                    </h2>
+                    <p class="text-sm text-gray-500">
+                        Manage your designations
+                    </p>
+                </div>
+            </a>
+
             <a href="/employees"
                class="group flex items-start gap-4 p-6 border border-gray-200 rounded-xl hover:border-indigo-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                 <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200">

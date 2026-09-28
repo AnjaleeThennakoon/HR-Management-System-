@@ -33,16 +33,16 @@
             </div>
         @endif
 
-        @if($errors->any())
-            <div role="alert" class="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-                <p class="font-semibold">Please correct the following errors and try again:</p>
-                <ul class="mt-2 list-inside list-disc">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+{{--        @if($errors->any())--}}
+{{--            <div role="alert" class="mb-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">--}}
+{{--                <p class="font-semibold">Please correct the following errors and try again:</p>--}}
+{{--                <ul class="mt-2 list-inside list-disc">--}}
+{{--                    @foreach($errors->all() as $error)--}}
+{{--                        <li>{{ $error }}</li>--}}
+{{--                    @endforeach--}}
+{{--                </ul>--}}
+{{--            </div>--}}
+{{--        @endif--}}
 
         {{-- Toolbar: Search + Add Button --}}
         <div class="flex items-center justify-between gap-4 mb-6">

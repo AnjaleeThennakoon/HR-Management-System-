@@ -19,7 +19,7 @@ class DesignationController extends Controller
             request('search'),
             request('per_page'));
 
-        return view('Designation.Dashbord', ['designations' => $designations]);
+        return view('Designation.DesignationDashbord', ['designations' => $designations]);
     }
 
     public function store(DesignationRequest $designationRequest, StoreDesignationInteractors $storeDesignationInteractors): RedirectResponse
