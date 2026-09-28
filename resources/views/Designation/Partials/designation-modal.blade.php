@@ -35,7 +35,7 @@
                     </label>
                     <input type="text" name="upper_level" id="designationUpperLevel"
                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                           placeholder="e.g. Senior Engineer">
+                           placeholder="e.g. 1">
                 </div>
             </div>
 
