@@ -52,7 +52,7 @@ test('a designation can be created when upper level is given', function () {
 });
 
 test('a designation name can be updated', function () {
-    $designation = Designation::factory()->create(['name' => 'Intern Software Engineer', 'level' => 1,]);
+    $designation = Designation::factory()->create(['name' => 'Intern Software Engineer', 'level' => 2,]);
     $designationData= ['name' => 'Software Engineer', 'level' => 1,];
 
     $response = $this->actingAs($this->user)->put("/designations/{$designation->id}", $designationData);
@@ -74,10 +74,14 @@ test('a designation upper level can be updated', function () {
 
     $response->assertStatus(302);
     $response->assertRedirect('/designations');
-    $this->assertDatabaseHas('designations', ['id' => $senior->id, 'name' => 'Senior Software Engineer', 'upper_level' => null,]);
-    $this->assertDatabaseHas('designations', ['id' => $software->id, 'name' => 'Software Engineer', 'upper_level' => $junior->id,]);
-    $this->assertDatabaseHas('designations', ['id' => $junior->id, 'name' => 'Junior Software Engineer', 'upper_level' => $senior->id,]);
-    $this->assertDatabaseHas('designations', ['id' => $intern->id, 'name' => 'Intern Software Engineer', 'upper_level' => $software->id,]);
+    $this->assertDatabaseHas('designations', ['id' => $senior->id,
+        'name' => 'Senior Software Engineer', 'upper_level' => null,]);
+    $this->assertDatabaseHas('designations', ['id' => $software->id,
+        'name' => 'Software Engineer', 'upper_level' => $junior->id,]);
+    $this->assertDatabaseHas('designations', ['id' => $junior->id,
+        'name' => 'Junior Software Engineer', 'upper_level' => $senior->id,]);
+    $this->assertDatabaseHas('designations', ['id' => $intern->id,
+        'name' => 'Intern Software Engineer', 'upper_level' => $software->id,]);
 });
 
 test('a designation can be deleted', function () {
@@ -99,6 +103,24 @@ test('designation name cannot be duplicated.', function () {
     $response->assertStatus(302);
     $response->assertSessionHasErrors('name');
     $this->assertDatabaseCount('designations', 1);
+});
+
+test('level is updated when a designation upper level is changed', function () {
+    $senior = Designation::factory()->create(
+        ['name' => 'Senior Software Engineer', 'upper_level' => null, 'level' => 1,]);
+    $software = Designation::factory()->create(
+        ['name' => 'Software Engineer', 'upper_level' => $senior->id, 'level' => 2,]);
+    $junior = Designation::factory()->create(
+        ['name' => 'Junior Software Engineer', 'upper_level' => $software->id, 'level' => 3,]);
+    $designationData =
+        ['name' => 'Junior Software Engineer', 'upper_level' => $senior->id,];
+
+    $response = $this->actingAs($this->user)->put("/designations/{$junior->id}", $designationData);
+
+    $response->assertStatus(302);
+    $response->assertRedirect('/designations');
+    $this->assertDatabaseHas('designations',
+        ['id' => $junior->id, 'name' => 'Junior Software Engineer', 'upper_level' => $senior->id, 'level' => 2,]);
 });
 
 

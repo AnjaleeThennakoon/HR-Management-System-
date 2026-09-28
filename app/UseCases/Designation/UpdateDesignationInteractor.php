@@ -9,15 +9,21 @@ class UpdateDesignationInteractor
 {
     public function execute(string $id, array $designationData): Designation
     {
-        return DB::transaction(function () use ($id, $designationData) {$designation = Designation::findOrFail($id);
+        return DB::transaction(function () use ($id, $designationData) {
 
-            $this->updateHierarchy($designation, $designationData['upper_level'] ?? null);
+            $designation = Designation::findOrFail($id);
 
             if (!empty($designationData['upper_level'])) {
                 $parent = Designation::findOrFail($designationData['upper_level']);
                 $designationData['level'] = $parent->level + 1;
-            } else {$designationData['level'] = (Designation::max('level') ?? 0) + 1;}
+            } else {
+                $designationData['level'] = (Designation::max('level') ?? 0) + 1;
+            }
+
+            $this->updateHierarchy($designation, $designationData['upper_level'] ?? null);
+
             $designation->update($designationData);
+
             return $designation->refresh();
         });
     }

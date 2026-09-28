@@ -26,12 +26,7 @@ class DesignationRequest extends FormRequest
                 'nullable',
                 'integer',
             ],
-            'level' => [
-                'nullable',
-                'integer',
-                Rule::unique('designations', 'level')
-                    ->ignore($this->route('id')),
-            ]
+
 
         ];
     }
