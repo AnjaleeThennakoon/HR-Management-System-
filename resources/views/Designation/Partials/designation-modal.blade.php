@@ -4,7 +4,7 @@
         {{-- Modal Header --}}
         <div class="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
             <h2 id="designationModalTitle" class="text-lg font-bold text-gray-900">Add New Designation</h2>
-            <button onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 transition">
+            <button type="button" onclick="closeAddModal()" class="text-gray-400 hover:text-gray-600 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -33,9 +33,13 @@
                     <label for="designationUpperLevel" class="block text-sm font-medium text-gray-700 mb-1">
                         Upper Level
                     </label>
-                    <input type="text" name="upper_level" id="designationUpperLevel"
-                           class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
-                           placeholder="e.g. 1">
+                    <select name="upper_level" id="designationUpperLevel"
+                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white">
+                        <option value="">— None (Top Level) —</option>
+                        @foreach($designations as $d)
+                            <option value="{{ $d->id }}">{{ $d->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
