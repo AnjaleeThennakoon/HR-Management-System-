@@ -14,6 +14,7 @@ test('designation list page loads successfully', function () {
     $response = $this->actingAs($this->user)->get('/designations');
 
     $response->assertStatus(200);
+    $response->assertSee('name="_method" id="designationMethod" value="PUT" disabled', false);
     $response->assertViewHas('designations', function ($designations) {return count($designations) == 10;});
 });
 
@@ -99,7 +100,6 @@ test('designation name cannot be duplicated.', function () {
     $response->assertSessionHasErrors('name');
     $this->assertDatabaseCount('designations', 1);
 });
-
 
 
 
