@@ -64,7 +64,10 @@
                     <th class="py-3 px-4 font-semibold">Name</th>
                     <th class="py-3 px-4 font-semibold">Department</th>
                     <th class="py-3 px-4 font-semibold">Designation</th>
-                    <th class="py-3 px-4 font-semibold">Phone</th>
+                    <th class="py-3 px-4 font-semibold">phone</th>
+                    <th class="py-3 px-4 font-semibold">Date of Birth</th>
+                    <th class="py-3 px-4 font-semibold">NIC</th>
+                    <th class="py-3 px-4 font-semibold">Gender</th>
                     <th class="py-3 px-4 font-semibold text-right">Actions</th>
                 </tr>
                 </thead>
@@ -92,6 +95,9 @@
                             </span>
                         </td>
                         <td class="py-3.5 px-4 text-gray-600">{{ $emp->phone }}</td>
+                        <td class="py-3.5 px-4 text-gray-600">{{ $emp->date_of_birth ?? '-' }}</td>
+                        <td class="py-3.5 px-4 text-gray-600">{{ $emp->nic ?? '-' }}</td>
+                        <td class="py-3.5 px-4 text-gray-600">{{ $emp->gender ?? '-' }}</td>
                         <td class="py-3.5 px-4 text-right">
                             <div class="inline-flex items-center gap-1">
                                 <x-Form.editbutton :arguments="[$emp->id, $emp, $emp->department_id, $emp->designation_id]" />
@@ -126,6 +132,7 @@
     </div>
 
     @include('Components.partials.add-modal')
-    @include('Components.partials.edit-modal')
+{{--    @include('Components.partials.edit-modal')--}}
+
 
 </x-layout>
