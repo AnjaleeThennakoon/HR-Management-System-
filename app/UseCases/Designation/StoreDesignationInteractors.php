@@ -9,36 +9,38 @@ class StoreDesignationInteractors
 {
     public function execute(DesignationRequest $designationRequest): Designation
     {
-        $designation = $designationRequest->validated();
-        $designation = $this->getDesignationWithNewLevel($designation);
-
+        $designation = $this->getDesignationWithNewLevel(
+            $designationRequest->validated()
+        );
         return Designation::create($designation);
     }
 
-    public function getDesignationWithNewLevel(array $designation): array
+    private function getDesignationWithNewLevel(array $designation): array
     {
-        if (!empty($designation['upper_level'])) {
-            $upperLevelDesignation = Designation::findOrFail(
-                $designation['upper_level']
-            );
+        if (empty($designation['upper_level'])) {
+            $designation['level'] = $this->getNextLevel();
 
-            $newLevel = $upperLevelDesignation->level + 1;
-
-            $hasSibling = Designation::where(
-                'upper_level',
-                $upperLevelDesignation->id
-            )->exists();
-
-            if (!$hasSibling) {
-                Designation::where('level', '>=', $newLevel)
-                    ->increment('level');
-            }
-            $designation['level'] = $newLevel;
-
-        } else {
-            $designation['level'] = (Designation::max('level') ?? 0) + 1;
+            return $designation;
         }
 
+        $parent = Designation::findOrFail($designation['upper_level']);
+        $designation['level'] = $parent->level + 1;
+        $this->shiftLevelsForFirstChild($parent, $designation['level']);
         return $designation;
+    }
+
+    private function getNextLevel(): int
+    {
+        return (Designation::max('level') ?? 0) + 1;
+    }
+
+    private function shiftLevelsForFirstChild(Designation $parent, int $level): void {
+        $hasSibling = Designation::where('upper_level', $parent->id)->exists();
+
+        if ($hasSibling) {
+            return;
+        }
+
+        Designation::where('level', '>=', $level)->increment('level');
     }
 }
