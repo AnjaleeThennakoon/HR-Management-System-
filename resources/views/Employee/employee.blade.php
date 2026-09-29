@@ -94,8 +94,11 @@
                         <td class="py-3.5 px-4 text-gray-600">{{ $emp->phone }}</td>
                         <td class="py-3.5 px-4 text-right">
                             <div class="inline-flex items-center gap-1">
-                                <x-Form.editbutton :emp="$emp" />
-                                <x-Form.deletebutton :emp="$emp" />
+                                <x-Form.editbutton :arguments="[$emp->id, $emp, $emp->department_id, $emp->designation_id]" />
+                                <x-Form.deletebutton
+                                    :action="route('employees.destroy', $emp->id)"
+                                    confirmation-message="Are you sure you want to delete this employee?"
+                                />
                             </div>
                         </td>
                     </tr>
@@ -124,59 +127,5 @@
 
     @include('Components.partials.add-modal')
     @include('Components.partials.edit-modal')
-
-    <script>
-        function openAddModal() {
-            document.getElementById('addModal').classList.remove('hidden');
-        }
-
-        function closeAddModal() {
-            document.getElementById('addModal').classList.add('hidden');
-        }
-
-        function openEditModal(id, emp, departmentId, designationId) {
-            document.getElementById('editForm').action = '/employees/' + id;
-            document.getElementById('edit_employee_id').value = emp.employee_id;
-            document.getElementById('edit_first_name').value = emp.first_name;
-            document.getElementById('edit_last_name').value = emp.last_name;
-            document.getElementById('edit_date_of_birth').value = emp.date_of_birth;
-            document.getElementById('edit_gender').value = emp.gender;
-            document.getElementById('edit_nic').value = emp.nic;
-            document.getElementById('edit_phone').value = emp.phone;
-            document.getElementById('edit_address').value = emp.address;
-            document.getElementById('edit_department_id').value = departmentId;
-            document.getElementById('edit_designation_id').value = designationId;
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-
-        function closeEditModal() {
-            document.getElementById('editModal').classList.add('hidden');
-        }
-
-        function filterEmployees() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('.emp-row');
-            let visibleCount = 0;
-
-            rows.forEach(row => {
-                const name = row.querySelector('.emp-name').textContent.toLowerCase();
-                const dept = row.querySelector('.emp-department').textContent.toLowerCase();
-                const desig = row.querySelector('.emp-designation').textContent.toLowerCase();
-                const match = name.includes(query) || dept.includes(query) || desig.includes(query);
-                row.style.display = match ? '' : 'none';
-                if (match) visibleCount++;
-            });
-
-            document.getElementById('noResults').classList.toggle('hidden', visibleCount !== 0 || rows.length === 0);
-        }
-
-        // Close modals on Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeAddModal();
-                closeEditModal();
-            }
-        });
-    </script>
 
 </x-layout>

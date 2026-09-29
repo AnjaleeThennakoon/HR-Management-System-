@@ -1,8 +1,8 @@
+@props(['action', 'confirmationMessage'])
 
-
-<form action="{{ route('departments.destroy', $dept['id']) }}"
+<form action="{{ $action }}"
       method="POST" class="inline"
-      onsubmit="return confirm('Are you sure you want to delete this department?')">
+      onsubmit="return confirm({{ Js::from($confirmationMessage) }})">
     @csrf
     @method('DELETE')
     <button type="submit"

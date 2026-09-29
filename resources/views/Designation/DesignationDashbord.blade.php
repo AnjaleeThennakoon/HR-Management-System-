@@ -114,8 +114,11 @@
 
                         <td class="px-4 py-4 text-right">
                             <div class="inline-flex items-center gap-1">
-                                <x-Form.editbutton :designation="$designation" />
-                                <x-Form.deletebutton :designation="$designation" />
+                                <x-Form.editbutton :arguments="[$designation->id, $designation->name, $designation->upper_level]" />
+                                <x-Form.deletebutton
+                                    :action="route('designations.destroy', $designation->id)"
+                                    confirmation-message="Are you sure you want to delete this designation?"
+                                />
                             </div>
                         </td>
                     </tr>
@@ -147,64 +150,6 @@
     </div>
 
     @include('Designation.partials.designation-modal')
-
-    <script>
-        function openAddModal() {
-            const form = document.getElementById('designationForm');
-            form.action = '{{ route('designations.store') }}';
-            document.getElementById('designationMethod').disabled = true
-            document.getElementById('designationName').value = '';
-            document.getElementById('designationUpperLevel').value = '';
-            document.getElementById('designationModalTitle').textContent = 'Add New Designation';
-            document.getElementById('designationSubmit').textContent = 'Add Designation';
-            const modal = document.getElementById('designationModal');
-            modal.classList.remove('hidden');
-            modal.setAttribute('aria-hidden', 'false');
-            document.getElementById('designationName').focus();
-        }
-
-        function closeAddModal() {
-            const modal = document.getElementById('designationModal');
-            modal.classList.add('hidden');
-            modal.setAttribute('aria-hidden', 'true');
-        }
-
-        function openEditModal(id, name, upperLevel) {
-            const form = document.getElementById('designationForm');
-            form.action = '/designations/' + id;
-            document.getElementById('designationMethod').disabled = false;
-            document.getElementById('designationName').value = name;
-            document.getElementById('designationUpperLevel').value = upperLevel ?? '';
-            document.getElementById('designationModalTitle').textContent = 'Edit Designation';
-            document.getElementById('designationSubmit').textContent = 'Update Designation';
-            const modal = document.getElementById('designationModal');
-            modal.classList.remove('hidden');
-            modal.setAttribute('aria-hidden', 'false');
-            document.getElementById('designationName').focus();
-        }
-
-        function filterDesignations() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('.desig-row');
-            let visibleCount = 0;
-
-            rows.forEach(row => {
-                const name = row.querySelector('.desig-name').textContent.toLowerCase();
-                const upper = row.querySelector('.desig-upper').textContent.toLowerCase();
-                const match = name.includes(query) || upper.includes(query);
-                row.style.display = match ? '' : 'none';
-                if (match) visibleCount++;
-            });
-
-            document.getElementById('noResults').classList.toggle('hidden', visibleCount !== 0 || rows.length === 0);
-        }
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                closeAddModal();
-            }
-        });
-    </script>
 
     <style>
         @keyframes fadeIn {

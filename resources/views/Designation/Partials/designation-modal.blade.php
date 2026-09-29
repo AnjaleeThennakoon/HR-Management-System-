@@ -13,7 +13,7 @@
         </div>
 
         {{-- Form --}}
-        <form id="designationForm" method="POST">
+        <form id="designationForm" action="{{ route('designations.store') }}" method="POST">
             @csrf
             <input type="hidden" name="_method" id="designationMethod" value="PUT" disabled>
 

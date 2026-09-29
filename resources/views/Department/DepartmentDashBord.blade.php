@@ -89,8 +89,11 @@
                         <td class="py-3.5 px-4 text-right">
                             <div class="inline-flex items-center gap-1">
 
-                                <x-Form.editbutton :dept="$dept" />
-                                <x-Form.deletebutton :dept="$dept" />
+                                <x-Form.editbutton :arguments="[$dept['id'], $dept['name']]" />
+                                <x-Form.deletebutton
+                                    :action="route('departments.destroy', $dept['id'])"
+                                    confirmation-message="Are you sure you want to delete this department?"
+                                />
 
 
                             </div>
@@ -122,54 +125,6 @@
     </div>
 
     @include('Department.partials.department-modal')
-
-    <script>
-        function openAddModal() {
-            const form = document.getElementById('departmentForm');
-            form.action = '{{ route('departments.store') }}';
-            document.getElementById('departmentMethod').disabled = true;
-            document.getElementById('departmentName').value = '';
-            document.getElementById('departmentModalTitle').textContent = 'Add New Department';
-            document.getElementById('departmentSubmit').textContent = 'Add Department';
-            document.getElementById('departmentModal').classList.remove('hidden');
-        }
-
-        function closeAddModal() {
-            document.getElementById('departmentModal').classList.add('hidden');
-        }
-
-        function openEditModal(id, name) {
-            const form = document.getElementById('departmentForm');
-            form.action = '/departments/' + id;
-            document.getElementById('departmentMethod').disabled = false;
-            document.getElementById('departmentName').value = name;
-            document.getElementById('departmentModalTitle').textContent = 'Edit Department';
-            document.getElementById('departmentSubmit').textContent = 'Update Department';
-            document.getElementById('departmentModal').classList.remove('hidden');
-        }
-
-        function filterDepartments() {
-            const query = document.getElementById('searchInput').value.toLowerCase();
-            const rows = document.querySelectorAll('.dept-row');
-            let visibleCount = 0;
-
-            rows.forEach(row => {
-                const name = row.querySelector('.dept-name').textContent.toLowerCase();
-                const match = name.includes(query);
-                row.style.display = match ? '' : 'none';
-                if (match) visibleCount++;
-            });
-
-            document.getElementById('noResults').classList.toggle('hidden', visibleCount !== 0 || rows.length === 0);
-        }
-
-        // Close modals on Escape key
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') {
-                closeAddModal();
-            }
-        });
-    </script>
 
     <style>
         @keyframes fadeIn {

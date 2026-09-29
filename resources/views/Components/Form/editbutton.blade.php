@@ -1,6 +1,6 @@
+@props(['arguments'])
 
-
-<button onclick="openEditModal({{ $dept['id'] }}, {{ Js::from($dept['name']) }})"
+<button type="button" onclick="openEditModal(...{{ Js::from($arguments) }})"
         class="inline-flex items-center gap-1 px-2.5 py-1.5 text-indigo-600 hover:bg-indigo-50 rounded-md text-xs font-semibold transition">
     <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none"
          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
