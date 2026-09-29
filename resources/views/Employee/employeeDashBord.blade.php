@@ -12,6 +12,7 @@
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Employees</h1>
                     <p class="text-sm text-gray-500 mt-0.5">Manage your organization's employees</p>
+
                 </div>
             </div>
 
@@ -132,7 +133,7 @@
     </div>
 
     @include('Components.partials.add-modal')
-{{--    @include('Components.partials.edit-modal')--}}
+    @include('Components.partials.edit-modal')
 
 
 </x-layout>

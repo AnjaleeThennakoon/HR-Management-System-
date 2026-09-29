@@ -18,6 +18,7 @@ test('employee list page loads successfully', function () {
     $response = $this->actingAs($this->user)->get('/employees');
 
     $response->assertOk()
+        ->assertSee('id="edit_employee_id"', false)
         ->assertViewHas('employees', function ($employees): bool {
             return $employees->count() === 10;
         });

@@ -1,10 +1,9 @@
-
 <div id="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-xl ring-1 ring-black/5 p-8 max-w-lg w-full" style="animation: fadeIn 0.15s ease-out;">
+    <div class="bg-white rounded-2xl shadow-xl ring-1 ring-black/5 p-8 max-w-lg w-full">
 
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-lg font-bold text-gray-900">Edit Employee</h2>
-            <button onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition">
+            <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 transition">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -35,9 +34,6 @@
                             <option value="{{ $department->id }}">{{ $department->name }}</option>
                         @endforeach
                     </select>
-                    @error('department_id')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
 
                 <div>
@@ -49,9 +45,6 @@
                             <option value="{{ $designation->id }}">{{ $designation->name }}</option>
                         @endforeach
                     </select>
-                    @error('designation_id')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
             </div>
 
@@ -65,9 +58,6 @@
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
                     </select>
-                    @error('gender')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                    @enderror
                 </div>
             </div>
 
