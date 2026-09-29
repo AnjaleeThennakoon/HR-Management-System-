@@ -61,12 +61,12 @@
                 <thead>
                 <tr class="bg-gray-50 text-left text-gray-500 text-xs uppercase tracking-wide">
                     <th class="py-3 px-4 font-semibold">#</th>
-                    <th class="py-3 px-4 font-semibold">Employee ID</th>
+                    <th class="py-3 px-4 font-semibold whitespace-nowrap">Employee ID</th>
                     <th class="py-3 px-4 font-semibold">Name</th>
                     <th class="py-3 px-4 font-semibold">Department</th>
                     <th class="py-3 px-4 font-semibold">Designation</th>
-                    <th class="py-3 px-4 font-semibold">phone</th>
-                    <th class="py-3 px-4 font-semibold">Date of Birth</th>
+                    <th class="py-3 px-4 font-semibold whitespace-nowrap">Phone</th>
+                    <th class="py-3 px-4 font-semibold whitespace-nowrap">Date of Birth</th>
                     <th class="py-3 px-4 font-semibold">NIC</th>
                     <th class="py-3 px-4 font-semibold">Gender</th>
                     <th class="py-3 px-4 font-semibold text-right">Actions</th>

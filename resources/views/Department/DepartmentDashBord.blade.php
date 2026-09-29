@@ -14,7 +14,6 @@
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Departments</h1>
                     <p class="text-sm text-gray-500 mt-0.5">Manage your organization's departments</p>
-                    <p class="mt-2 text-xs font-medium text-slate-400">{{ $designations->total() }} designations</p>
 
                 </div>
             </div>
