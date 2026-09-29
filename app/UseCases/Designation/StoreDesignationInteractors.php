@@ -17,18 +17,24 @@ class StoreDesignationInteractors
 
     public function getDesignationWithNewLevel(array $designation): array
     {
-        if (! empty($designation['upper_level'])) {
-            $upperLevelDesignation = Designation::findOrFail($designation['upper_level']);
+        if (!empty($designation['upper_level'])) {
+            $upperLevelDesignation = Designation::findOrFail(
+                $designation['upper_level']
+            );
+
             $newLevel = $upperLevelDesignation->level + 1;
 
-            Designation::where('level', '>=', $newLevel)
-                ->where(function ($query) use ($upperLevelDesignation) {
-                    $query->whereNull('upper_level')
-                        ->orWhere('upper_level', '!=', $upperLevelDesignation->id);
-                })
-                ->increment('level');
+            $hasSibling = Designation::where(
+                'upper_level',
+                $upperLevelDesignation->id
+            )->exists();
 
+            if (!$hasSibling) {
+                Designation::where('level', '>=', $newLevel)
+                    ->increment('level');
+            }
             $designation['level'] = $newLevel;
+
         } else {
             $designation['level'] = (Designation::max('level') ?? 0) + 1;
         }

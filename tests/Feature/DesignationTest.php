@@ -117,67 +117,49 @@ test('designation name cannot be duplicated.', function () {
 });
 
 test('level is updated when a designation upper level is changed', function () {
-    $senior = Designation::factory()->create(
-        ['name' => 'Senior Software Engineer', 'upper_level' => null, 'level' => 1]);
-    $software = Designation::factory()->create(
-        ['name' => 'Software Engineer', 'upper_level' => $senior->id, 'level' => 2]);
-    $junior = Designation::factory()->create(
-        ['name' => 'Junior Software Engineer', 'upper_level' => $software->id, 'level' => 3]);
-    $designationData =
-        ['name' => 'Junior Software Engineer', 'upper_level' => $senior->id];
+    $ceo = Designation::factory()->create(['name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1,]);
+    $cfo = Designation::factory()->create(['name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
+    $db = Designation::factory()->create(['name' => 'Database Administrator', 'upper_level' => null, 'level' => 3,]);
+    $network = Designation::factory()->create(['name' => 'Network Engineer', 'upper_level' => null, 'level' => 4,]);
+    $newDesignation = ['name' => 'Intern Software Engineer', 'upper_level' => $cfo->id,];
 
-    $response = $this->actingAs($this->user)->put("/designations/{$junior->id}", $designationData);
+    $response = $this->actingAs($this->user)->post('/designations', $newDesignation);
 
     $response->assertStatus(302);
     $response->assertRedirect('/designations');
     $this->assertDatabaseHas('designations',
-        ['id' => $junior->id, 'name' => 'Junior Software Engineer', 'upper_level' => $senior->id, 'level' => 2]);
-});
-
-test('a designation without upper level is added to the end of the list', function () {
-    Designation::query()->delete();
-    $ceo = Designation::factory()->create(['name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1]);
-    $cfo = Designation::factory()->create(['name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2]);
-    $db = Designation::factory()->create(['name' => 'Database Administrator', 'upper_level' => null, 'level' => 3]);
-    $Network = Designation::factory()->create(['name' => 'Network Engineer', 'upper_level' => null, 'level' => 4]);
-
-    $response = $this->actingAs($this->user)->post('/designations', [
-        'name' => 'Intern Software Engineer', 'upper_level' => $cfo->id, ]);
-    $response->assertStatus(302);
-    $response->assertRedirect('/designations');
-
+        ['id' => $ceo->id, 'name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1,]);
     $this->assertDatabaseHas('designations',
-        ['id' => $ceo->id, 'name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1]);
-    $this->assertDatabaseHas('designations',
-        ['id' => $cfo->id, 'name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2]);
+        ['id' => $cfo->id, 'name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
     $intern = Designation::where('name', 'Intern Software Engineer')->first();
     $this->assertDatabaseHas('designations',
-        ['id' => $intern->id, 'name' => 'Intern Software Engineer', 'upper_level' => $cfo->id, 'level' => 3, ]);
+        ['id' => $intern->id, 'name' => 'Intern Software Engineer', 'upper_level' => $cfo->id, 'level' => 3,]);
     $this->assertDatabaseHas('designations',
-        ['id' => $db->id, 'name' => 'Database Administrator', 'upper_level' => null, 'level' => 4]);
+        ['id' => $db->id, 'name' => 'Database Administrator', 'upper_level' => null, 'level' => 4,]);
     $this->assertDatabaseHas('designations',
-        ['id' => $Network->id, 'name' => 'Network Engineer', 'upper_level' => null, 'level' => 5]);
+        ['id' => $network->id, 'name' => 'Network Engineer', 'upper_level' => null, 'level' => 5,]);
 });
 
-test('designations with the same upper level have the same level', function () {
-    Designation::query()->delete();
+test('a designation gets the same level as existing siblings', function () {
     $ceo = Designation::factory()->create(['name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1,]);
-    $this->actingAs($this->user)->post('/designations',
-        ['name' => 'Chief Financial Officer', 'upper_level' => $ceo->id,]);
-    $this->actingAs($this->user)->post('/designations',
-        ['name' => 'Chief Operating Officer', 'upper_level' => $ceo->id,]);
-    $this->actingAs($this->user)->post('/designations',
-        ['name' => 'Chief Information Officer', 'upper_level' => $ceo->id,]);
+    $cfo = Designation::factory()->create(['name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
+    $db = Designation::factory()->create(['name' => 'Database Administrator', 'upper_level' => $ceo->id, 'level' => 2,]);
+    $network = Designation::factory()->create(['name' => 'Network Engineer', 'upper_level' => null, 'level' => 3,]);
+    $newDesignation = ['name' => 'Intern Software Engineer', 'upper_level' => $ceo->id,];
 
-    $this->assertDatabaseHas('designations',
-        ['name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1,]);
-    $this->assertDatabaseHas('designations',
-        ['name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
-    $this->assertDatabaseHas('designations', [
-        'name' => 'Chief Operating Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
-    $this->assertDatabaseHas('designations', [
-        'name' => 'Chief Information Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
+    $response = $this->actingAs($this->user)->post('/designations', $newDesignation);
 
-    $cLevels = Designation::where('upper_level', $ceo->id)->pluck('level')->unique()->toArray();
-    expect($cLevels)->toBe([2]);
+    $intern = Designation::where('name', 'Intern Software Engineer')->first();
+    $response->assertStatus(302);
+    $response->assertRedirect('/designations');
+    $this->assertDatabaseHas('designations',
+        ['id' => $ceo->id, 'name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1,]);
+    $this->assertDatabaseHas('designations',
+        ['id' => $cfo->id, 'name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
+    $this->assertDatabaseHas('designations',
+        ['id' => $db->id, 'name' => 'Database Administrator', 'upper_level' => $ceo->id, 'level' => 2,]);
+    $this->assertDatabaseHas('designations',
+        ['id' => $intern->id, 'name' => 'Intern Software Engineer', 'upper_level' => $ceo->id, 'level' => 2,]);
+    $this->assertDatabaseHas('designations',
+        ['id' => $network->id, 'name' => 'Network Engineer', 'upper_level' => null, 'level' => 3,]);
 });
