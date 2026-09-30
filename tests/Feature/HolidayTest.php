@@ -24,13 +24,13 @@ test('holiday list page loads successfully',function(){
 });
 
 test('a holiday can be created', function () {
-    $holiday = Holiday::factory()->make([
+    $holidaydata = [
         'name' => 'New Year',
         'date' => '2024-01-01',
         'type' => 'public',
-    ]);
+    ];
 
-    $response = $this->actingAs($this->user)->post('/holidays', $holiday->toArray());
+    $response = $this->actingAs($this->user)->post('/holidays', $holidaydata);
 
     $response->assertStatus(302);
     $response->assertRedirect('/holidays');
@@ -69,7 +69,7 @@ test('a holiday can  be updated',function(){
 
 test('a holiday can  be deleted',function(){
     $holiday = Holiday::factory()->create([
-        'name' => 'Old Name',
+        'name' => 'New Year',
         'date' => '2024-01-01',
         'type' => 'public',
     ]);
@@ -83,19 +83,28 @@ test('a holiday can  be deleted',function(){
     ]);
 });
 
-test('a holiday type must be publc or special',function(){
-
-    $holiday = Holiday::factory()->make([
+test('a holiday type must be public or special',function(){
+    Holiday::factory()->create([
+        'name' => 'Public Holiday',
+        'date' => '2024-01-01',
+        'type' => 'public',
+    ]);
+    Holiday::factory()->create([
+        'name' => 'Special Holiday',
+        'date' => '2024-01-01',
+        'type' => 'special',
+    ]);
+    $holiday3 = Holiday::factory()->make([
         'name' => 'Invalid Type Holiday',
         'date' => '2024-01-01',
         'type' => 'invalid_type',
     ]);
 
-    $response = $this->actingAs($this->user)->post('/holidays', $holiday->toArray());
+    $response = $this->actingAs($this->user)->post('/holidays', $holiday3->toArray());
 
     $response->assertStatus(302);
     $response->assertSessionHasErrors('type');
-    $this->assertDatabaseCount('holidays', 0);
+    $this->assertDatabaseCount('holidays', 2);
 });
 
 test('a holiday name need to be unique',function(){

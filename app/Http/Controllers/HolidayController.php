@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-
-
 use App\Models\Holiday;
 use App\UseCases\Holiday\DeleteHolidayInteractors;
 use App\UseCases\Holiday\ListHolidayInteractors;
@@ -22,37 +20,32 @@ class HolidayController extends Controller
             request('search'),
             request('per_page')
         );
-
         return view('Holiday.HolidayDashBord', compact('holidays'));
-
-
     }
-    public function store(
-        HolidayRequest $holidayRequest, StoreHolidayInteractors $storeHolidayInteractor):RedirectResponse{
+
+    public function store(HolidayRequest $holidayRequest, StoreHolidayInteractors $storeHolidayInteractor):RedirectResponse
+    {
         $storeHolidayInteractor->execute($holidayRequest);
 
         return redirect()->route('holidays.index')
             ->with('success', 'Holiday has been successfully created.');
-
     }
 
-    public function update(HolidayRequest $holidayRequest, UpdateHolidayInteractors $updateHolidayInteractors, string $id
-    ): RedirectResponse {
+    public function update(HolidayRequest $holidayRequest, UpdateHolidayInteractors $updateHolidayInteractors, string $id): RedirectResponse
+    {
         $updateHolidayInteractors->execute(
             $id,
             $holidayRequest->validated()
         );
-
         return redirect()
             ->route('holidays.index')
             ->with('success', 'Holiday has been successfully updated.');
     }
+
     public function destroy(string $id, DeleteHolidayInteractors $deleteHolidayInteractors): RedirectResponse
     {
         $deleteHolidayInteractors->execute($id);
-
         return redirect()->route('holidays.index')
             ->with('success', 'Holiday has been successfully deleted.');
     }
-
 }
