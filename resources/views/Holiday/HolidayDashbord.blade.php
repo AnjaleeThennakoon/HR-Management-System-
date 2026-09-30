@@ -177,8 +177,24 @@
                 closeAddModal();
             }
         });
-    </script>
 
+        // Auto-open modal if there are validation errors
+        @if($errors->any())
+        document.addEventListener('DOMContentLoaded', function () {
+            const modal = document.getElementById('holidayModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                // If it was an edit attempt, restore edit mode
+                @if(old('_method') === 'PUT' && old('_holiday_id'))
+                document.getElementById('holidayForm').action = '/holidays/' + {{ old('_holiday_id') }};
+                document.getElementById('holidayMethod').disabled = false;
+                document.getElementById('holidayModalTitle').textContent = 'Edit Holiday';
+                document.getElementById('holidaySubmit').textContent = 'Update Holiday';
+                @endif
+            }
+        });
+        @endif
+    </script>
     <style>
         @keyframes fadeIn {
             from {
