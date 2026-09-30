@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Holiday;
+use App\UseCases\Holiday\DeleteHolidayInteractors;
 use App\UseCases\Holiday\ListHolidayInteractors;
 use App\UseCases\Holiday\Request\HolidayRequest;
 use App\UseCases\Holiday\StoreHolidayInteractors;
@@ -46,10 +47,12 @@ class HolidayController extends Controller
             ->route('holidays.index')
             ->with('success', 'Holiday has been successfully updated.');
     }
-    public function destroy(string $id)
+    public function destroy(string $id, DeleteHolidayInteractors $deleteHolidayInteractors): RedirectResponse
     {
+        $deleteHolidayInteractors->execute($id);
 
+        return redirect()->route('holidays.index')
+            ->with('success', 'Holiday has been successfully deleted.');
     }
-
 
 }

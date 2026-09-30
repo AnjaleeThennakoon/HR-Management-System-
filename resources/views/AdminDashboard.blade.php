@@ -78,6 +78,23 @@
                 </div>
             </a>
 
+            <a href="/holidays"
+               class="group flex items-start gap-4 p-6 border border-gray-200 rounded-xl hover:border-indigo-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-13.5-6h.008v.008h-.008V12.75zm0 3h.008v.008h-.008V15.75zm3-3h.008v.008h-.008V12.75zm0 3h.008v.008h-.008V15.75zm3-3h.008v.008h-.008V12.75zm0 3h.008v.008h-.008V15.75z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-base font-semibold text-gray-900 mb-1">
+                        Holidays
+                    </h2>
+                    <p class="text-sm text-gray-500">
+                        Manage company holidays
+                    </p>
+                </div>
+            </a>
+
             <a href="#"
                class="group flex items-start gap-4 p-6 border border-gray-200 rounded-xl hover:border-indigo-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                 <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200">

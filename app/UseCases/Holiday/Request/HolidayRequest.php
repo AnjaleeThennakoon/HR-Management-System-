@@ -14,8 +14,9 @@ class HolidayRequest extends FormRequest
 
     public function rules(): array
     {
+        $id = $this->route('holiday')?? $this->route('id');
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255','unique:holidays,name,'.$id],
             'date' => ['required', 'date'],
             'type' => ['required', 'string', Rule::in(['public', 'special'])],
         ];
