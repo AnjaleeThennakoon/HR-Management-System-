@@ -21,7 +21,7 @@ class EmployeeController extends Controller
             request('search'),
             request('per_page'));
 
-        return view('Employee.employeeDashBord', [
+        return view('Employee.EmployeeDashbord', [
             'employees' => $employees,
             'departments' => Department::all(),
             'designations' => Designation::all(),
