@@ -57,7 +57,10 @@ test('an employee can be created', function () {
 });
 
 test('an employee can be created without a designation', function () {
-    $employee = Employee::factory()->make(['designation_id' => null]);
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP002',
+        'designation_id' => null,
+    ]);
 
     $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
 
@@ -69,7 +72,10 @@ test('an employee can be created without a designation', function () {
 });
 
 test('employee form errors are displayed on the employee page', function () {
-    $employee = Employee::factory()->make(['first_name' => '']);
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP001',
+        'first_name' => '',
+    ]);
 
     $response = $this->from('/employees')
         ->followingRedirects()
@@ -81,7 +87,10 @@ test('employee form errors are displayed on the employee page', function () {
 });
 
 test('an invalid designation is rejected and its error is displayed', function () {
-    $employee = Employee::factory()->make(['designation_id' => 999999]);
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP003',
+        'designation_id' => 999999,
+    ]);
 
     $response = $this->from('/employees')
         ->followingRedirects()
@@ -134,7 +143,10 @@ test('an employee can be deleted', function () {
 });
 
 test('employee nic must be 12 digits or 10 digits followed by v', function () {
-    $employee = Employee::factory()->make(['nic' => '1234561']);
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP004',
+        'nic' => '1234561',
+    ]);
 
     $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
 
@@ -142,7 +154,10 @@ test('employee nic must be 12 digits or 10 digits followed by v', function () {
 });
 
 test('employee nic accepts 10 digits followed by v', function () {
-    $employee = Employee::factory()->make(['nic' => '1234567890v']);
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP005',
+        'nic' => '1234567890v',
+    ]);
 
     $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
 
@@ -151,7 +166,10 @@ test('employee nic accepts 10 digits followed by v', function () {
 });
 
 test('employee phone must contain 10 digits', function () {
-    $employee = Employee::factory()->make(['phone' => '1234561']);
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP006',
+        'phone' => '1234561',
+    ]);
 
     $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
 
@@ -160,8 +178,14 @@ test('employee phone must contain 10 digits', function () {
 });
 
 test('employee nic must be unique', function () {
-    $employee1 = Employee::factory()->create(['nic' => '123456789012']);
-    $employee2 = Employee::factory()->make(['nic' => $employee1->nic]);
+    $employee1 = Employee::factory()->create([
+        'employee_id' => 'EMP007',
+        'nic' => '123456789012',
+    ]);
+    $employee2 = Employee::factory()->make([
+        'employee_id' => 'EMP008',
+        'nic' => $employee1->nic,
+    ]);
 
     $response = $this->actingAs($this->user)->post('/employees', $employee2->toArray());
 
@@ -182,7 +206,10 @@ test('employee id  must be unique', function () {
 });
 
 test('employee date of birth must be valid', function () {
-    $employee = Employee::factory()->make(['date_of_birth' => '2027-08-08']);
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP009',
+        'date_of_birth' => '2027-08-08',
+    ]);
 
     $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
 
@@ -190,7 +217,10 @@ test('employee date of birth must be valid', function () {
 });
 
 test('employee gender must be valid', function () {
-    $employee = Employee::factory()->make(['gender' => 'Other']);
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP010',
+        'gender' => 'Other',
+    ]);
 
     $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
 
