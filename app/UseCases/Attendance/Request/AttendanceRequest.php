@@ -14,7 +14,7 @@ class AttendanceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'employee_id' => ['required', 'string', 'max:50', 'exists:employees,id'],
+            'employee_id' => ['required', 'integer', 'exists:employees,id'],
             'date' => ['required', 'date'],
             'in_time' => ['required', 'date_format:H:i'],
             'out_time' => ['nullable', 'date_format:H:i'],
