@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
@@ -14,13 +15,18 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', function () {return view('Auth.register');})->name('register');});
+    Route::get('/register', function () {
+        return view('Auth.register');
+    })->name('register');
+});
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function () {return view('AdminDashboard');})->name('dashboard');
+    Route::get('/dashboard', function () {
+        return view('AdminDashboard');
+    })->name('dashboard');
 
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
@@ -41,4 +47,9 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/holidays', [HolidayController::class, 'store'])->name('holidays.store');
     Route::put('/holidays/{id}', [HolidayController::class, 'update'])->name('holidays.update');
     Route::delete('/holidays/{id}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
+
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+    Route::put('/attendance/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
+    Route::delete('/attendance/{id}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
 });

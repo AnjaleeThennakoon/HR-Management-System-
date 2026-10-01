@@ -4,7 +4,7 @@ namespace App\UseCases\Department;
 
 use App\Models\Department;
 
-class CreateDepartmentInteractor
+class CreateDepartmentInteractors
 {
     public function execute(array $data): Department
     {

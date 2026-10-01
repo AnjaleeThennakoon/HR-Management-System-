@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\UseCases\Department\CreateDepartmentInteractor;
+use App\UseCases\Department\CreateDepartmentInteractors;
 use App\UseCases\Department\DeleteDepartmentInteractors;
 use App\UseCases\Department\ListDepartmentInteractors;
 use App\UseCases\Department\Request\DepartmentRequest;
@@ -22,7 +22,7 @@ class DepartmentController extends Controller
         return view('Department.DepartmentDashBord', compact('departments'));
     }
 
-    public function store(DepartmentRequest $departmentRequest, CreateDepartmentInteractor $createDepartmentInteractor): RedirectResponse
+    public function store(DepartmentRequest $departmentRequest, CreateDepartmentInteractors $createDepartmentInteractor): RedirectResponse
     {
         $createDepartmentInteractor->execute($departmentRequest->validated());
 
