@@ -28,8 +28,7 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function store(
-        EmployeeRequest $employeeRequest, StoreEmployeeInteractors $storeEmployeeInteractors): RedirectResponse
+    public function store(EmployeeRequest $employeeRequest, StoreEmployeeInteractors $storeEmployeeInteractors): RedirectResponse
     {
         $storeEmployeeInteractors->execute($employeeRequest->validated());
 
@@ -37,8 +36,8 @@ class EmployeeController extends Controller
             ->with('success', 'Employee has been successfully created.');
     }
 
-    public function update(EmployeeRequest $employeeRequest, UpdateEmployeeInteractors $updateEmployeeInteractors, string $id
-    ): RedirectResponse {
+    public function update(EmployeeRequest $employeeRequest, UpdateEmployeeInteractors $updateEmployeeInteractors, string $id): RedirectResponse
+    {
 
         $employee = Employee::findOrFail($id);
 

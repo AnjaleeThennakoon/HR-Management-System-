@@ -38,8 +38,8 @@ test('an employee can be created', function () {
     ]);
 
     $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
-    $response->assertStatus(302);
 
+    $response->assertStatus(302);
     $response->assertRedirect('/employees');
     $this->assertDatabaseCount('employees', 1);
     $this->assertDatabaseHas('employees', [
