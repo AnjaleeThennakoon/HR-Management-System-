@@ -6,12 +6,13 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\UseCases\Attendance\DeleteAttendanceInteractors;
 use App\UseCases\Attendance\ListAttendanceInteractors;
+use App\UseCases\Attendance\Request\AttendanceCsvRequest;
 use App\UseCases\Attendance\Request\AttendanceRequest;
 use App\UseCases\Attendance\StoreAttendanceInteractors;
 use App\UseCases\Attendance\UpdateAttendanceInteractors;
 use App\UseCases\Attendance\UploadAttendanceInteractors;
 use Illuminate\Http\RedirectResponse;
-use App\UseCases\Attendance\Request\AttendanceCsvRequest;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
@@ -31,8 +32,17 @@ class AttendanceController extends Controller
 
     public function store(AttendanceRequest $attendanceRequest, StoreAttendanceInteractors $storeAttendanceInteractors): RedirectResponse
     {
-        return redirect()->route('attendance.index')
-            ->with('success', 'Attendance has been successfully created.');
+        try {
+            $storeAttendanceInteractors->execute($attendanceRequest->validated());
+
+            return redirect()->route('attendance.index')
+                ->with('success', 'Attendance has been successfully created.');
+
+        } catch (ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput();
+        }
     }
 
     public function update(string $id, AttendanceRequest $attendanceRequest, UpdateAttendanceInteractors $updateAttendanceInteractors): RedirectResponse
@@ -54,7 +64,9 @@ class AttendanceController extends Controller
 
     public function upload(AttendanceCsvRequest $attendanceCsvRequest, UploadAttendanceInteractors $uploadAttendanceInteractors): RedirectResponse
     {
-        $uploadAttendanceInteractors->execute($attendanceCsvRequest->file('csv_file'));
+        $uploadAttendanceInteractors->execute(
+            $attendanceCsvRequest->file('csv_file')
+        );
 
         return redirect()->route('attendance.index')
             ->with('success', 'Attendance CSV imported successfully.');
