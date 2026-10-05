@@ -53,9 +53,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
     Route::put('/attendance/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
     Route::delete('/attendance/{id}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
+    Route::post('/attendance/upload', [AttendanceController::class, 'upload'])->name('attendance.upload');
 
     Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
-    Route::post('leaves', [LeaveController::class, 'store'])->name('leaves.store');
+    Route::post('leaves/upload', [LeaveController::class, 'store'])->name('leaves.store');
     Route::put('leaves/{id}', [LeaveController::class, 'update'])->name('leaves.update');
     Route::delete('leaves/{id}', [LeaveController::class, 'destroy'])->name('leaves.destroy');
 });

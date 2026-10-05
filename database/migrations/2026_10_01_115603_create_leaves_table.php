@@ -23,6 +23,7 @@ return new class extends Migration
             $table->date('end_date');
             $table->enum('leave_type', ['Annual', 'Medical','casual']);
             $table->text('reason');
+            $table->integer('level')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
         });
     }
