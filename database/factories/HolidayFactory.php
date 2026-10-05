@@ -2,12 +2,15 @@
 
 namespace Database\Factories;
 
-use App\Models\Leave;
+use App\Models\Holiday;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Holiday>
+ */
 class HolidayFactory extends Factory
 {
-    protected $model = Leave::class;
+    protected $model = Holiday::class;
 
     public function definition(): array
     {

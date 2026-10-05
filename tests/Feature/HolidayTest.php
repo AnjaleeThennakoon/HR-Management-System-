@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Leave;
+use App\Models\Holiday;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -11,7 +11,7 @@ beforeEach(function () {
 });
 
 test('holiday list page loads successfully', function () {
-    Leave::factory()->count(10)->create();
+    Holiday::factory()->count(10)->create();
 
     $response = $this->actingAs($this->user)->get('/holidays');
 
@@ -42,7 +42,7 @@ test('a holiday can be created', function () {
 });
 
 test('a holiday can  be updated', function () {
-    $holiday = Leave::factory()->create([
+    $holiday = Holiday::factory()->create([
         'name' => 'Old Name',
         'date' => '2024-01-01',
         'type' => 'public',
@@ -67,7 +67,7 @@ test('a holiday can  be updated', function () {
 });
 
 test('a holiday can  be deleted', function () {
-    $holiday = Leave::factory()->create([
+    $holiday = Holiday::factory()->create([
         'name' => 'New Year',
         'date' => '2024-01-01',
         'type' => 'public',
@@ -83,17 +83,17 @@ test('a holiday can  be deleted', function () {
 });
 
 test('a holiday type must be public or special', function () {
-    Leave::factory()->create([
+    Holiday::factory()->create([
         'name' => 'Public Holiday',
         'date' => '2024-01-01',
         'type' => 'public',
     ]);
-    Leave::factory()->create([
+    Holiday::factory()->create([
         'name' => 'Special Holiday',
         'date' => '2024-01-01',
         'type' => 'special',
     ]);
-    $holiday3 = Leave::factory()->make([
+    $holiday3 = Holiday::factory()->make([
         'name' => 'Invalid Type Holiday',
         'date' => '2024-01-01',
         'type' => 'invalid_type',
@@ -107,12 +107,12 @@ test('a holiday type must be public or special', function () {
 });
 
 test('a holiday name need to be unique', function () {
-    $holiday = Leave::factory()->create([
+    $holiday = Holiday::factory()->create([
         'name' => 'New Year Holiday',
         'date' => '2024-01-01',
         'type' => 'public',
     ]);
-    $newHoliday = Leave::factory()->make([
+    $newHoliday = Holiday::factory()->make([
         'name' => 'New Year Holiday',
         'date' => '2024-01-01',
         'type' => 'public',

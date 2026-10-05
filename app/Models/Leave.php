@@ -5,29 +5,41 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\HigherOrderCollectionProxy;
 
 class Leave extends Model
 {
     use HasFactory;
 
+    /**
+     * @var HigherOrderCollectionProxy|mixed
+     */
+    public mixed $employee_last_name;
+
+    /**
+     * @var HigherOrderCollectionProxy|mixed
+     */
+    public mixed $employee_first_name;
+
     protected $fillable = [
-        'name',
         'date',
         'reason',
         'type',
         'start_date',
         'end_date',
         'status',
+        'leave_type',
         'employee_id',
         'department_id',
     ];
-    public function employee():BelongsTo
+
+    public function employee(): BelongsTo
     {
-        return $this->belongTo(Employee::class);
+        return $this->belongsTo(Employee::class);
     }
 
-    public function department():BelongsTo
+    public function department(): BelongsTo
     {
-        return $this->belongTo(Department::class);
+        return $this->belongsTo(Department::class);
     }
 }
