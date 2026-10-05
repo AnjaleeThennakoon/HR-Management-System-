@@ -1,24 +1,24 @@
 <?php
 
-namespace App\UseCases\Holiday;;
+namespace App\UseCases\Holiday;
 
-use App\Models\Holiday;
+use App\Models\Leave;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
 class ListHolidayInteractors
 {
-    public function execute(?string $search = null, ?int $perPage = 10): LengthAwarePaginator |Collection
-
+    public function execute(?string $search = null, ?int $perPage = 10): LengthAwarePaginator|Collection
     {
-        $query = Holiday::query();
+        $query = Leave::query();
 
-        if ($search){
+        if ($search) {
             $query->where(function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%")
                     ->orWhere('date', 'like', "%{$search}%");
             });
         }
+
         return $query->get();
     }
 }

@@ -36,9 +36,8 @@ class EmployeeController extends Controller
             ->with('success', 'Employee has been successfully created.');
     }
 
-    public function update(EmployeeRequest $employeeRequest, UpdateEmployeeInteractors $updateEmployeeInteractors, string $id): RedirectResponse
+    public function update(string $id, EmployeeRequest $employeeRequest, UpdateEmployeeInteractors $updateEmployeeInteractors): RedirectResponse
     {
-
         $employee = Employee::findOrFail($id);
 
         $updateEmployeeInteractors->execute($employeeRequest, $employee);

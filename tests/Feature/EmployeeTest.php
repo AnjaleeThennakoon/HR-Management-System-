@@ -25,7 +25,6 @@ test('employee list page loads successfully', function () {
 });
 
 test('an employee can be created', function () {
-
     $employee = Employee::factory()->make([
         'employee_id' => 'EMP001',
         'first_name' => 'John',

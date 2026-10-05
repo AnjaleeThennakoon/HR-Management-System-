@@ -11,6 +11,8 @@ class Attendance extends Model
     use HasFactory;
 
     protected $fillable = [
+        'employee_frist_name',
+        'employee_last_name',
         'employee_id',
         'date',
         'in_time',

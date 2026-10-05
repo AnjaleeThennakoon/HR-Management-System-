@@ -15,10 +15,11 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
-            $table->date('date')->nullable();
-            $table->time('in_time')->nullable();
+            $table->date('date');
+            $table->time('in_time');
             $table->time('out_time')->nullable();
 
+            $table->unique(['employee_id', 'date'], 'unique_employee_date');
         });
     }
 

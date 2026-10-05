@@ -1,24 +1,23 @@
 <?php
 
-
+use App\Models\Leave;
 use App\Models\User;
-use App\Models\Holiday;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-beforeEach(function (){
+beforeEach(function () {
     $this->user = User::factory()->create();
 });
 
-test('holiday list page loads successfully',function(){
-    Holiday::factory()->count(10)->create();
+test('holiday list page loads successfully', function () {
+    Leave::factory()->count(10)->create();
 
     $response = $this->actingAs($this->user)->get('/holidays');
 
     $response->assertStatus(200)
         ->assertsee('name="_method" id="holidayMethod" value="PUT" disabled', false)
-        ->assertViewHas('holidays' , function($holidays) {
+        ->assertViewHas('holidays', function ($holidays) {
             return count($holidays) == 10;
         });
 });
@@ -42,8 +41,8 @@ test('a holiday can be created', function () {
     ]);
 });
 
-test('a holiday can  be updated',function(){
-    $holiday = Holiday::factory()->create([
+test('a holiday can  be updated', function () {
+    $holiday = Leave::factory()->create([
         'name' => 'Old Name',
         'date' => '2024-01-01',
         'type' => 'public',
@@ -67,8 +66,8 @@ test('a holiday can  be updated',function(){
 
 });
 
-test('a holiday can  be deleted',function(){
-    $holiday = Holiday::factory()->create([
+test('a holiday can  be deleted', function () {
+    $holiday = Leave::factory()->create([
         'name' => 'New Year',
         'date' => '2024-01-01',
         'type' => 'public',
@@ -83,18 +82,18 @@ test('a holiday can  be deleted',function(){
     ]);
 });
 
-test('a holiday type must be public or special',function(){
-    Holiday::factory()->create([
+test('a holiday type must be public or special', function () {
+    Leave::factory()->create([
         'name' => 'Public Holiday',
         'date' => '2024-01-01',
         'type' => 'public',
     ]);
-    Holiday::factory()->create([
+    Leave::factory()->create([
         'name' => 'Special Holiday',
         'date' => '2024-01-01',
         'type' => 'special',
     ]);
-    $holiday3 = Holiday::factory()->make([
+    $holiday3 = Leave::factory()->make([
         'name' => 'Invalid Type Holiday',
         'date' => '2024-01-01',
         'type' => 'invalid_type',
@@ -107,13 +106,13 @@ test('a holiday type must be public or special',function(){
     $this->assertDatabaseCount('holidays', 2);
 });
 
-test('a holiday name need to be unique',function(){
-    $holiday = Holiday::factory()->create([
+test('a holiday name need to be unique', function () {
+    $holiday = Leave::factory()->create([
         'name' => 'New Year Holiday',
         'date' => '2024-01-01',
         'type' => 'public',
     ]);
-    $newHoliday = Holiday::factory()->make([
+    $newHoliday = Leave::factory()->make([
         'name' => 'New Year Holiday',
         'date' => '2024-01-01',
         'type' => 'public',
@@ -125,4 +124,3 @@ test('a holiday name need to be unique',function(){
     $response->assertSessionHasErrors('name');
     $this->assertDatabaseCount('holidays', 1);
 });
-

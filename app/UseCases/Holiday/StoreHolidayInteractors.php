@@ -1,6 +1,8 @@
 <?php
+
 namespace App\UseCases\Holiday;
-use App\Models\Holiday;
+
+use App\Models\Leave;
 use App\UseCases\Holiday\Request\HolidayRequest;
 
 class StoreHolidayInteractors
@@ -9,6 +11,6 @@ class StoreHolidayInteractors
     {
         $holiday = $holidayRequest->validated();
 
-        return Holiday::create($holiday);
+        return Leave::create($holiday);
     }
 }

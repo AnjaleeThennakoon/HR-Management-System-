@@ -2,13 +2,13 @@
 
 namespace App\UseCases\Holiday;
 
-use App\Models\Holiday;
+use App\Models\Leave;
 
 class DeleteHolidayInteractors
 {
     public function execute(string $id): bool
     {
-        $holiday = Holiday::findOrFail($id);
+        $holiday = Leave::findOrFail($id);
 
         return $holiday->delete();
     }

@@ -26,8 +26,6 @@ class DesignationRequest extends FormRequest
                 'nullable',
                 'integer',
             ],
-
-
         ];
     }
 }

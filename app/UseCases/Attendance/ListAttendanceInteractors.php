@@ -12,18 +12,18 @@ class ListAttendanceInteractors
         ?string $search = null,
         ?int $perPage = null
     ): LengthAwarePaginator|Collection {
+        $query = Attendance::with('employee'); // eager load to avoid N+1
 
-        $query = Attendance::query();
         if ($search) {
             $query->where(function ($query) use ($search) {
-                $query->where('date', 'like', '%'.$search.'%');
+                $query->where('date', 'like', '%'.$search.'%')->orWhereHas('employee', function ($q) use ($search) {
+                    $q->where('first_name', 'like', '%'.$search.'%')->orWhere('last_name', 'like', '%'.$search.'%');
+                });
             });
         }
-        if ($perPage) {
-            return $query->paginate($perPage);
-        } else {
-            return $query->get();
-        }
 
+        return $perPage
+            ? $query->paginate($perPage)
+            : $query->get();
     }
 }
