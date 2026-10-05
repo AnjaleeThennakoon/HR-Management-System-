@@ -2,13 +2,13 @@
 
 namespace App\UseCases\Holiday;
 
-use App\Models\Leave;
+use App\Models\Holiday;
 
 class UpdateLeaveInteractors
 {
-    public function execute(string $id, array $holidayData): Leave
+    public function execute(string $id, array $holidayData): Holiday
     {
-        $holiday = Leave::findOrFail($id);
+        $holiday = Holiday::findOrFail($id);
 
         $holiday->update($holidayData);
 
