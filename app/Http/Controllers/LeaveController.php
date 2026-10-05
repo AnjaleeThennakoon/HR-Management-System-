@@ -34,9 +34,11 @@ class LeaveController extends Controller
             ->with('success', 'Leave has been successfully created.');
     }
 
-    public function update(string $id, LeaveRequest $request, UpdateLeaveInteractors $updateLeaveInteractors): RedirectResponse
+    public function update(string $id, LeaveRequest $leaveRequest, UpdateLeaveInteractors $updateLeaveInteractors): RedirectResponse
     {
-        $updateLeaveInteractors->execute($id, $request->validated());
+        $leave = Leave::findOrFail($id);
+
+        $updateLeaveInteractors->execute($leaveRequest, $leave);
 
         return redirect()->route('leaves.index')
             ->with('success', 'Leave has been successfully updated.');

@@ -3,14 +3,14 @@
 namespace App\UseCases\Leave;
 
 use App\Models\Leave;
+use App\UseCases\Leave\Request\LeaveRequest;
 
 class UpdateLeaveInteractors
 {
-    public function execute(string $id, array $leaveData): Leave
+    public function execute(LeaveRequest $leaveRequest, Leave $leave ): Leave
     {
-        $leave = Leave::findOrFail($id);
 
-        $leave->update($leaveData);
+        $leave->update($leaveRequest-> validated());
 
         return $leave->refresh();
     }

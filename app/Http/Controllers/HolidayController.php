@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Holiday;
 use App\UseCases\Holiday\DeleteHolidayInteractors;
 use App\UseCases\Holiday\ListHolidayInteractors;
 use App\UseCases\Holiday\Request\HolidayRequest;
 use App\UseCases\Holiday\StoreHolidayInteractors;
-use App\UseCases\Holiday\UpdateLeaveInteractors;
+use App\UseCases\Holiday\UpdateHolidayInteractors;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -30,12 +31,11 @@ class HolidayController extends Controller
             ->with('success', 'Holiday has been successfully created.');
     }
 
-    public function update(HolidayRequest $holidayRequest, UpdateLeaveInteractors $updateHolidayInteractors, string $id): RedirectResponse
+    public function update(string $id,HolidayRequest $holidayRequest, UpdateHolidayInteractors $updateHolidayInteractors): RedirectResponse
     {
-        $updateHolidayInteractors->execute(
-            $id,
-            $holidayRequest->validated()
-        );
+        $holiday = Holiday::findOrFail($id);
+
+        $updateHolidayInteractors->execute( $holidayRequest, $holiday);
 
         return redirect()
             ->route('holidays.index')
