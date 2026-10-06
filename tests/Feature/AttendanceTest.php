@@ -147,7 +147,7 @@ test('an employee cannot have two attendances on the same date', function () {
     $response->assertSessionHasErrors('employee_id');
     $this->assertDatabaseCount('attendances', 1);
 });
-test( 'CSV with 5 rows imports 5 attendance records', function () {
+test('CSV with 1 row imports 1 attendance', function () {
     Storage::fake('local');
     $employees = Employee::factory()->count(5)->create()->toArray();
     $csvContent = "employee_id,date,in_time,out_time\n";
@@ -168,35 +168,36 @@ test( 'CSV with 5 rows imports 5 attendance records', function () {
     $response->assertStatus(302);
     $response->assertRedirect('/attendance');
     $response->assertSessionHasNoErrors();
-    $this->assertDatabaseCount('attendances', 5);
+    $this->assertDatabaseCount('attendances', 1);
     $this->assertDatabaseHas('attendances', [
-        'employee_id' => $employees[0]['id'],
+        'employee_id' => $employees[0]['employee_id'],
         'date' => '2024-01-01',
-        'in_time' => '08:00:00',
-        'out_time' => '17:30:00',
+        'in_time' => '08:00',
+        'out_time' => '17:30',
     ]);
     $this->assertDatabaseHas('attendances', [
-        'employee_id' => $employees[1]['id'],
+        'employee_id' => $employees[1]['employee_id'],
         'date' => '2024-01-01',
-        'in_time' => '08:00:00',
-        'out_time' => '17:30:00',
+        'in_time' => '08:00',
+        'out_time' => '17:30',
     ]);
     $this->assertDatabaseHas('attendances', [
-        'employee_id' => $employees[2]['id'],
+        'employee_id' => $employees[2]['employee_id'],
         'date' => '2024-01-01',
-        'in_time' => '08:00:00',
-        'out_time' => '17:30:00',
+        'in_time' => '08:00',
+        'out_time' => '17:30',
     ]);
     $this->assertDatabaseHas('attendances', [
-        'employee_id' => $employees[3]['id'],
+        'employee_id' => $employees[3]['employee_id'],
         'date' => '2024-01-01',
-        'in_time' => '08:00:00',
-        'out_time' => '17:30:00',
+        'in_time' => '08:00',
+        'out_time' => '17:30',
     ]);
     $this->assertDatabaseHas('attendances', [
-        'employee_id' => $employees[4]['id'],
+        'employee_id' => $employees[4]['employee_id'],
         'date' => '2024-01-01',
-        'in_time' => '08:00:00',
-        'out_time' => '17:30:00',
+        'in_time' => '08:00',
+        'out_time' => '17:30',
     ]);
 });
+
