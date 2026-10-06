@@ -39,7 +39,6 @@ class StoreAttendanceInteractors
             'employee_id.required' => 'Employee is required.',
             'employee_id.exists' => 'Selected employee does not exist.',
             'date.required' => 'Date is required.',
-            'in_time.required' => 'In time is required.',
             'in_time.date_format' => 'In time must be in HH:MM format.',
             'out_time.date_format' => 'Out time must be in HH:MM format.',
         ]);
