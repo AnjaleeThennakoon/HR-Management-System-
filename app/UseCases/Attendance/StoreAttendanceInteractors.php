@@ -25,7 +25,7 @@ class StoreAttendanceInteractors
             ],
             'date' => [
                 'required',
-                'date',
+                'date_format:Y-m-d',
             ],
             'in_time' => [
                 'required',

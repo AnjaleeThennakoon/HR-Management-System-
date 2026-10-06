@@ -180,14 +180,12 @@ test('CSV with 5 rows imports 5 attendances', function () {
 
 test('CSV with invalid rows and shows errors and saves valid ones', function () {
     $employees = Employee::factory()->count(3)->create();
-
     $csvContent = "employee_id,date,in_time,out_time\n";
     $csvContent .= "{$employees[0]->employee_id},2024-01-01,08:00,17:30\n";
     $csvContent .= "{$employees[1]->employee_id},2024-01-01,08:00\n";
     $csvContent .= "EMP99999,2024-01-01,08:00,17:30\n";
     $csvContent .= "{$employees[2]->employee_id},2024-01-01,08:00,17:30\n";
     $csvContent .= "EMP88888,2024-01-01\n";
-
     $file = UploadedFile::fake()->createWithContent('attendance.csv', $csvContent);
 
     $response = $this->actingAs($this->user)

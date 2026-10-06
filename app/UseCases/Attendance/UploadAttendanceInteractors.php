@@ -35,7 +35,7 @@ readonly class UploadAttendanceInteractors
 
         try {
             $headers = array_map(
-                fn ($header) => strtolower(trim($header)),
+                fn ($header) => strtolower(trim($header, "\xEF\xBB\xBF \t\n\r\0\x0B")),
                 fgetcsv($fileHandle)
             );
 
@@ -94,14 +94,21 @@ readonly class UploadAttendanceInteractors
         }
 
         try {
+            $date = \Carbon\Carbon::parse($rowData['date'])->format('Y-m-d');
+            $inTime = \Carbon\Carbon::parse($rowData['in_time'])->format('H:i');
+            $outTime = !empty($rowData['out_time'])
+                ? \Carbon\Carbon::parse($rowData['out_time'])->format('H:i')
+                : null;
+
             $this->storeAttendanceInteractors->execute([
                 'employee_id' => $employeeId,
-                'date' => $rowData['date'],
-                'in_time' => $rowData['in_time'],
-                'out_time' => $rowData['out_time'] ?? null,
+                'date' => $date,
+                'in_time' => $inTime,
+                'out_time' => $outTime,
             ]);
 
             return [];
+
         } catch (ValidationException $exception) {
             return array_map(
                 fn ($error) =>

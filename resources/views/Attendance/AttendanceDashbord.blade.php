@@ -39,7 +39,7 @@
                 {{ session('success') }}
             </div>
         @endif
-
+        @include('Attendance.CsvUpload')
         {{-- Toolbar: Search + Add Button --}}
         <div class="flex items-center justify-between gap-4 mb-6">
             <div class="relative flex-1 max-w-xs">
