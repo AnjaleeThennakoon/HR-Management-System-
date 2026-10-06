@@ -12,6 +12,7 @@ use App\UseCases\Attendance\StoreAttendanceInteractors;
 use App\UseCases\Attendance\UpdateAttendanceInteractors;
 use App\UseCases\Attendance\UploadAttendanceInteractors;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
@@ -56,7 +57,13 @@ class AttendanceController extends Controller
 
     public function upload(AttendanceCsvRequest $attendanceCsvRequest, UploadAttendanceInteractors $uploadAttendanceInteractors): RedirectResponse
     {
-        $uploadAttendanceInteractors->execute($attendanceCsvRequest->file('csv_file'));
+        try {
+            $uploadAttendanceInteractors->execute($attendanceCsvRequest->file('csv_file'));
+        } catch (ValidationException $exception) {
+            return redirect()->back()
+                ->withErrors($exception->validator)
+                ->withInput();
+        }
 
         return redirect()->route('attendance.index')
             ->with('success', 'Attendance CSV imported successfully.');
