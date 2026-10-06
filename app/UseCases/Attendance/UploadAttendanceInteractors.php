@@ -35,12 +35,11 @@ readonly class UploadAttendanceInteractors
 
         try {
             $headers = array_map(
-                fn($header) => strtolower(trim($header)),
+                fn ($header) => strtolower(trim($header)),
                 fgetcsv($fileHandle)
             );
 
             return $this->processRows($fileHandle, $headers);
-
         } finally {
             fclose($fileHandle);
         }
@@ -53,27 +52,45 @@ readonly class UploadAttendanceInteractors
 
         while (($row = fgetcsv($fileHandle)) !== false) {
             $rowNumber++;
-            $rowErrors = $this->processRow($row, $headers);
+
+            $rowErrors = $this->processRow(
+                $row,
+                $headers,
+                $rowNumber
+            );
 
             if (!empty($rowErrors)) {
                 $errors["row_{$rowNumber}"] = $rowErrors;
             }
         }
-
         return $errors;
     }
 
-    private function processRow(array $row, array $headers): array
-    {
+    private function processRow(
+        array $row,
+        array $headers,
+        int $rowNumber
+    ): array {
         if (count($row) !== count($headers)) {
-            return ['Invalid column count'];
+            $csvEmployeeId = trim($row[0] ?? 'Unknown');
+
+            return [
+                "Row {$rowNumber} ({$csvEmployeeId}): Invalid column count. "
+                . "Expected " . count($headers)
+                . " columns, but received " . count($row) . "."
+            ];
         }
 
         $rowData = array_combine($headers, $row);
-        $employeeId = $this->findEmployeeId($rowData['employee_id']);
+
+        $csvEmployeeId = trim($rowData['employee_id']);
+
+        $employeeId = $this->findEmployeeId($csvEmployeeId);
 
         if ($employeeId === null) {
-            return ["Employee ID '{$rowData['employee_id']}' does not exist."];
+            return [
+                "Row {$rowNumber} ({$csvEmployeeId}): Employee ID does not exist."
+            ];
         }
 
         try {
@@ -86,14 +103,18 @@ readonly class UploadAttendanceInteractors
 
             return [];
         } catch (ValidationException $exception) {
-            return $exception->validator->errors()->all();
+            return array_map(
+                fn ($error) =>
+                "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
+                $exception->validator->errors()->all()
+            );
         }
     }
 
     private function findEmployeeId(string $employeeId): ?int
     {
         return Employee::query()
-            ->where('employee_id', trim($employeeId))
+            ->where('employee_id', $employeeId)
             ->value('id');
     }
 }

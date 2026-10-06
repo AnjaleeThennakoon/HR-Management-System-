@@ -202,3 +202,45 @@ test('CSV with 5 rows imports 5 attendances', function () {
         'out_time' => '17:30:00',
     ]);
 });
+
+test('CSV with invalid rows and shows errors and saves valid ones',function (){
+    $employees = Employee::factory()->count(3)->create();
+    $csvContent = "employee_id,date,in_time,out_time\n";
+    $csvContent .= "{$employees[0]['employee_id']},2024-01-01,08:00,17:30\n";
+    $csvContent .= "{$employees[1]['employee_id']},2024-01-01,08:00\n";
+    $csvContent .= "EMP99999,2024-01-01,08:00,17:30\n";
+    $csvContent .= "{$employees[2]->employee_id},2024-01-01,08:00,17:30\n";
+    $csvContent .= "EMP88888,2024-01-01\n";
+    $file = UploadedFile::fake()->createWithContent(
+        'attendance.csv',
+        $csvContent
+
+    );
+
+    $response = $this->actingAs($this->user)
+        ->from('/attendance')
+        ->post('/attendance/upload', [
+            'csv_file' => $file,
+        ]);
+    dd($response->getSession()->get('errors'));
+    $response->assertStatus(302);
+    $response->assertRedirect('/attendance');
+    $response->assertSessionHasErrors();
+    $this->assertDatabaseCount('attendances', 3);
+    $this->assertDatabaseHas('attendances', [
+        'employee_id' => $employees[0]->id,
+        'date' => '2024-01-01',
+    ]);
+    $this->assertDatabaseHas('attendances', [
+        'employee_id' => $employees[1]->id,
+        'date' => '2024-01-01',
+    ]);
+    $this->assertDatabaseHas('attendances', [
+        'employee_id' => $employees[2]->id,
+        'date' => '2024-01-01',
+    ]);
+    $this->assertDatabaseMissing('attendances', [
+        'employee_id' => 99999,
+    ]);
+
+});
