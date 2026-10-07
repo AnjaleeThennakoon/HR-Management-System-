@@ -4,32 +4,32 @@
 @php
     $hasCsvErrors = $errors->has('csv_file')
         || $errors->has('import_errors')
+        || $errors->has('import_summary')
         || ($errors->any() && !$errors->has('employee_id') && !$errors->has('date') && !$errors->has('in_time') && !$errors->has('out_time'));
 @endphp
 
 @if($hasCsvErrors)
     <div class="mb-5 rounded-xl ring-1 ring-red-200 bg-red-50/50 overflow-hidden">
-        {{-- Header - Always Visible --}}
+        {{-- Header --}}
         <div class="flex items-center justify-between p-4">
-            <div class="flex items-center gap-2">
-                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24"
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24"
                          stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round"
                               d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-sm font-semibold text-red-800">CSV Import Errors</h3>
+                    <h3 class="text-sm font-semibold text-red-800">CSV Import Report</h3>
                     <p class="text-xs text-red-600 mt-0.5">
-                        {{ count($errors->all()) }} row(s) failed to import
+                        {{ $errors->first('import_summary') ?? count($errors->all()) . ' row(s) failed' }}
                     </p>
                 </div>
             </div>
 
-            {{-- Toggle Button --}}
             <button type="button" onclick="toggleErrorDetails()"
-                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-red-700 text-xs font-medium rounded-lg ring-1 ring-red-200 hover:bg-red-50 transition">
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-red-700 text-xs font-medium rounded-lg ring-1 ring-red-200 hover:bg-red-50 transition whitespace-nowrap">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
@@ -38,21 +38,83 @@
             </button>
         </div>
 
-        {{-- Error Details - Hidden by Default --}}
+        {{-- Row Details --}}
         <div id="errorDetailsList" class="hidden border-t border-red-200 bg-white/50">
-            <div class="max-h-64 overflow-y-auto p-4">
-                <ul class="space-y-2">
-                    @foreach($errors->all() as $error)
-                        <li class="flex items-start gap-2 text-xs text-red-700">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 mt-0.5 text-red-500"
-                                 fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                      d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
-                            </svg>
-                            <span>{{ $error }}</span>
-                        </li>
-                    @endforeach
-                </ul>
+            <div class="max-h-96 overflow-y-auto p-4">
+                @php
+                    $importRowsJson = $errors->first('import_rows');
+                    $importRows = $importRowsJson ? json_decode($importRowsJson, true) : [];
+                @endphp
+
+                @if(!empty($importRows) && is_array($importRows))
+                    <table class="w-full text-xs">
+                        <thead>
+                        <tr class="text-left text-gray-500 border-b border-gray-200">
+                            <th class="py-2 px-2 font-semibold">Row</th>
+                            <th class="py-2 px-2 font-semibold">Employee ID</th>
+                            <th class="py-2 px-2 font-semibold">Status</th>
+                            <th class="py-2 px-2 font-semibold">Message</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($importRows as $row)
+                            <tr class="border-b border-gray-100
+                                {{ ($row['status'] ?? '') === 'success' ? 'bg-green-50/50' : 'bg-red-50/50' }}">
+                                <td class="py-2 px-2 text-gray-600 font-medium">
+                                    {{ $row['row_number'] ?? '-' }}
+                                </td>
+                                <td class="py-2 px-2 text-gray-800">
+                                    {{ $row['employee_id'] ?: 'N/A' }}
+                                </td>
+                                <td class="py-2 px-2">
+                                    @if(($row['status'] ?? '') === 'success')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                                                 stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                      d="M4.5 12.75l6 6 9-13.5"/>
+                                            </svg>
+                                            Success
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                                                 stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                                            </svg>
+                                            Failed
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="py-2 px-2 text-gray-600">
+                                    @if(($row['status'] ?? '') === 'fail')
+                                        @foreach($row['errors'] ?? [] as $error)
+                                            <p>{{ $error }}</p>
+                                        @endforeach
+                                    @else
+                                        <span class="text-green-600">Imported successfully</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                @else
+                    <ul class="space-y-2">
+                        @foreach($errors->all() as $error)
+                            @if($error !== $errors->first('import_summary') && $error !== $errors->first('import_rows'))
+                                <li class="flex items-start gap-2 text-xs text-red-700">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0 mt-0.5 text-red-500"
+                                         fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                                    </svg>
+                                    <span>{{ $error }}</span>
+                                </li>
+                            @endif
+                        @endforeach
+                    </ul>
+                @endif
             </div>
         </div>
     </div>

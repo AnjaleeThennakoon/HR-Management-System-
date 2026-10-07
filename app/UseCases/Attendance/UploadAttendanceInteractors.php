@@ -16,10 +16,19 @@ readonly class UploadAttendanceInteractors
 
     public function execute(UploadedFile $file): void
     {
-        $errors = $this->processCsv($file);
+        $result = $this->processCsv($file);
 
-        if (!empty($errors)) {
-            throw ValidationException::withMessages($errors);
+        if (! empty($result['errors'])) {
+            $rowErrors = array_map(
+                fn (array $messages): string => implode(' ', $messages),
+                $result['errors']
+            );
+
+            throw ValidationException::withMessages([
+                'import_summary' => [$result['summary']],
+                'import_rows' => [json_encode($result['rows'])],
+                ...$rowErrors,
+            ]);
         }
     }
 
@@ -27,7 +36,7 @@ readonly class UploadAttendanceInteractors
     {
         $fileHandle = fopen($file->getRealPath(), 'r');
 
-        if (!$fileHandle) {
+        if (! $fileHandle) {
             throw new \Exception('Could not open CSV file.');
         }
 
@@ -46,52 +55,76 @@ readonly class UploadAttendanceInteractors
     private function processRows($fileHandle, array $headers): array
     {
         $errors = [];
+        $rows = [];
         $rowNumber = 1;
+        $totalRows = 0;
+        $successCount = 0;
 
         while (($row = fgetcsv($fileHandle)) !== false) {
             $rowNumber++;
+            $totalRows++;
 
             $rowErrors = $this->processRow($row, $headers, $rowNumber);
+            $csvEmployeeId = trim($row[0] ?? '');
 
-            if (!empty($rowErrors)) {
+            if (! empty($rowErrors)) {
                 $errors["row_{$rowNumber}"] = $rowErrors;
+                $rows[] = [
+                    'row_number' => $rowNumber,
+                    'employee_id' => $csvEmployeeId,
+                    'status' => 'fail',
+                    'errors' => $rowErrors,
+                ];
+            } else {
+                $successCount++;
+                $rows[] = [
+                    'row_number' => $rowNumber,
+                    'employee_id' => $csvEmployeeId,
+                    'status' => 'success',
+                    'errors' => [],
+                ];
             }
         }
-        return $errors;
+
+        $summary = sprintf(
+            '%d of %d rows failed. %d imported successfully.',
+            count($errors),
+            $totalRows,
+            $successCount
+        );
+
+        return [
+            'errors' => $errors,
+            'rows' => $rows,
+            'summary' => $summary,
+        ];
     }
 
     private function processRow(array $row, array $headers, int $rowNumber): array
     {
         if (count($row) !== count($headers)) {
-            $csvEmployeeId = trim($row[0] ?? 'Unknown');
             return [
-                "Row {$rowNumber} ({$csvEmployeeId}): Invalid column count. "
-                . "Expected " . count($headers)
-                . " columns, but received " . count($row) . "."
+                "Row {$rowNumber} (".trim($row[0] ?? '').'): Invalid column count. Expected '.count($headers).' columns, but received '.count($row).'.',
             ];
         }
 
         $rowData = array_combine($headers, $row);
 
-        if (!array_key_exists('employee_id', $rowData)) {
-            return [
-                "Row {$rowNumber}: Missing 'employee_id' column. Please check your CSV headers."
-            ];
+        if (! array_key_exists('employee_id', $rowData)) {
+            return ["Row {$rowNumber}: Missing 'employee_id' column."];
         }
 
         $rowErrors = [];
-
         $csvEmployeeId = trim($rowData['employee_id'] ?? '');
+
         if ($csvEmployeeId === '') {
-            $rowErrors[] = "Employee ID is empty.";
+            $rowErrors[] = 'Employee ID is empty.';
         }
-
         if (empty(trim($rowData['date'] ?? ''))) {
-            $rowErrors[] = "Date is empty.";
+            $rowErrors[] = 'Date is empty.';
         }
-
         if (empty(trim($rowData['in_time'] ?? ''))) {
-            $rowErrors[] = "In time is empty.";
+            $rowErrors[] = 'In time is empty.';
         }
 
         $employeeId = null;
@@ -102,55 +135,35 @@ readonly class UploadAttendanceInteractors
             }
         }
 
-        if (!empty($rowErrors)) {
+        if (! empty($rowErrors)) {
             return array_map(
-                fn($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
+                fn ($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
                 $rowErrors
             );
         }
 
         try {
-            $date = Carbon::parse($rowData['date'])->format('Y-m-d');
-            $inTime = Carbon::parse($rowData['in_time'])->format('H:i');
-            $outTime = !empty($rowData['out_time'])
-                ? Carbon::parse($rowData['out_time'])->format('H:i')
-                : null;
-
             $this->storeAttendanceInteractors->execute([
                 'employee_id' => $employeeId,
-                'date' => $date,
-                'in_time' => $inTime,
-                'out_time' => $outTime,
+                'date' => Carbon::parse($rowData['date'])->format('Y-m-d'),
+                'in_time' => Carbon::parse($rowData['in_time'])->format('H:i'),
+                'out_time' => ! empty($rowData['out_time']) ? Carbon::parse($rowData['out_time'])->format('H:i') : null,
             ]);
 
             return [];
-        } catch (ValidationException $exception) {
-            return array_map(
-                fn($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
-                $exception->validator->errors()->all()
-            );
         } catch (QueryException $exception) {
-            // 🆕 Duplicate error check
             if ($exception->getCode() === '23000') {
-                return [
-                    "Row {$rowNumber} ({$csvEmployeeId}): Attendance already exists for this employee on this date."
-                ];
+                return ["Row {$rowNumber} ({$csvEmployeeId}): Attendance already exists for this employee on this date."];
             }
 
-            return [
-                "Row {$rowNumber} ({$csvEmployeeId}): Database error. Please try again."
-            ];
+            return ["Row {$rowNumber} ({$csvEmployeeId}): Database error. Please try again."];
         } catch (\Exception $exception) {
-            return [
-                "Row {$rowNumber} ({$csvEmployeeId}): {$exception->getMessage()}"
-            ];
+            return ["Row {$rowNumber} ({$csvEmployeeId}): {$exception->getMessage()}"];
         }
     }
 
     private function findEmployeeId(string $employeeId): ?int
     {
-        return Employee::query()
-            ->where('employee_id', $employeeId)
-            ->value('id');
+        return Employee::query()->where('employee_id', $employeeId)->value('id');
     }
 }
