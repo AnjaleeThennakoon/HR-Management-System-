@@ -29,8 +29,10 @@
               action="{{ $hasAttendanceErrors && old('_edit_action') ? old('_edit_action') : route('attendance.store') }}"
               class="p-5 space-y-4">
             @csrf
-            <input type="hidden" name="_method" id="attendanceMethod" value="PUT"
-                   @if(!($hasAttendanceErrors && old('_method') === 'PUT')) disabled @endif>
+
+            {{-- Method --}}
+            <input type="hidden" name="_method" id="attendanceMethod"
+                   value="{{ $hasAttendanceErrors && old('_method') === 'PUT' ? 'PUT' : '' }}">
 
             <input type="hidden" name="_edit_action" id="attendanceEditAction"
                    value="{{ old('_edit_action') }}">
@@ -44,7 +46,6 @@
                               d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
                     </svg>
                     <div>
-                        {{-- Attendance fields වල errors විතරයි --}}
                         @foreach(['employee_id', 'date', 'in_time', 'out_time'] as $field)
                             @foreach($errors->get($field) as $error)
                                 <p>{{ $error }}</p>
