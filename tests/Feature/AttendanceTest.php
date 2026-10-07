@@ -301,3 +301,36 @@ test('CSV import shows summary with row details', function () {
         $row2['errors'][0]
     );
 });
+
+test('CSV with duplicate rows show error', function () {
+    $employee = Employee::factory()->create();
+    $csvContent = "employee_id,date,in_time,out_time\n";
+    $csvContent .= "{$employee->employee_id},2026-10-07,08:30,17:30\n";
+    $csvContent .= "{$employee->employee_id},2026-10-07,08:30,17:30\n";
+    $file = UploadedFile::fake()->createWithContent('attendance.csv', $csvContent);
+
+    $response = $this->actingAs($this->user)
+        ->from('/attendance')
+        ->post('/attendance/upload', ['csv_file' => $file,]);
+
+    $response->assertStatus(302);
+    $response->assertRedirect('/attendance');
+    $response->assertSessionHasErrors();
+    $this->assertDatabaseCount('attendances', 1);
+    $errors = session('errors')
+        ->getBag('default')
+        ->getMessages();
+    $this->assertArrayHasKey('row_3', $errors);
+    $this->assertStringContainsString(
+        'already exists',
+        $errors['row_3'][0]
+    );
+    $this->assertStringNotContainsString(
+        'SQLSTATE',
+        $errors['row_3'][0]
+    );
+    $this->assertStringNotContainsString(
+        'Integrity constraint violation',
+        $errors['row_3'][0]
+    );
+});
