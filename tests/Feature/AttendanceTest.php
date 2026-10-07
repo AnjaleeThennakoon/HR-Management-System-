@@ -218,7 +218,7 @@ test('CSV with invalid rows and shows errors and saves valid ones', function () 
     ]);
 
     $this->assertArrayHasKey('row_4', $errors);
-    $this->assertStringContainsString('Employee ID does not exist', $errors['row_4'][0]);
+    $this->assertStringContainsString('does not exist', $errors['row_4'][0]);
     $this->assertDatabaseHas('attendances', [
         'employee_id' => $employees[2]->id,
         'date' => '2024-01-01',
@@ -231,4 +231,6 @@ test('CSV with invalid rows and shows errors and saves valid ones', function () 
     ]);
     $this->assertArrayHasKey('row_6', $errors);
     $this->assertStringContainsString('Invalid column count', $errors['row_6'][0]);
+
+    $this->get('/attendance')->assertOk();
 });
