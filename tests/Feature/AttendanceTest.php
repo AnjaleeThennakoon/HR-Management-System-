@@ -234,3 +234,70 @@ test('CSV with invalid rows and shows errors and saves valid ones', function () 
 
     $this->get('/attendance')->assertOk();
 });
+
+test('CSV with duplicate attendance shows error', function () {
+    $employee = Employee::factory()->create();
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2024-01-01',
+    ]);
+    $csvContent = "employee_id,date,in_time,out_time\n";
+    $csvContent .= "{$employee->employee_id},2024-01-01,08:00,17:30\n";
+
+    $file = UploadedFile::fake()->createWithContent('attendance.csv', $csvContent);
+
+    $response = $this->actingAs($this->user)
+        ->from('/attendance')
+        ->post('/attendance/upload', ['csv_file' => $file]);
+    $response->assertStatus(302);
+    $response->assertRedirect('/attendance');
+    $response->assertSessionHasErrors();
+    $this->assertDatabaseCount('attendances', 1);
+    $errors = session('errors')->getBag('default')->getMessages();
+    $this->assertArrayHasKey('row_2', $errors);
+});
+
+test('non-CSV file is rejected', function () {
+    $file = UploadedFile::fake()->create('attendance.txt', 100);
+
+    $response = $this->actingAs($this->user)
+        ->post('/attendance/upload', ['csv_file' => $file]);
+
+    $response->assertSessionHasErrors('csv_file');
+});
+
+test('CSV import shows summary with row details', function () {
+    $employees = Employee::factory()->count(2)->create();
+    $csvContent = "employee_id,date,in_time,out_time\n";
+    $csvContent .= "{$employees[0]->employee_id},2024-01-01,08:00,17:30\n";
+    $csvContent .= "INVALID,2024-01-01,08:00,17:30\n";
+    $file = UploadedFile::fake()->createWithContent('attendance.csv', $csvContent);
+
+    $response = $this->actingAs($this->user)
+        ->from('/attendance')
+        ->post('/attendance/upload', ['csv_file' => $file]);
+
+    $response->assertStatus(302);
+    $response->assertRedirect('/attendance');
+    $response->assertSessionHasErrors();
+    $this->assertNotNull(session('import_summary'));
+    $this->assertStringContainsString('1 of 2 rows failed', session('import_summary'));
+    $this->assertStringContainsString('1 imported successfully', session('import_summary'));
+    $importRows = session('import_rows');
+    $this->assertIsArray($importRows);
+    $this->assertCount(2, $importRows);
+    $row1 = $importRows[0];
+    $this->assertEquals(2, $row1['row_number']);
+    $this->assertEquals($employees[0]->employee_id, $row1['employee_id']);
+    $this->assertEquals('success', $row1['status']);
+    $this->assertEmpty($row1['errors']);
+    $row2 = $importRows[1];
+    $this->assertEquals(3, $row2['row_number']);
+    $this->assertEquals('INVALID', $row2['employee_id']);
+    $this->assertEquals('fail', $row2['status']);
+    $this->assertNotEmpty($row2['errors']);
+    $this->assertStringContainsString(
+        'does not exist',
+        $row2['errors'][0]
+    );
+});
