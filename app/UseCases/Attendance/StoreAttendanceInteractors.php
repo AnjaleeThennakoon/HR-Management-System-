@@ -11,7 +11,6 @@ class StoreAttendanceInteractors
     public function execute(array $attendance): Attendance
     {
         $validate = $this->validate($attendance);
-
         return Attendance::create($attendance);
     }
 

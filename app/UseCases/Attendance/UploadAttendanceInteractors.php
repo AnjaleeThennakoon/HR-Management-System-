@@ -3,6 +3,7 @@
 namespace App\UseCases\Attendance;
 
 use App\Models\Employee;
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 
@@ -12,10 +13,6 @@ readonly class UploadAttendanceInteractors
         private StoreAttendanceInteractors $storeAttendanceInteractors
     ) {}
 
-    /**
-     * @throws \Exception
-     * @throws ValidationException
-     */
     public function execute(UploadedFile $file): void
     {
         $errors = $this->processCsv($file);
@@ -35,7 +32,7 @@ readonly class UploadAttendanceInteractors
 
         try {
             $headers = array_map(
-                fn ($header) => strtolower(trim($header, "\xEF\xBB\xBF \t\n\r\0\x0B")),
+                fn ($header) => strtolower(trim(preg_replace('/^\xEF\xBB\xBF/', '', $header))),
                 fgetcsv($fileHandle)
             );
 
@@ -53,11 +50,7 @@ readonly class UploadAttendanceInteractors
         while (($row = fgetcsv($fileHandle)) !== false) {
             $rowNumber++;
 
-            $rowErrors = $this->processRow(
-                $row,
-                $headers,
-                $rowNumber
-            );
+            $rowErrors = $this->processRow($row, $headers, $rowNumber);
 
             if (!empty($rowErrors)) {
                 $errors["row_{$rowNumber}"] = $rowErrors;
@@ -66,14 +59,10 @@ readonly class UploadAttendanceInteractors
         return $errors;
     }
 
-    private function processRow(
-        array $row,
-        array $headers,
-        int $rowNumber
-    ): array {
+    private function processRow(array $row, array $headers, int $rowNumber): array
+    {
         if (count($row) !== count($headers)) {
             $csvEmployeeId = trim($row[0] ?? 'Unknown');
-
             return [
                 "Row {$rowNumber} ({$csvEmployeeId}): Invalid column count. "
                 . "Expected " . count($headers)
@@ -83,21 +72,47 @@ readonly class UploadAttendanceInteractors
 
         $rowData = array_combine($headers, $row);
 
-        $csvEmployeeId = trim($rowData['employee_id']);
-
-        $employeeId = $this->findEmployeeId($csvEmployeeId);
-
-        if ($employeeId === null) {
+        if (!array_key_exists('employee_id', $rowData)) {
             return [
-                "Row {$rowNumber} ({$csvEmployeeId}): Employee ID does not exist."
+                "Row {$rowNumber}: Missing 'employee_id' column. Please check your CSV headers."
             ];
         }
 
+        $rowErrors = [];
+
+        $csvEmployeeId = trim($rowData['employee_id'] ?? '');
+        if ($csvEmployeeId === '') {
+            $rowErrors[] = "Employee ID is empty.";
+        }
+
+        if (empty(trim($rowData['date'] ?? ''))) {
+            $rowErrors[] = "Date is empty.";
+        }
+
+        if (empty(trim($rowData['in_time'] ?? ''))) {
+            $rowErrors[] = "In time is empty.";
+        }
+
+        $employeeId = null;
+        if ($csvEmployeeId !== '') {
+            $employeeId = $this->findEmployeeId($csvEmployeeId);
+            if ($employeeId === null) {
+                $rowErrors[] = "Employee ID '{$csvEmployeeId}' does not exist.";
+            }
+        }
+
+        if (!empty($rowErrors)) {
+            return array_map(
+                fn ($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
+                $rowErrors
+            );
+        }
+
         try {
-            $date = \Carbon\Carbon::parse($rowData['date'])->format('Y-m-d');
-            $inTime = \Carbon\Carbon::parse($rowData['in_time'])->format('H:i');
+            $date = Carbon::parse($rowData['date'])->format('Y-m-d');
+            $inTime = Carbon::parse($rowData['in_time'])->format('H:i');
             $outTime = !empty($rowData['out_time'])
-                ? \Carbon\Carbon::parse($rowData['out_time'])->format('H:i')
+                ? Carbon::parse($rowData['out_time'])->format('H:i')
                 : null;
 
             $this->storeAttendanceInteractors->execute([
@@ -108,13 +123,15 @@ readonly class UploadAttendanceInteractors
             ]);
 
             return [];
-
         } catch (ValidationException $exception) {
             return array_map(
-                fn ($error) =>
-                "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
+                fn ($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
                 $exception->validator->errors()->all()
             );
+        } catch (\Exception $exception) {
+            return [
+                "Row {$rowNumber} ({$csvEmployeeId}): {$exception->getMessage()}"
+            ];
         }
     }
 

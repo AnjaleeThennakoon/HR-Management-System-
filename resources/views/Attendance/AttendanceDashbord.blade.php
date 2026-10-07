@@ -187,8 +187,7 @@
             const form = document.getElementById('attendanceForm');
             form.action = '/attendance/' + id;
             document.getElementById('attendanceMethod').disabled = false;
-            document.getElementById('attendanceEditAction').value = action;
-            document.getElementById('attendanceEmployee').value = employeeId;
+            document.getElementById('attendanceEditAction').value = '/attendance/' + id;
             document.getElementById('attendanceDate').value = date;
             document.getElementById('attendanceInTime').value = inTime;
             document.getElementById('attendanceOutTime').value = outTime ?? '';
@@ -217,8 +216,8 @@
             if (e.key === 'Escape') closeAddModal();
         });
 
-        // Auto-open modal if validation errors
-        @if($errors->any())
+        // Auto-open modal only if attendance form errors
+        @if($errors->has('employee_id') || $errors->has('date') || $errors->has('in_time') || $errors->has('out_time'))
         document.addEventListener('DOMContentLoaded', function () {
             const modal = document.getElementById('attendanceModal');
             if (modal) {
@@ -226,6 +225,7 @@
             }
         });
         @endif
+
     </script>
 
     <style>

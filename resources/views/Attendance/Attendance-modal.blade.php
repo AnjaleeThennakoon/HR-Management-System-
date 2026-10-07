@@ -1,10 +1,19 @@
+{{-- resources/views/Attendance/attendance-modal.blade.php --}}
+
+@php
+    $hasAttendanceErrors = $errors->has('employee_id')
+        || $errors->has('date')
+        || $errors->has('in_time')
+        || $errors->has('out_time');
+@endphp
+
 <div id="attendanceModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
     <div class="bg-white rounded-2xl shadow-xl ring-1 ring-black/5 w-full max-w-md animate-[fadeIn_0.2s_ease-out]">
 
         {{-- Header --}}
         <div class="flex items-center justify-between p-5 border-b border-gray-100">
             <h3 id="attendanceModalTitle" class="text-lg font-semibold text-gray-900">
-                {{ $errors->any() && old('_method') === 'PUT' ? 'Edit Attendance' : 'Add New Attendance' }}
+                {{ $hasAttendanceErrors && old('_method') === 'PUT' ? 'Edit Attendance' : 'Add New Attendance' }}
             </h3>
             <button type="button" onclick="closeAddModal()"
                     class="text-gray-400 hover:text-gray-600 transition">
@@ -17,18 +26,17 @@
 
         {{-- Form --}}
         <form id="attendanceForm" method="POST"
-              action="{{ $errors->any() && old('_edit_action') ? old('_edit_action') : route('attendance.store') }}"
+              action="{{ $hasAttendanceErrors && old('_edit_action') ? old('_edit_action') : route('attendance.store') }}"
               class="p-5 space-y-4">
             @csrf
             <input type="hidden" name="_method" id="attendanceMethod" value="PUT"
-                   @if(!($errors->any() && old('_method') === 'PUT')) disabled @endif>
+                   @if(!($hasAttendanceErrors && old('_method') === 'PUT')) disabled @endif>
 
-            {{-- 👇 Hidden field එකක් — edit කරද්දී URL එක මතක තියාගන්න --}}
             <input type="hidden" name="_edit_action" id="attendanceEditAction"
                    value="{{ old('_edit_action') }}">
 
             {{-- Global error message --}}
-            @if($errors->any() && !$errors->has('employee_id') && !$errors->has('date') && !$errors->has('in_time') && !$errors->has('out_time'))
+            @if($hasAttendanceErrors)
                 <div class="flex items-start gap-2 p-3 bg-red-50 text-red-700 text-sm rounded-lg ring-1 ring-red-100">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 mt-0.5" fill="none"
                          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -36,8 +44,11 @@
                               d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
                     </svg>
                     <div>
-                        @foreach($errors->all() as $error)
-                            <p>{{ $error }}</p>
+                        {{-- Attendance fields වල errors විතරයි --}}
+                        @foreach(['employee_id', 'date', 'in_time', 'out_time'] as $field)
+                            @foreach($errors->get($field) as $error)
+                                <p>{{ $error }}</p>
+                            @endforeach
                         @endforeach
                     </div>
                 </div>
@@ -120,7 +131,7 @@
                 </button>
                 <button type="submit" id="attendanceSubmit"
                         class="px-4 py-2 text-sm font-semibold text-white bg-gray-900 rounded-lg shadow-sm hover:bg-gray-800 hover:shadow-md active:scale-[0.98] transition-all duration-200">
-                    {{ $errors->any() && old('_method') === 'PUT' ? 'Update Attendance' : 'Add Attendance' }}
+                    {{ $hasAttendanceErrors && old('_method') === 'PUT' ? 'Update Attendance' : 'Add Attendance' }}
                 </button>
             </div>
         </form>
