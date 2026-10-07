@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ProcessAttendanceCsv;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\UseCases\Attendance\DeleteAttendanceInteractors;
@@ -57,15 +58,12 @@ class AttendanceController extends Controller
 
     public function upload(AttendanceCsvRequest $attendanceCsvRequest, UploadAttendanceInteractors $uploadAttendanceInteractors): RedirectResponse
     {
-        try {
-            $uploadAttendanceInteractors->execute($attendanceCsvRequest->file('csv_file'));
-        } catch (ValidationException $exception) {
-            return redirect()->back()
-                ->withErrors($exception->validator)
-                ->withInput();
-        }
+        $filePath = $attendanceCsvRequest->file('csv_file')->store('tempt');
+        \App\Jobs\ProcessAttendanceCsv::dispatch($filePath,auth()->id());
+
+        ProcessAttendanceCsv::dispatch($filePath,auth()->id());
 
         return redirect()->route('attendance.index')
-            ->with('success', 'Attendance CSV imported successfully.');
+            ->with('success','csv is being  processed in the background ,you will be notified   when it completes.');
     }
 }
