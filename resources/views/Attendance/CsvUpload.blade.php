@@ -1,27 +1,91 @@
 {{-- resources/views/Attendance/CsvUpload.blade.php --}}
 
-{{-- CSV Upload Errors --}}
 @php
-    $hasCsvErrors = $errors->has('csv_file')
-        || $errors->has('import_errors')
+    $importSummary = session('import_summary');
+    $importRows = session('import_rows', []);
+
+    $hasCsvErrors = !empty($importSummary)
+        || $errors->has('csv_file')
         || ($errors->any() && !$errors->has('employee_id') && !$errors->has('date') && !$errors->has('in_time') && !$errors->has('out_time'));
 @endphp
 
 @if($hasCsvErrors)
-    <div class="mb-5 p-4 bg-red-50 text-red-700 text-sm rounded-lg ring-1 ring-red-100">
-        <div class="flex items-center gap-2 mb-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24"
-                 stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                      d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
-            </svg>
-            <span class="font-semibold">CSV Import Errors</span>
+    <div class="mb-5 rounded-xl ring-1 ring-red-200 bg-red-50/50 overflow-hidden">
+
+        {{-- Header --}}
+        <div class="flex items-center justify-between p-4">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 flex-shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                              d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-red-800">CSV Import Report</h3>
+                    <p class="text-xs text-red-600 mt-0.5">
+                        {{ $importSummary ?? 'Import failed. Please check your CSV file.' }}
+                    </p>
+                </div>
+            </div>
+
+            @if(!empty($importRows))
+                <button type="button" onclick="toggleErrorDetails()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-red-700 text-xs font-medium rounded-lg ring-1 ring-red-200 hover:bg-red-50 transition whitespace-nowrap">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                         stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+                    </svg>
+                    <span id="errorDetailsToggleText">See details</span>
+                </button>
+            @endif
         </div>
-        <ul class="list-disc list-inside space-y-1 ml-7">
-            @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
+
+        @if(!empty($importRows))
+            <div id="errorDetailsList" class="hidden border-t border-red-200 bg-white/50">
+                <div class="max-h-96 overflow-y-auto p-4">
+                    <table class="w-full text-xs">
+                        <thead>
+                        <tr class="text-left text-gray-500 border-b border-gray-200">
+                            <th class="py-2 px-2 font-semibold">Row</th>
+                            <th class="py-2 px-2 font-semibold">Employee ID</th>
+                            <th class="py-2 px-2 font-semibold">Status</th>
+                            <th class="py-2 px-2 font-semibold">Message</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @foreach($importRows as $row)
+                            <tr class="border-b border-gray-100 {{ ($row['status'] ?? '') === 'success' ? 'bg-green-50/50' : 'bg-red-50/50' }}">
+                                <td class="py-2 px-2 text-gray-600 font-medium">{{ $row['row_number'] ?? '-' }}</td>
+                                <td class="py-2 px-2 text-gray-800">{{ $row['employee_id'] ?: 'N/A' }}</td>
+                                <td class="py-2 px-2">
+                                    @if(($row['status'] ?? '') === 'success')
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">
+                                            ✓ Success
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-semibold">
+                                            ✗ Failed
+                                        </span>
+                                    @endif
+                                </td>
+                                <td class="py-2 px-2 text-gray-600">
+                                    @if(($row['status'] ?? '') === 'fail')
+                                        @foreach($row['errors'] ?? [] as $error)
+                                            <p>{{ $error }}</p>
+                                        @endforeach
+                                    @else
+                                        <span class="text-green-600">Imported successfully</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
     </div>
 @endif
 

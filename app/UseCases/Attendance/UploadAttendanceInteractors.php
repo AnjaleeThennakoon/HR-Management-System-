@@ -5,6 +5,7 @@ namespace App\UseCases\Attendance;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 
 readonly class UploadAttendanceInteractors
@@ -15,10 +16,21 @@ readonly class UploadAttendanceInteractors
 
     public function execute(UploadedFile $file): void
     {
-        $errors = $this->processCsv($file);
+        $result = $this->processCsv($file);
 
-        if (!empty($errors)) {
-            throw ValidationException::withMessages($errors);
+        if (!empty($result['errors'])) {
+
+            $flatErrors = [];
+            foreach ($result['errors'] as $rowKey => $messages) {
+                $flatErrors[$rowKey] = is_array($messages)
+                    ? implode(' ', \Illuminate\Support\Arr::flatten($messages))
+                    : (string) $messages;
+            }
+
+            session()->flash('import_summary', $result['summary']);
+            session()->flash('import_rows', $result['rows']);
+
+            throw ValidationException::withMessages($flatErrors);
         }
     }
 
@@ -45,28 +57,61 @@ readonly class UploadAttendanceInteractors
     private function processRows($fileHandle, array $headers): array
     {
         $errors = [];
+        $rows = [];
         $rowNumber = 1;
+        $totalRows = 0;
+        $successCount = 0;
 
         while (($row = fgetcsv($fileHandle)) !== false) {
             $rowNumber++;
+            $totalRows++;
 
             $rowErrors = $this->processRow($row, $headers, $rowNumber);
+            $csvEmployeeId = trim($row[0] ?? '');
 
             if (!empty($rowErrors)) {
                 $errors["row_{$rowNumber}"] = $rowErrors;
+                $rows[] = [
+                    'row_number' => $rowNumber,
+                    'employee_id' => $csvEmployeeId,
+                    'status' => 'fail',
+                    'errors' => $rowErrors,
+                ];
+            } else {
+                $successCount++;
+                $rows[] = [
+                    'row_number' => $rowNumber,
+                    'employee_id' => $csvEmployeeId,
+                    'status' => 'success',
+                    'errors' => [],
+                ];
             }
         }
-        return $errors;
+
+        $summary = sprintf(
+            '%d of %d rows failed. %d imported successfully.',
+            count($errors),
+            $totalRows,
+            $successCount
+        );
+
+        return [
+            'errors' => $errors,
+            'rows' => $rows,
+            'summary' => $summary,
+        ];
     }
+
 
     private function processRow(array $row, array $headers, int $rowNumber): array
     {
         if (count($row) !== count($headers)) {
             $csvEmployeeId = trim($row[0] ?? 'Unknown');
+
             return [
                 "Row {$rowNumber} ({$csvEmployeeId}): Invalid column count. "
-                . "Expected " . count($headers)
-                . " columns, but received " . count($row) . "."
+                . 'Expected ' . count($headers)
+                . ' columns, but received ' . count($row) . '.',
             ];
         }
 
@@ -74,7 +119,7 @@ readonly class UploadAttendanceInteractors
 
         if (!array_key_exists('employee_id', $rowData)) {
             return [
-                "Row {$rowNumber}: Missing 'employee_id' column. Please check your CSV headers."
+                "Row {$rowNumber}: Missing 'employee_id' column. Please check your CSV headers.",
             ];
         }
 
@@ -82,15 +127,15 @@ readonly class UploadAttendanceInteractors
 
         $csvEmployeeId = trim($rowData['employee_id'] ?? '');
         if ($csvEmployeeId === '') {
-            $rowErrors[] = "Employee ID is empty.";
+            $rowErrors[] = 'Employee ID is empty.';
         }
 
         if (empty(trim($rowData['date'] ?? ''))) {
-            $rowErrors[] = "Date is empty.";
+            $rowErrors[] = 'Date is empty.';
         }
 
         if (empty(trim($rowData['in_time'] ?? ''))) {
-            $rowErrors[] = "In time is empty.";
+            $rowErrors[] = 'In time is empty.';
         }
 
         $employeeId = null;
@@ -130,7 +175,7 @@ readonly class UploadAttendanceInteractors
             );
         } catch (\Exception $exception) {
             return [
-                "Row {$rowNumber} ({$csvEmployeeId}): {$exception->getMessage()}"
+                "Row {$rowNumber} ({$csvEmployeeId}): {$exception->getMessage()}",
             ];
         }
     }
