@@ -4,6 +4,7 @@ namespace App\UseCases\Attendance;
 
 use App\Models\Employee;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 
@@ -103,7 +104,7 @@ readonly class UploadAttendanceInteractors
 
         if (!empty($rowErrors)) {
             return array_map(
-                fn ($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
+                fn($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
                 $rowErrors
             );
         }
@@ -125,9 +126,20 @@ readonly class UploadAttendanceInteractors
             return [];
         } catch (ValidationException $exception) {
             return array_map(
-                fn ($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
+                fn($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
                 $exception->validator->errors()->all()
             );
+        } catch (QueryException $exception) {
+            // 🆕 Duplicate error check
+            if ($exception->getCode() === '23000') {
+                return [
+                    "Row {$rowNumber} ({$csvEmployeeId}): Attendance already exists for this employee on this date."
+                ];
+            }
+
+            return [
+                "Row {$rowNumber} ({$csvEmployeeId}): Database error. Please try again."
+            ];
         } catch (\Exception $exception) {
             return [
                 "Row {$rowNumber} ({$csvEmployeeId}): {$exception->getMessage()}"

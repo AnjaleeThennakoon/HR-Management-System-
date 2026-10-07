@@ -39,7 +39,10 @@
                 {{ session('success') }}
             </div>
         @endif
+
+        {{-- CSV Upload Section --}}
         @include('Attendance.CsvUpload')
+
         {{-- Toolbar: Search + Add Button --}}
         <div class="flex items-center justify-between gap-4 mb-6">
             <div class="relative flex-1 max-w-xs">
@@ -172,8 +175,10 @@
             const form = document.getElementById('attendanceForm');
             form.reset();
             form.action = "{{ route('attendance.store') }}";
+
+            document.getElementById('attendanceMethod').value = '';
             document.getElementById('attendanceEditAction').value = '';
-            document.getElementById('attendanceMethod').disabled = true;
+
             document.getElementById('attendanceModalTitle').textContent = 'Add New Attendance';
             document.getElementById('attendanceSubmit').textContent = 'Add Attendance';
             document.getElementById('attendanceModal').classList.remove('hidden');
@@ -186,8 +191,12 @@
         function openEditModal(id, employeeId, date, inTime, outTime) {
             const form = document.getElementById('attendanceForm');
             form.action = '/attendance/' + id;
-            document.getElementById('attendanceMethod').disabled = false;
+
+            document.getElementById('attendanceMethod').value = 'PUT';
             document.getElementById('attendanceEditAction').value = '/attendance/' + id;
+
+            document.getElementById('attendanceEmployee').value = employeeId;
+
             document.getElementById('attendanceDate').value = date;
             document.getElementById('attendanceInTime').value = inTime;
             document.getElementById('attendanceOutTime').value = outTime ?? '';
@@ -210,6 +219,22 @@
             });
 
             document.getElementById('noResults').classList.toggle('hidden', visibleCount !== 0 || rows.length === 0);
+        }
+
+        // 🆕 Toggle Error Details
+        function toggleErrorDetails() {
+            const detailsList = document.getElementById('errorDetailsList');
+            const toggleText = document.getElementById('errorDetailsToggleText');
+
+            if (!detailsList || !toggleText) return;
+
+            if (detailsList.classList.contains('hidden')) {
+                detailsList.classList.remove('hidden');
+                toggleText.textContent = 'Hide details';
+            } else {
+                detailsList.classList.add('hidden');
+                toggleText.textContent = 'See details';
+            }
         }
 
         document.addEventListener('keydown', function (e) {

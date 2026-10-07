@@ -9,7 +9,7 @@
 
 @if($hasCsvErrors)
     <div class="mb-5 p-4 bg-red-50 text-red-700 text-sm rounded-lg ring-1 ring-red-100">
-        <div class="flex items-center gap-2 mb-2">
+        <div class="flex items-center gap-2 mb-3">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -17,9 +17,26 @@
             </svg>
             <span class="font-semibold">CSV Import Errors</span>
         </div>
-        <ul class="list-disc list-inside space-y-1 ml-7">
+
+        {{-- Summary --}}
+        <p class="mb-3 text-sm">
+            {{ count($errors->all()) }} row(s) failed to import. Please check the details below.
+        </p>
+
+        {{-- See Details Button --}}
+        <button type="button" onclick="toggleErrorDetails()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-red-700 text-xs font-medium rounded-md ring-1 ring-red-200 hover:bg-red-50 transition">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
+            </svg>
+            <span id="errorDetailsToggleText">See details</span>
+        </button>
+
+        {{-- Error Details (hidden by default) --}}
+        <ul id="errorDetailsList" class="hidden list-disc list-inside space-y-1 ml-4 mt-3 pt-3 border-t border-red-200">
             @foreach($errors->all() as $error)
-                <li>{{ $error }}</li>
+                <li class="text-xs">{{ $error }}</li>
             @endforeach
         </ul>
     </div>
