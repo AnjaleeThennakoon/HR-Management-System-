@@ -1,13 +1,38 @@
 {{-- resources/views/Attendance/CsvUpload.blade.php --}}
 
 @php
-    $importSummary = session('import_summary');
-    $importRows = session('import_rows', []);
+    $importSummary = $attendanceImport?->summary ?? session('import_summary');
+    $importRows = $attendanceImport?->rows ?? session('import_rows', []);
+    $hasImportFailures = $attendanceImport?->status === 'failed'
+        || collect($importRows)->contains('status', 'fail');
 
-    $hasCsvErrors = !empty($importSummary)
+    $hasCsvErrors = $hasImportFailures
         || $errors->has('csv_file')
         || ($errors->any() && !$errors->has('employee_id') && !$errors->has('date') && !$errors->has('in_time') && !$errors->has('out_time'));
 @endphp
+
+@if($attendanceImport)
+    <script>
+        const attendanceImportUrl = new URL(window.location.href);
+        if (attendanceImportUrl.searchParams.get('import') !== '{{ $attendanceImport->id }};') {
+            attendanceImportUrl.searchParams.set('import', '{{ $attendanceImport->id }}');
+            window.history.replaceState({}, '', attendanceImportUrl);
+        }
+    </script>
+@endif
+
+@if($attendanceImport && in_array($attendanceImport->status, ['queued', 'processing'], true))
+    <p id="attendanceImportStatus"
+       class="mb-5 rounded-lg bg-blue-50 px-4 py-3 text-sm text-blue-800 ring-1 ring-blue-100"
+       role="status"
+       aria-live="polite"
+       data-status-url="{{ route('attendance.imports.status', $attendanceImport->id) }}"
+       data-import-id="{{ $attendanceImport->id }}"
+       data-status="{{ $attendanceImport->status }}">
+        {{ $attendanceImport->status === 'queued' ? 'CSV import is queued and waiting to start.' : 'CSV import is in progress.' }}
+        This page will update automatically when it finishes.
+    </p>
+@endif
 
 @if($hasCsvErrors)
     <div class="mb-5 rounded-xl ring-1 ring-red-200 bg-red-50/50 overflow-hidden">
@@ -25,8 +50,11 @@
                 <div>
                     <h3 class="text-sm font-semibold text-red-800">CSV Import Report</h3>
                     <p class="text-xs text-red-600 mt-0.5">
-                        {{ $importSummary ?? 'Import failed. Please check your CSV file.' }}
+                        {{ $attendanceImport?->error_message ?? $importSummary ?? 'Import failed. Please check your CSV file.' }}
                     </p>
+                    @foreach($errors->get('csv_file') as $uploadError)
+                        <p class="text-xs text-red-700 mt-1">{{ $uploadError }}</p>
+                    @endforeach
                 </div>
             </div>
 
@@ -37,13 +65,13 @@
                          stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
                     </svg>
-                    <span id="errorDetailsToggleText">See details</span>
+                    <span id="errorDetailsToggleText">{{ $hasImportFailures ? 'Hide details' : 'See details' }}</span>
                 </button>
             @endif
         </div>
 
         @if(!empty($importRows))
-            <div id="errorDetailsList" class="hidden border-t border-red-200 bg-white/50">
+            <div id="errorDetailsList" class="{{ $hasImportFailures ? '' : 'hidden' }} border-t border-red-200 bg-white/50">
                 <div class="max-h-96 overflow-y-auto p-4">
                     <table class="w-full text-xs">
                         <thead>
@@ -87,6 +115,47 @@
             </div>
         @endif
     </div>
+@endif
+
+@if($attendanceImport?->status === 'completed' && !$hasCsvErrors)
+    <p class="mb-5 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800 ring-1 ring-green-100"
+       role="status">
+        {{ $importSummary }}
+    </p>
+@endif
+
+@if($attendanceImport && in_array($attendanceImport->status, ['queued', 'processing'], true))
+    <script>
+        const importStatus = document.getElementById('attendanceImportStatus');
+        const pollImportStatus = async () => {
+            try {
+                const response = await fetch(importStatus.dataset.statusUrl, {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Status check failed (${response.status}).`);
+                }
+
+                const result = await response.json();
+                if (result.status === 'completed' || result.status === 'failed') {
+                    window.location.reload();
+                    return;
+                }
+
+                importStatus.textContent = result.status === 'processing'
+                    ? 'CSV import is in progress. This page will update automatically when it finishes.'
+                    : 'CSV import is queued and waiting to start. This page will update automatically when it finishes.';
+                window.setTimeout(pollImportStatus, 2000);
+            } catch (error) {
+                importStatus.textContent = 'Unable to check import status. Retrying automatically.';
+                window.setTimeout(pollImportStatus, 5000);
+            }
+        };
+
+        window.setTimeout(pollImportStatus, 2000);
+    </script>
 @endif
 
 {{-- CSV Upload Section --}}

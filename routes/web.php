@@ -54,6 +54,8 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/attendance/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
     Route::delete('/attendance/{id}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
     Route::post('/attendance/upload', [AttendanceController::class, 'upload'])->name('attendance.upload');
+    Route::get('/attendance/imports/{id}/status', [AttendanceController::class, 'importStatus'])
+        ->name('attendance.imports.status');
 
     Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
     Route::post('leaves', [LeaveController::class, 'store'])->name('leaves.store');

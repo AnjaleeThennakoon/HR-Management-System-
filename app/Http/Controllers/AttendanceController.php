@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ProcessAttendanceCsv;
 use App\Models\Attendance;
+use App\Models\AttendanceImport;
 use App\Models\Employee;
 use App\UseCases\Attendance\DeleteAttendanceInteractors;
 use App\UseCases\Attendance\ListAttendanceInteractors;
@@ -11,9 +12,10 @@ use App\UseCases\Attendance\Request\AttendanceCsvRequest;
 use App\UseCases\Attendance\Request\AttendanceRequest;
 use App\UseCases\Attendance\StoreAttendanceInteractors;
 use App\UseCases\Attendance\UpdateAttendanceInteractors;
-use App\UseCases\Attendance\UploadAttendanceInteractors;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
@@ -24,10 +26,31 @@ class AttendanceController extends Controller
             request('search'),
             request('per_page')
         );
+        $importId = request()->integer('import') ?: (int) session('attendance_import_id', 0);
+        $attendanceImport = $importId > 0
+            ? AttendanceImport::query()
+                ->where('user_id', auth()->id())
+                ->findOrFail($importId)
+            : null;
 
         return view('Attendance.AttendanceDashbord', [
             'attendances' => $attendances,
             'employees' => Employee::all(),
+            'attendanceImport' => $attendanceImport,
+        ]);
+    }
+
+    public function importStatus(Request $request, int $id): JsonResponse
+    {
+        $attendanceImport = AttendanceImport::query()
+            ->where('user_id', $request->user()->id)
+            ->findOrFail($id);
+
+        return response()->json([
+            'status' => $attendanceImport->status,
+            'summary' => $attendanceImport->summary,
+            'rows' => $attendanceImport->rows,
+            'error_message' => $attendanceImport->error_message,
         ]);
     }
 
@@ -56,14 +79,26 @@ class AttendanceController extends Controller
             ->with('success', 'Attendance has been successfully deleted.');
     }
 
-    public function upload(AttendanceCsvRequest $attendanceCsvRequest, UploadAttendanceInteractors $uploadAttendanceInteractors): RedirectResponse
+    public function upload(AttendanceCsvRequest $attendanceCsvRequest): RedirectResponse
     {
-        $filePath = $attendanceCsvRequest->file('csv_file')->store('tempt');
-        \App\Jobs\ProcessAttendanceCsv::dispatch($filePath,auth()->id());
+        $file = $attendanceCsvRequest->file('csv_file');
 
-        ProcessAttendanceCsv::dispatch($filePath,auth()->id());
+        $filename = uniqid().'_'.time().'.csv';
+
+        $path = Storage::disk('local')->putFileAs('temp', $file, $filename);
+        if ($path === false) {
+            throw new \RuntimeException('The attendance CSV could not be stored.');
+        }
+
+        $attendanceImport = AttendanceImport::query()->create([
+            'user_id' => $attendanceCsvRequest->user()->id,
+            'file_path' => $path,
+        ]);
+
+        ProcessAttendanceCsv::dispatch($attendanceImport->id, $path, $attendanceCsvRequest->user()->id);
 
         return redirect()->route('attendance.index')
-            ->with('success','csv is being  processed in the background ,you will be notified   when it completes.');
+            ->with('attendance_import_id', $attendanceImport->id)
+            ->with('success', 'CSV is being processed in the background.');
     }
 }

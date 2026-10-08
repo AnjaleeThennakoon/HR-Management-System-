@@ -2,44 +2,74 @@
 
 namespace App\Jobs;
 
+use App\Models\AttendanceImport;
 use App\UseCases\Attendance\UploadAttendanceInteractors;
-use GuzzleHttp\Psr7\UploadedFile;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Throwable;
 
 class ProcessAttendanceCsv implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $attendanceImportId;
 
-    public $filepath;
+    public int $userId;
 
-    public $userId;
-
-    public function __construct(string $filepath,int $userId)
-    {
-        $this->filepath = $filepath;
+    public function __construct(
+        int $attendanceImportId,
+        public string $filePath,
+        int $userId
+    ) {
+        $this->attendanceImportId = $attendanceImportId;
         $this->userId = $userId;
     }
 
     /**
-     * Execute the job.
-     *
-     * @param  App\Services\AudioProcessor  $processor
-     * @return void
+     * @throws \Exception
      */
-    public function handle(UploadAttendanceInteractors $interactors)
+    public function handle(UploadAttendanceInteractors $interactor): void
     {
-        $file = new UploadedFile(
-          storage_path('app/' . $this->filepath),
-            'attendance.csv',
-            'text/csv',
-            null,
-            true
-        );
-        $interactors->execute($file);
+        $attendanceImport = AttendanceImport::query()->findOrFail($this->attendanceImportId);
+        $attendanceImport->update(['status' => 'processing']);
+
+        $fullPath = Storage::disk('local')->path($this->filePath);
+
+        if (! file_exists($fullPath)) {
+            throw new \Exception("CSV file not found: {$fullPath}");
+        }
+
+        $result = $interactor->executeFromPath($fullPath);
+
+        $attendanceImport->update([
+            'status' => 'completed',
+            'summary' => $result['summary'],
+            'rows' => $result['rows'],
+        ]);
+
+        if (! empty($result['errors'])) {
+            Log::warning('Attendance CSV import completed with invalid rows.', [
+                'user_id' => $this->userId,
+                'file_path' => $this->filePath,
+                'errors' => $result['errors'],
+            ]);
+        }
+
+        Storage::disk('local')->delete($this->filePath);
+    }
+
+    public function failed(?Throwable $exception): void
+    {
+        AttendanceImport::query()
+            ->whereKey($this->attendanceImportId)
+            ->update([
+                'status' => 'failed',
+                'error_message' => 'CSV processing failed. Please check the file and try again.',
+            ]);
     }
 }
