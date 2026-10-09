@@ -9,6 +9,15 @@ class StoreLeaveInteractors
 {
     public function execute(LeaveRequest $leaveRequest): Leave
     {
-        return Leave::create($leaveRequest->validated());
+        $data = $leaveRequest->validated();
+
+        return Leave::create([
+            'employee_id' => $data['employee_id'],
+            'leave_type' => $data['leave_type'],
+            'start_date' => $data['start_date'],
+            'end_date' => $data['end_date'],
+            'reason' => $data['reason'],
+            'status' => $data['status'] ?? 'pending',
+        ]);
     }
 }

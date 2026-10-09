@@ -4,6 +4,7 @@ namespace App\UseCases\Attendance;
 
 use App\Models\Employee;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -27,16 +28,19 @@ readonly class UploadAttendanceInteractors
         }
     }
 
+    /**
+     * @throws Exception
+     */
     public function executeFromPath(string $filePath): array
     {
         if (! file_exists($filePath)) {
-            throw new \Exception("CSV file not found: {$filePath}");
+            throw new Exception("CSV file not found: {$filePath}");
         }
 
         $fileHandle = fopen($filePath, 'r');
 
         if (! $fileHandle) {
-            throw new \Exception("Could not open CSV file: {$filePath}");
+            throw new Exception("Could not open CSV file: {$filePath}");
         }
 
         try {
@@ -80,7 +84,7 @@ readonly class UploadAttendanceInteractors
         $fileHandle = fopen($file->getRealPath(), 'r');
 
         if (! $fileHandle) {
-            throw new \Exception('Could not open CSV file.');
+            throw new Exception('Could not open CSV file.');
         }
 
         try {
@@ -214,6 +218,7 @@ readonly class UploadAttendanceInteractors
             ]);
 
             return [];
+
         } catch (QueryException $exception) {
             if ($exception->getCode() === '23000') {
                 return [
@@ -224,7 +229,7 @@ readonly class UploadAttendanceInteractors
             return [
                 "Row {$rowNumber} ({$csvEmployeeId}): Database error. Please try again.",
             ];
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return [
                 "Row {$rowNumber} ({$csvEmployeeId}): {$exception->getMessage()}",
             ];

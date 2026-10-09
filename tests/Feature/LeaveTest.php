@@ -2,6 +2,8 @@
 
 use App\Models\Employee;
 use App\Models\Leave;
+use App\Models\Support\LeaveSupport;
+use App\Models\SystemConfiguration;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -47,7 +49,6 @@ test('Leave can be created', function () {
         'status' => 'pending',
     ]);
 });
-
 
 test('Leave can be Updated', function () {
     $employee = Employee::factory()->create();
@@ -123,4 +124,202 @@ test('an employee cannot have multiple leave types on the same day', function ()
     $response->assertStatus(302);
     $response->assertSessionHasErrors('leave_type');
     $this->assertDatabaseCount('leaves', 1);
+});
+
+test('leave page loads leave counts from system configuration', function () {
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => [
+            'Annual' => 14,
+            'Medical' => 7,
+            'casual' => 5,
+        ]]
+    );
+
+    $response = $this->actingAs($this->user)->get('/leaves');
+
+    $response->assertOk()
+        ->assertViewHas('leaveCounts', function ($leaveCounts): bool {
+            return $leaveCounts['Annual'] === 14
+                && $leaveCounts['Medical'] === 7
+                && $leaveCounts['casual'] === 5;
+        });
+});
+
+test('employee remaining leave decreases after taking leave', function () {
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => [
+            'Annual' => 14,
+            'Medical' => 7,
+            'casual' => 5,
+        ],
+        ]
+    );
+    $employee = Employee::factory()->create();
+    Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-01',
+        'status' => 'approved',
+    ]);
+
+    $remainingDays = LeaveSupport::getRemainingDays(
+        $employee->id,
+        'Annual',
+        2026
+    );
+
+    expect($remainingDays)->toBe(13);
+    $this->assertDatabaseHas('leaves', [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-01',
+        'status' => 'approved',
+    ]);
+});
+
+test('employee can not get the leave, when he get the full leave', function () {
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => [
+            'Annual' => 0,
+            'Medical' => 1,
+            'casual' => 0,
+        ],
+        ]
+    );
+    $employee = Employee::factory()->create();
+    Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'leave_type' => 'Medical',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-01',
+        'status' => 'approved',
+    ]);
+
+    $remainingDays = LeaveSupport::getRemainingDays(
+        $employee->id,
+        'Medical',
+        2026
+    );
+
+    expect($remainingDays)->toBe(0);
+});
+
+test('employee cannot request leave after using the full allowance', function () {
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => [
+            'Annual' => 0,
+            'Medical' => 1,
+            'casual' => 0,
+        ],
+        ]
+    );
+    $employee = Employee::factory()->create();
+    Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'leave_type' => 'Medical',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-01',
+        'status' => 'approved',
+    ]);
+
+    $response = $this->actingAs($this->user)->post('/leaves', [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Medical',
+        'start_date' => '2026-10-02',
+        'end_date' => '2026-10-02',
+        'reason' => 'Follow-up appointment',
+        'status' => 'pending',
+    ]);
+
+    $response->assertSessionHasErrors('leave_type');
+    $this->assertDatabaseCount('leaves', 1);
+});
+
+test('employee remaining leave decreases by requested number of days', function () {
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => [
+            'Annual' => 14,
+            'Medical' => 7,
+            'casual' => 5,
+        ]]
+    );
+
+    $employee = Employee::factory()->create();
+
+    Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-03',
+        'status' => 'approved',
+    ]);
+
+    expect(
+        LeaveSupport::getRemainingDays($employee->id, 'Annual', 2026)
+    )->toBe(11);
+});
+
+test('leave balance endpoint returns the employee balance for the current year', function () {
+    $this->travelTo('2026-10-08 12:00:00');
+
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => [
+            'Annual' => 14,
+            'Medical' => 7,
+            'casual' => 5,
+        ]]
+    );
+    $employee = Employee::factory()->create();
+    Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-03',
+        'status' => 'approved',
+    ]);
+
+    $response = $this->actingAs($this->user)->getJson(route('leaves.balance', [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+    ]));
+
+    $response->assertOk()->assertJson([
+        'success' => true,
+        'balance' => [
+            'max_days' => 14,
+            'used_days' => 3,
+            'remaining_days' => 11,
+            'year' => 2026,
+        ],
+    ]);
+});
+
+test('leave balance endpoint rejects unsupported leave types', function () {
+    $employee = Employee::factory()->create();
+
+    $response = $this->actingAs($this->user)->getJson(route('leaves.balance', [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Unpaid',
+    ]));
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors('leave_type');
+});
+
+test('leave balance endpoint returns 422 for an unknown employee', function () {
+    $response = $this->actingAs($this->user)->getJson(route('leaves.balance', [
+        'employee_id' => 999999,
+        'leave_type' => 'Annual',
+    ]));
+
+    $response->assertUnprocessable()
+        ->assertJsonValidationErrors('employee_id');
 });

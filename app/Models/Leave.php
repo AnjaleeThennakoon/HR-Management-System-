@@ -31,6 +31,7 @@ class Leave extends Model
         'leave_type',
         'employee_id',
         'department_id',
+        'day',
     ];
 
     public function employee(): BelongsTo
