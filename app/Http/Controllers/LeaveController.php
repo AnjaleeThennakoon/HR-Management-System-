@@ -66,17 +66,30 @@ class LeaveController extends Controller
     {
         $validated = $leaveBalanceRequest->validate([
             'employee_id' => ['required', 'integer', 'exists:employees,id'],
-            'leave_type' => ['required', 'string', Rule::in(['Annual', 'Medical', 'casual'])],
+            'leave_type' => ['nullable', 'string', Rule::in(['Annual', 'Medical', 'casual'])],
         ]);
 
-        $balance = LeaveSupport::getBalance(
-            (int) $validated['employee_id'],
-            $validated['leave_type']
-        );
+        $employeeId = (int) $validated['employee_id'];
+
+        if (! empty($validated['leave_type'])) {
+            $balance = LeaveSupport::getBalance(
+                $employeeId,
+                $validated['leave_type']
+            );
+
+            return response()->json([
+                'success' => true,
+                'balance' => $balance,
+            ]);
+        }
 
         return response()->json([
             'success' => true,
-            'balance' => $balance,
+            'balances' => [
+                'Annual' => LeaveSupport::getBalance($employeeId, 'Annual'),
+                'Medical' => LeaveSupport::getBalance($employeeId, 'Medical'),
+                'casual' => LeaveSupport::getBalance($employeeId, 'casual'),
+            ],
         ]);
     }
 }

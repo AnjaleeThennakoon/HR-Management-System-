@@ -196,6 +196,8 @@
             if (balanceCard) balanceCard.classList.add('hidden');
             const quotaBadge = document.getElementById('leaveQuotaBadge');
             if (quotaBadge) quotaBadge.classList.add('hidden');
+            const overviewContainer = document.getElementById('employeeBalancesOverview');
+            if (overviewContainer) overviewContainer.classList.add('hidden');
 
             document.getElementById('leaveModal').classList.remove('hidden');
         }
@@ -218,9 +220,67 @@
             document.getElementById('leaveModalTitle').textContent = 'Edit Leave';
             document.getElementById('leaveSubmit').textContent = 'Update Leave';
 
+            loadEmployeeBalances(employeeId);
             checkLeaveBalance();
 
             document.getElementById('leaveModal').classList.remove('hidden');
+        }
+
+        function loadEmployeeBalances(employeeId) {
+            const overviewContainer = document.getElementById('employeeBalancesOverview');
+            const loadingEl = document.getElementById('overviewLoading');
+            if (!overviewContainer) return;
+
+            if (!employeeId) {
+                overviewContainer.classList.add('hidden');
+                return;
+            }
+
+            overviewContainer.classList.remove('hidden');
+            if (loadingEl) loadingEl.classList.remove('hidden');
+
+            fetch(`{{ route('leaves.balance') }}?employee_id=${employeeId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Failed to load balances');
+                    return response.json();
+                })
+                .then(data => {
+                    if (loadingEl) loadingEl.classList.add('hidden');
+                    if (data.success && data.balances) {
+                        const types = [
+                            { key: 'Annual', availId: 'availAnnual', maxId: 'maxAnnual' },
+                            { key: 'Medical', availId: 'availMedical', maxId: 'maxMedical' },
+                            { key: 'casual', availId: 'availCasual', maxId: 'maxCasual' },
+                        ];
+
+                        types.forEach(t => {
+                            const bal = data.balances[t.key];
+                            const availEl = document.getElementById(t.availId);
+                            const maxEl = document.getElementById(t.maxId);
+                            if (bal && availEl && maxEl) {
+                                availEl.textContent = bal.remaining_days;
+                                maxEl.textContent = bal.max_days;
+
+                                if (bal.remaining_days <= 0) {
+                                    availEl.className = 'text-red-500 font-bold';
+                                } else {
+                                    availEl.className = 'text-emerald-600 font-bold';
+                                }
+                            }
+                        });
+                    }
+                })
+                .catch(() => {
+                    if (loadingEl) loadingEl.classList.add('hidden');
+                });
+        }
+
+        function selectLeaveType(type) {
+            const typeSelect = document.getElementById('leaveType');
+            if (typeSelect) {
+                typeSelect.value = type;
+                checkLeaveBalance();
+            }
         }
 
         function checkLeaveBalance() {
@@ -274,8 +334,18 @@
         document.addEventListener('DOMContentLoaded', function () {
             const employeeSelect = document.getElementById('leaveEmployee');
             const typeSelect = document.getElementById('leaveType');
-            if (employeeSelect) employeeSelect.addEventListener('change', checkLeaveBalance);
-            if (typeSelect) typeSelect.addEventListener('change', checkLeaveBalance);
+            if (employeeSelect) {
+                employeeSelect.addEventListener('change', function () {
+                    loadEmployeeBalances(this.value);
+                    checkLeaveBalance();
+                });
+                if (employeeSelect.value) {
+                    loadEmployeeBalances(employeeSelect.value);
+                }
+            }
+            if (typeSelect) {
+                typeSelect.addEventListener('change', checkLeaveBalance);
+            }
         });
 
         function filterLeaves() {

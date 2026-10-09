@@ -344,3 +344,51 @@ test('leave can be created without an end date and defaults to start date', func
         'reason' => 'Single day leave',
     ]);
 });
+
+test('leave balance endpoint returns all leave balances when leave_type is omitted', function () {
+    $this->travelTo('2026-10-08 12:00:00');
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => [
+            'Annual' => 14,
+            'Medical' => 7,
+            'casual' => 5,
+        ]]
+    );
+    $employee = Employee::factory()->create();
+    Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-03',
+        'status' => 'approved',
+    ]);
+
+    $response = $this->actingAs($this->user)->getJson(route('leaves.balance', [
+        'employee_id' => $employee->id,
+    ]));
+
+    $response->assertOk()->assertJson([
+        'success' => true,
+        'balances' => [
+            'Annual' => [
+                'max_days' => 14,
+                'used_days' => 3,
+                'remaining_days' => 11,
+                'year' => 2026,
+            ],
+            'Medical' => [
+                'max_days' => 7,
+                'used_days' => 0,
+                'remaining_days' => 7,
+                'year' => 2026,
+            ],
+            'casual' => [
+                'max_days' => 5,
+                'used_days' => 0,
+                'remaining_days' => 5,
+                'year' => 2026,
+            ],
+        ],
+    ]);
+});
