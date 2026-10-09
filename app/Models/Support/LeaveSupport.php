@@ -4,9 +4,10 @@ namespace App\Models\Support;
 
 use App\Models\Leave;
 use App\Models\SystemConfiguration;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 
-class LeaveSupport
+class LeaveSupport extends Model
 {
     public static function getRemainingDays(
         int $employeeId,

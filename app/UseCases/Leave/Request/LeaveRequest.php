@@ -2,12 +2,9 @@
 
 namespace App\UseCases\Leave\Request;
 
-use App\Models\Leave;
-use App\Models\Support\LeaveSupport;
+use App\UseCases\Leave\Request\Validators\LeaveValidator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class LeaveRequest extends FormRequest
 {

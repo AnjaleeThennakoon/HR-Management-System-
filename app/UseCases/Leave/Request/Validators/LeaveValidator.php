@@ -1,9 +1,10 @@
 <?php
 
-namespace App\UseCases\Leave\Request;
+namespace App\UseCases\Leave\Request\Validators;
 
 use App\Models\Leave;
 use App\Models\Support\LeaveSupport;
+use App\UseCases\Leave\Request\LeaveRequest;
 use Carbon\Carbon;
 use Illuminate\Validation\Validator;
 
