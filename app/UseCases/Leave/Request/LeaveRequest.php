@@ -31,53 +31,7 @@ class LeaveRequest extends FormRequest
     public function after(): array
     {
         return [
-            function (Validator $validator): void {
-                if ($validator->errors()->hasAny([
-                    'employee_id',
-                    'leave_type',
-                    'start_date',
-                    'end_date',
-                ])) {
-                    return;
-                }
-
-                $employeeId = (int) $this->input('employee_id');
-                $leaveType = $this->input('leave_type');
-                $startDate = Carbon::parse($this->input('start_date'));
-                $endDate = Carbon::parse($this->input('end_date'));
-                $leaveId = $this->route('id')
-                    ?? $this->route('leave')?->id;
-
-                $overlapQuery = Leave::query()
-                    ->where('employee_id', $employeeId)
-                    ->whereDate('start_date', '<=', $endDate->toDateString())
-                    ->whereDate('end_date', '>=', $startDate->toDateString());
-
-                if ($leaveId !== null) {
-                    $overlapQuery->where('id', '!=', $leaveId);
-                }
-
-                if ($overlapQuery->exists()) {
-                    $validator->errors()->add(
-                        'leave_type',
-                        'The employee already has a leave request that overlaps these dates.'
-                    );
-                }
-
-                $requestedDays = $startDate->diffInDays($endDate) + 1;
-                $remainingDays = LeaveSupport::getRemainingDays(
-                    $employeeId,
-                    $leaveType,
-                    excludeLeaveId: $leaveId
-                );
-
-                if ($requestedDays > $remainingDays) {
-                    $validator->errors()->add(
-                        'leave_type',
-                        "Insufficient leave balance. You have {$remainingDays} day(s) remaining, but requested {$requestedDays} day(s)."
-                    );
-                }
-            },
+            new LeaveValidator($this),
         ];
     }
 
