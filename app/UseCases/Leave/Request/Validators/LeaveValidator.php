@@ -33,7 +33,7 @@ class LeaveValidator
     {
         $employeeId = (int) $this->request->input('employee_id');
         $startDate = Carbon::parse($this->request->input('start_date'));
-        $endDate = Carbon::parse($this->request->input('end_date'));
+        $endDate = Carbon::parse($this->request->input('end_date') ?: $this->request->input('start_date'));
         $leaveId = $this->request->route('id') ?? $this->request->route('leave')?->id;
 
         $overlapQuery = Leave::query()
@@ -58,7 +58,7 @@ class LeaveValidator
         $employeeId = (int) $this->request->input('employee_id');
         $leaveType = $this->request->input('leave_type');
         $startDate = Carbon::parse($this->request->input('start_date'));
-        $endDate = Carbon::parse($this->request->input('end_date'));
+        $endDate = Carbon::parse($this->request->input('end_date') ?: $this->request->input('start_date'));
         $leaveId = $this->request->route('id') ?? $this->request->route('leave')?->id;
 
         $requestedDays = $startDate->diffInDays($endDate) + 1;

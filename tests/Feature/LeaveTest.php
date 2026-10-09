@@ -323,3 +323,24 @@ test('leave balance endpoint returns 422 for an unknown employee', function () {
     $response->assertUnprocessable()
         ->assertJsonValidationErrors('employee_id');
 });
+
+test('leave can be created without an end date and defaults to start date', function () {
+    $employee = Employee::factory()->create();
+
+    $response = $this->actingAs($this->user)->post(route('leaves.store'), [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-15',
+        'reason' => 'Single day leave',
+        'status' => 'pending',
+    ]);
+
+    $response->assertRedirect(route('leaves.index'));
+    $this->assertDatabaseHas('leaves', [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-15',
+        'end_date' => '2026-10-15',
+        'reason' => 'Single day leave',
+    ]);
+});

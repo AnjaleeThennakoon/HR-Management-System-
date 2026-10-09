@@ -175,9 +175,14 @@
     </div>
 
     {{-- Modal --}}
-    @include('Leave.partials.leave-modal', ['employees' => $employees])
+    @include('Leave.Partials.Leave-modal', [
+        'employees' => $employees,
+        'leaveCounts' => $leaveCounts ?? [],
+    ])
 
     <script>
+        const leaveCounts = @json($leaveCounts ?? []);
+
         function openAddModal() {
             const form = document.getElementById('leaveForm');
             form.reset();
@@ -186,6 +191,12 @@
             document.getElementById('leaveModalTitle').textContent = 'Add New Leave';
             document.getElementById('leaveSubmit').textContent = 'Add Leave';
             document.getElementById('edit_leave_id').value = '';
+            
+            const balanceCard = document.getElementById('leaveBalanceCard');
+            if (balanceCard) balanceCard.classList.add('hidden');
+            const quotaBadge = document.getElementById('leaveQuotaBadge');
+            if (quotaBadge) quotaBadge.classList.add('hidden');
+
             document.getElementById('leaveModal').classList.remove('hidden');
         }
 
@@ -206,8 +217,66 @@
             document.getElementById('edit_leave_id').value = id;
             document.getElementById('leaveModalTitle').textContent = 'Edit Leave';
             document.getElementById('leaveSubmit').textContent = 'Update Leave';
+
+            checkLeaveBalance();
+
             document.getElementById('leaveModal').classList.remove('hidden');
         }
+
+        function checkLeaveBalance() {
+            const employeeSelect = document.getElementById('leaveEmployee');
+            const typeSelect = document.getElementById('leaveType');
+            const employeeId = employeeSelect ? employeeSelect.value : '';
+            const leaveType = typeSelect ? typeSelect.value : '';
+            const balanceCard = document.getElementById('leaveBalanceCard');
+            const quotaBadge = document.getElementById('leaveQuotaBadge');
+            const quotaCount = document.getElementById('leaveQuotaCount');
+
+            if (leaveType && leaveCounts[leaveType] !== undefined) {
+                if (quotaCount) quotaCount.textContent = leaveCounts[leaveType];
+                if (quotaBadge) quotaBadge.classList.remove('hidden');
+            } else if (quotaBadge) {
+                quotaBadge.classList.add('hidden');
+            }
+
+            if (!employeeId || !leaveType) {
+                if (balanceCard) balanceCard.classList.add('hidden');
+                return;
+            }
+
+            fetch(`{{ route('leaves.balance') }}?employee_id=${employeeId}&leave_type=${leaveType}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Balance check failed');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success && data.balance && balanceCard) {
+                        document.getElementById('balanceMaxDays').textContent = data.balance.max_days;
+                        document.getElementById('balanceUsedDays').textContent = data.balance.used_days;
+                        const remainingEl = document.getElementById('balanceRemainingDays');
+                        remainingEl.textContent = data.balance.remaining_days;
+
+                        if (data.balance.remaining_days <= 0) {
+                            balanceCard.className = 'mt-2 p-2.5 rounded-lg text-xs border border-red-200 bg-red-50 text-red-700 transition-all';
+                            remainingEl.className = 'font-bold text-red-700';
+                        } else {
+                            balanceCard.className = 'mt-2 p-2.5 rounded-lg text-xs border border-indigo-100 bg-indigo-50/60 text-indigo-700 transition-all';
+                            remainingEl.className = 'font-bold text-indigo-700';
+                        }
+                        balanceCard.classList.remove('hidden');
+                    }
+                })
+                .catch(() => {
+                    if (balanceCard) balanceCard.classList.add('hidden');
+                });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const employeeSelect = document.getElementById('leaveEmployee');
+            const typeSelect = document.getElementById('leaveType');
+            if (employeeSelect) employeeSelect.addEventListener('change', checkLeaveBalance);
+            if (typeSelect) typeSelect.addEventListener('change', checkLeaveBalance);
+        });
 
         function filterLeaves() {
             const query = document.getElementById('searchInput').value.toLowerCase();

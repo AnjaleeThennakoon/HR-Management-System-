@@ -17,7 +17,7 @@
         <form id="leaveForm" method="POST" action="{{ route('leaves.store') }}" class="p-5 space-y-4">
             @csrf
             <input type="hidden" name="_method" id="leaveMethod" value="PUT" disabled>
-            <input type="hidden" name="_leave_id" id="leaveId" value="{{ old('_leave_id') }}">
+            <input type="hidden" name="_leave_id" id="edit_leave_id" value="{{ old('_leave_id') }}">
 
             {{-- Employee --}}
             <div>
@@ -40,19 +40,39 @@
 
             {{-- Leave Type --}}
             <div>
-                <label for="leaveType" class="block text-sm font-medium text-gray-700 mb-1.5">
-                    Leave Type <span class="text-red-500">*</span>
-                </label>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label for="leaveType" class="block text-sm font-medium text-gray-700">
+                        Leave Type <span class="text-red-500">*</span>
+                    </label>
+                    <span id="leaveQuotaBadge" class="hidden text-xs px-2 py-0.5 rounded-full font-medium bg-gray-100 text-gray-600">
+                        Allowed: <span id="leaveQuotaCount">0</span> days/yr
+                    </span>
+                </div>
                 <select id="leaveType" name="leave_type" required
                         class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
                     <option value="">Select Type</option>
-                    <option value="Annual" @selected(old('leave_type') == 'Annual')>Annual</option>
-                    <option value="Medical" @selected(old('leave_type') == 'Medical')>Medical</option>
-                    <option value="casual" @selected(old('leave_type') == 'casual')>Casual</option>
+                    <option value="Annual" @selected(old('leave_type') == 'Annual')>
+                        Annual ({{ $leaveCounts['Annual'] ?? 0 }} days)
+                    </option>
+                    <option value="Medical" @selected(old('leave_type') == 'Medical')>
+                        Medical ({{ $leaveCounts['Medical'] ?? 0 }} days)
+                    </option>
+                    <option value="casual" @selected(old('leave_type') == 'casual')>
+                        Casual ({{ $leaveCounts['casual'] ?? 0 }} days)
+                    </option>
                 </select>
                 @error('leave_type')
                 <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
                 @enderror
+
+                {{-- Live Balance Feedback --}}
+                <div id="leaveBalanceCard" class="hidden mt-2 p-2.5 rounded-lg text-xs border border-indigo-100 bg-indigo-50/60 transition-all">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Allowance: <strong id="balanceMaxDays" class="text-gray-900">0</strong>d</span>
+                        <span class="text-gray-600">Used: <strong id="balanceUsedDays" class="text-gray-900">0</strong>d</span>
+                        <span class="text-indigo-700 font-semibold">Remaining: <span id="balanceRemainingDays">0</span>d</span>
+                    </div>
+                </div>
             </div>
 
             {{-- Start Date + End Date --}}
@@ -71,10 +91,11 @@
 
                 <div>
                     <label for="leaveEndDate" class="block text-sm font-medium text-gray-700 mb-1.5">
-                        End Date <span class="text-red-500">*</span>
+                        End Date
                     </label>
-                    <input type="date" id="leaveEndDate" name="end_date" required
+                    <input type="date" id="leaveEndDate" name="end_date"
                            value="{{ old('end_date') }}"
+
                            class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
                     @error('end_date')
                     <p class="mt-1 text-xs text-red-500">{{ $message }}</p>
