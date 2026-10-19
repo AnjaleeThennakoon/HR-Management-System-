@@ -140,7 +140,7 @@
                             {{ $leave->approved_at ? \Carbon\Carbon::parse($leave->approved_at)->format('d M Y, h:i A') : '-' }}
                         </td>
                         <td class="py-3.5 px-4 text-xs text-gray-500">
-                            {{ $leave->approver->name ?? '-' }}
+                            {{ $leave->user?->name ?? '-' }}
                         </td>
                         <td class="py-3.5 px-4 text-right">
                             <div class="inline-flex items-center gap-1">

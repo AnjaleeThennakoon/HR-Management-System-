@@ -57,10 +57,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/attendance/imports/{id}/status', [AttendanceController::class, 'importStatus'])->name('attendance.imports.status');
 
     Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
-    Route::get('leaves/balance', [LeaveController::class, 'getBalance'])->name('leaves.balance');
     Route::post('leaves', [LeaveController::class, 'store'])->name('leaves.store');
     Route::put('leaves/{id}', [LeaveController::class, 'update'])->name('leaves.update');
     Route::delete('leaves/{id}', [LeaveController::class, 'destroy'])->name('leaves.destroy');
+    Route::get('leaves/balance', [LeaveController::class, 'getBalance'])->name('leaves.balance');
     Route::post('leaves/approval', [LeaveController::class, 'updateApproval'])->name('leave-approval.store');
 
 });

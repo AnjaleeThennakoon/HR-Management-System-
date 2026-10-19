@@ -13,8 +13,7 @@ use Illuminate\Http\RedirectResponse;
 
 class DesignationController extends Controller
 {
-    public function index(
-        ListDesignationInteractors $listDesignationInteractor): View
+    public function index(ListDesignationInteractors $listDesignationInteractor): View
     {
         $designations = $listDesignationInteractor->execute(
             request('search'),

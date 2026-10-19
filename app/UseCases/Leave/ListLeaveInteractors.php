@@ -10,7 +10,7 @@ class ListLeaveInteractors
 {
     public function execute(?string $search = null, ?int $perPage = null): LengthAwarePaginator|Collection
     {
-        $query = Leave::with('employee');
+        $query = Leave::with(['employee', 'user']);
 
         if ($search) {
             $query->where(function ($q) use ($search) {
