@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AttendanceImport extends Model
 {
     protected $fillable = [
-        'user_id',
+        'employee_id',
         'file_path',
         'status',
         'summary',
@@ -21,8 +21,8 @@ class AttendanceImport extends Model
         'summary' => 'array',
     ];
 
-    public function user(): BelongsTo
+    public function employee(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Employee::class);
     }
 }

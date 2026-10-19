@@ -6,6 +6,7 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HolidayController;
+use App\Http\Controllers\LeaveApprovalController;
 use App\Http\Controllers\LeaveController;
 use Illuminate\Support\Facades\Route;
 
@@ -61,5 +62,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('leaves', [LeaveController::class, 'store'])->name('leaves.store');
     Route::put('leaves/{id}', [LeaveController::class, 'update'])->name('leaves.update');
     Route::delete('leaves/{id}', [LeaveController::class, 'destroy'])->name('leaves.destroy');
+
+    Route::get('leavesApproval', [LeaveApprovalController::class, 'index'])->name('leave-approval.index');
+    Route::post('leavesApproval', [LeaveApprovalController::class, 'store'])->name('leave-approval.store');
+    Route::put('leavesApproval/{id}', [LeaveApprovalController::class, 'update'])->name('leave-approval.update');
+    Route::delete('leavesApproval/{id}', [LeaveApprovalController::class, 'destroy'])->name('leave-approval.destroy');
 
 });

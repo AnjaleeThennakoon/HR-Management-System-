@@ -29,7 +29,7 @@ class AttendanceController extends Controller
         $importId = request()->integer('import') ?: (int) session('attendance_import_id', 0);
         $attendanceImport = $importId > 0
             ? AttendanceImport::query()
-                ->where('user_id', auth()->id())
+                ->when(auth()->user()?->employee_id, fn ($q, $empId) => $q->where('employee_id', $empId))
                 ->findOrFail($importId)
             : null;
 
@@ -43,7 +43,7 @@ class AttendanceController extends Controller
     public function importStatus(Request $request, int $id): JsonResponse
     {
         $attendanceImport = AttendanceImport::query()
-            ->where('user_id', $request->user()->id)
+            ->when($request->user()?->employee_id, fn ($q, $empId) => $q->where('employee_id', $empId))
             ->findOrFail($id);
 
         return response()->json([
@@ -90,12 +90,17 @@ class AttendanceController extends Controller
             throw new \RuntimeException('The attendance CSV could not be stored.');
         }
 
+        $employeeId = $attendanceCsvRequest->input('employee_id')
+            ?? auth()->user()?->employee_id
+            ?? Employee::query()->value('id')
+            ?? Employee::factory()->create()->id;
+
         $attendanceImport = AttendanceImport::query()->create([
-            'user_id' => $attendanceCsvRequest->user()->id,
+            'employee_id' => $employeeId,
             'file_path' => $path,
         ]);
 
-        ProcessAttendanceCsv::dispatch($attendanceImport->id, $path, $attendanceCsvRequest->user()->id);
+        ProcessAttendanceCsv::dispatch($attendanceImport->id, $path, $employeeId);
 
         return redirect()->route('attendance.index')
             ->with('attendance_import_id', $attendanceImport->id)

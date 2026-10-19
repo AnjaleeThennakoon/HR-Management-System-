@@ -24,8 +24,12 @@ class DepartmentFactory extends Factory
 
     public function definition(): array
     {
+        static $index = 0;
+        $name = self::DEPARTMENTS[$index % count(self::DEPARTMENTS)].($index >= count(self::DEPARTMENTS) ? ' '.($index + 1) : '');
+        $index++;
+
         return [
-            'name' => $this->faker->unique()->randomElement(self::DEPARTMENTS),
+            'name' => $name,
         ];
     }
 

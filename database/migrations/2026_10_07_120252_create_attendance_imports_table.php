@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('attendance_imports', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
             $table->string('file_path');
             $table->string('status')->default('queued');
             $table->json('summary')->nullable();
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->text('error_message')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'status']);
+            $table->index(['employee_id', 'status']);
         });
     }
 

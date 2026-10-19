@@ -19,15 +19,15 @@ class ProcessAttendanceCsv implements ShouldQueue
 
     public int $attendanceImportId;
 
-    public int $userId;
+    public int $employeeId;
 
     public function __construct(
         int $attendanceImportId,
         public string $filePath,
-        int $userId
+        int $employeeId
     ) {
         $this->attendanceImportId = $attendanceImportId;
-        $this->userId = $userId;
+        $this->employeeId = $employeeId;
     }
 
     /**
@@ -54,7 +54,7 @@ class ProcessAttendanceCsv implements ShouldQueue
 
         if (! empty($result['errors'])) {
             Log::warning('Attendance CSV import completed with invalid rows.', [
-                'user_id' => $this->userId,
+                'employee_id' => $this->employeeId,
                 'file_path' => $this->filePath,
                 'errors' => $result['errors'],
             ]);
