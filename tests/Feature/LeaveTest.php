@@ -20,6 +20,7 @@ test('leave list page successfully loads', function () {
 
     $response->assertOk()
         ->assertSee('id="edit_leave_id"', false)
+        ->assertSee('id="approvalLiveDateTime"', false)
         ->assertViewHas('leaves', function ($leaves): bool {
             return $leaves->count() === 10;
         });
@@ -32,7 +33,6 @@ test('Leave can be created', function () {
         'start_date' => '2024-01-01',
         'end_date' => '2024-01-10',
         'reason' => 'Vacation',
-        'status' => 'pending',
     ];
 
     $response = $this->actingAs($this->user)->post('/leaves', $leaveData);
@@ -84,6 +84,69 @@ test('Leave can be Updated', function () {
     ]);
 });
 
+test('leave approval can be updated', function () {
+    $this->travelTo('2026-10-19 15:49:00');
+
+    $leave = Leave::factory()->create([
+        'status' => 'pending',
+        'remarks' => null,
+        'approved_at' => null,
+    ]);
+
+    $response = $this->actingAs($this->user)->post(route('leave-approval.store'), [
+        'leave_id' => $leave->id,
+        'employee_id' => $leave->employee_id,
+        'status' => 'approved',
+        'remarks' => 'Approved by manager.',
+    ]);
+
+    $response->assertRedirect(route('leaves.index'));
+    $this->assertDatabaseHas('leaves', [
+        'id' => $leave->id,
+        'status' => 'approved',
+        'remarks' => 'Approved by manager.',
+        'approved_at' => '2026-10-19 15:49:00',
+        'user_id' => $this->user->id,
+    ]);
+});
+
+test('leave approval rejects an invalid status without changing the leave', function () {
+    $leave = Leave::factory()->create([
+        'status' => 'pending',
+    ]);
+
+    $response = $this->actingAs($this->user)->from(route('leaves.index'))
+        ->post(route('leave-approval.store'), [
+            'leave_id' => $leave->id,
+            'status' => 'invalid',
+        ]);
+
+    $response->assertSessionHasErrors('status');
+    $this->assertDatabaseHas('leaves', [
+        'id' => $leave->id,
+        'status' => 'pending',
+    ]);
+});
+
+test('resetting leave approval to pending clears its approval timestamp', function () {
+    $leave = Leave::factory()->create([
+        'status' => 'approved',
+        'approved_at' => '2026-10-18 10:00:00',
+    ]);
+
+    $response = $this->actingAs($this->user)->post(route('leave-approval.store'), [
+        'leave_id' => $leave->id,
+        'status' => 'pending',
+    ]);
+
+    $response->assertRedirect(route('leaves.index'));
+    $this->assertDatabaseHas('leaves', [
+        'id' => $leave->id,
+        'status' => 'pending',
+        'approved_at' => null,
+    ]);
+});
+
 test('Leave can be Deleted', function () {
     $employee = Employee::factory()->create();
     $leave = Leave::factory()->create([
@@ -106,20 +169,22 @@ test('Leave can be Deleted', function () {
 
 test('an employee cannot have multiple leave types on the same day', function () {
     $employee = Employee::factory()->create();
+
     Leave::factory()->create([
         'employee_id' => $employee->id,
         'start_date' => '2024-01-01',
         'end_date' => '2024-01-01',
         'leave_type' => 'Annual',
-    ]);
-    $leave2 = Leave::factory()->make([
-        'employee_id' => $employee->id,
-        'start_date' => '2024-01-01',
-        'end_date' => '2024-01-01',
-        'leave_type' => 'Medical',
+        'status' => 'pending',
     ]);
 
-    $response = $this->actingAs($this->user)->post('/leaves', $leave2->toArray());
+    $response = $this->actingAs($this->user)->post('/leaves', [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Medical',
+        'start_date' => '2024-01-01',
+        'end_date' => '2024-01-01',
+        'reason' => 'Sick leave',
+    ]);
 
     $response->assertStatus(302);
     $response->assertSessionHasErrors('leave_type');

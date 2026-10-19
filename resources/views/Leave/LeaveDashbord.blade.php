@@ -39,7 +39,7 @@
             </div>
         @endif
 
-        {{-- Toolbar: Search + Add Button --}}
+        {{-- Toolbar --}}
         <div class="flex items-center justify-between gap-4 mb-6">
             <div class="relative flex-1 max-w-xs">
                 <svg xmlns="http://www.w3.org/2000/svg"
@@ -49,11 +49,11 @@
                           d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/>
                 </svg>
                 <input type="text" id="searchInput" onkeyup="filterLeaves()" placeholder="Search by employee or type..."
-                       class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition">
+                       class="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
             </div>
 
             <button onclick="openAddModal()"
-                    class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-gray-800 hover:shadow-md active:scale-[0.98] transition-all duration-200 whitespace-nowrap">
+                    class="inline-flex items-center gap-1.5 px-4 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg shadow-sm hover:bg-gray-800 hover:shadow-md active:scale-[0.98] transition-all whitespace-nowrap">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
                      stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
@@ -70,9 +70,12 @@
                     <th class="py-3 px-4 font-semibold">#</th>
                     <th class="py-3 px-4 font-semibold">Employee</th>
                     <th class="py-3 px-4 font-semibold">Type</th>
+                    <th class="py-3 px-4 font-semibold">Reason</th>
                     <th class="py-3 px-4 font-semibold">Start Date</th>
                     <th class="py-3 px-4 font-semibold">End Date</th>
                     <th class="py-3 px-4 font-semibold">Status</th>
+                    <th class="py-3 px-4 font-semibold">Approved At</th>
+                    <th class="py-3 px-4 font-semibold">Approved User</th>
                     <th class="py-3 px-4 font-semibold text-right">Actions</th>
                 </tr>
                 </thead>
@@ -98,6 +101,11 @@
                                 {{ $leave->leave_type }}
                             </span>
                         </td>
+                        <td class="py-3.5 px-4 max-w-xs">
+                            <span class="leave-reason text-gray-600 text-xs" title="{{ $leave->reason }}">
+                                {{ \Illuminate\Support\Str::limit($leave->reason, 40) }}
+                            </span>
+                        </td>
                         <td class="py-3.5 px-4">
                             <span class="leave-start inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700">
                                 {{ \Carbon\Carbon::parse($leave->start_date)->format('d M Y') }}
@@ -111,14 +119,28 @@
                         <td class="py-3.5 px-4">
                             @php
                                 $statusColors = [
-                                    'pending' => 'bg-yellow-50 text-yellow-700',
-                                    'approved' => 'bg-green-50 text-green-700',
-                                    'rejected' => 'bg-red-50 text-red-700',
+                                    'pending'  => 'bg-yellow-50 text-yellow-700 hover:bg-yellow-100',
+                                    'approved' => 'bg-green-50 text-green-700 hover:bg-green-100',
+                                    'rejected' => 'bg-red-50 text-red-700 hover:bg-red-100',
                                 ];
                             @endphp
-                            <span class="leave-status inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium {{ $statusColors[$leave->status] ?? 'bg-gray-100 text-gray-700' }}">
+                            <button type="button"
+                                    onclick="openApprovalModal(
+                                        {{ $leave->id }},
+                                        {{ $leave->employee_id }},
+                                        '{{ $leave->status }}',
+                                        '{{ addslashes($leave->remarks ?? '') }}'
+                                    )"
+                                    class="leave-status inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $statusColors[$leave->status] ?? 'bg-gray-100 text-gray-700' }}"
+                                    title="Click to update approval status">
                                 {{ ucfirst($leave->status) }}
-                            </span>
+                            </button>
+                        </td>
+                        <td class="py-3.5 px-4 text-xs text-gray-500">
+                            {{ $leave->approved_at ? \Carbon\Carbon::parse($leave->approved_at)->format('d M Y, h:i A') : '-' }}
+                        </td>
+                        <td class="py-3.5 px-4 text-xs text-gray-500">
+                            {{ $leave->approver->name ?? '-' }}
                         </td>
                         <td class="py-3.5 px-4 text-right">
                             <div class="inline-flex items-center gap-1">
@@ -129,8 +151,7 @@
                                             '{{ $leave->leave_type }}',
                                             '{{ $leave->start_date }}',
                                             '{{ $leave->end_date }}',
-                                            '{{ addslashes($leave->reason) }}',
-                                            '{{ $leave->status }}'
+                                            '{{ addslashes($leave->reason) }}'
                                         )"
                                         class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -149,7 +170,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="py-12 text-center">
+                        <td colspan="10" class="py-12 text-center">
                             <div class="flex flex-col items-center gap-2 text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none"
                                      viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -170,19 +191,20 @@
             No leave records match your search.
         </p>
 
-        {{-- 👇 Test එකට ඕන hidden input එක --}}
         <input type="hidden" id="edit_leave_id">
     </div>
 
-    {{-- Modal --}}
+    {{-- Modals --}}
     @include('Leave.Partials.Leave-modal', [
         'employees' => $employees,
         'leaveCounts' => $leaveCounts ?? [],
     ])
+    @include('Leave.Partials.LeaveApproval-modal')
 
     <script>
         const leaveCounts = @json($leaveCounts ?? []);
 
+        // ===== Add / Edit Modal =====
         function openAddModal() {
             const form = document.getElementById('leaveForm');
             form.reset();
@@ -191,7 +213,7 @@
             document.getElementById('leaveModalTitle').textContent = 'Add New Leave';
             document.getElementById('leaveSubmit').textContent = 'Add Leave';
             document.getElementById('edit_leave_id').value = '';
-            
+
             const balanceCard = document.getElementById('leaveBalanceCard');
             if (balanceCard) balanceCard.classList.add('hidden');
             const quotaBadge = document.getElementById('leaveQuotaBadge');
@@ -206,7 +228,7 @@
             document.getElementById('leaveModal').classList.add('hidden');
         }
 
-        function openEditModal(id, employeeId, leaveType, startDate, endDate, reason, status) {
+        function openEditModal(id, employeeId, leaveType, startDate, endDate, reason) {
             const form = document.getElementById('leaveForm');
             form.action = '/leaves/' + id;
             document.getElementById('leaveMethod').disabled = false;
@@ -215,7 +237,6 @@
             document.getElementById('leaveStartDate').value = startDate;
             document.getElementById('leaveEndDate').value = endDate;
             document.getElementById('leaveReason').value = reason;
-            document.getElementById('leaveStatus').value = status;
             document.getElementById('edit_leave_id').value = id;
             document.getElementById('leaveModalTitle').textContent = 'Edit Leave';
             document.getElementById('leaveSubmit').textContent = 'Update Leave';
@@ -226,6 +247,26 @@
             document.getElementById('leaveModal').classList.remove('hidden');
         }
 
+        // ===== Approval Modal =====
+        function openApprovalModal(leaveId, employeeId, status, remarks) {
+            const form = document.getElementById('approvalForm');
+            form.action = "{{ route('leave-approval.store') }}";
+
+            document.getElementById('approvalLeaveId').value      = leaveId;
+            document.getElementById('approvalEmployeeId').value   = employeeId;
+            document.getElementById('approvalLeaveDisplay').value = '#' + leaveId;
+            // approvalStatus hidden input එකට දැනට තියෙන status එක දානවා
+            document.getElementById('approvalStatus').value       = status || 'pending';
+            document.getElementById('approvalRemarks').value      = remarks || '';
+
+            document.getElementById('approvalModal').classList.remove('hidden');
+        }
+
+        function closeApprovalModal() {
+            document.getElementById('approvalModal').classList.add('hidden');
+        }
+
+        // ===== Balance Loading =====
         function loadEmployeeBalances(employeeId) {
             const overviewContainer = document.getElementById('employeeBalancesOverview');
             const loadingEl = document.getElementById('overviewLoading');
@@ -357,7 +398,8 @@
                 const employee = row.querySelector('.leave-employee').textContent.toLowerCase();
                 const type = row.querySelector('.leave-type').textContent.toLowerCase();
                 const status = row.querySelector('.leave-status').textContent.toLowerCase();
-                const match = employee.includes(query) || type.includes(query) || status.includes(query);
+                const reason = row.querySelector('.leave-reason') ? row.querySelector('.leave-reason').textContent.toLowerCase() : '';
+                const match = employee.includes(query) || type.includes(query) || status.includes(query) || reason.includes(query);
                 row.style.display = match ? '' : 'none';
                 if (match) visibleCount++;
             });
@@ -366,10 +408,12 @@
         }
 
         document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape') closeAddModal();
+            if (e.key === 'Escape') {
+                closeAddModal();
+                closeApprovalModal();
+            }
         });
 
-        {{-- Auto-open modal on validation errors --}}
         @if($errors->any())
         document.addEventListener('DOMContentLoaded', function () {
             const modal = document.getElementById('leaveModal');

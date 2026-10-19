@@ -32,6 +32,16 @@ class Leave extends LeaveSupport
         'employee_id',
         'department_id',
         'day',
+        'user_id',
+        'remark',
+        'remarks',
+        'approved_user',
+        'approved_at',
+
+    ];
+
+    protected $casts = [
+        'approved_at' => 'datetime',
     ];
 
     public function employee(): BelongsTo
@@ -42,5 +52,10 @@ class Leave extends LeaveSupport
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

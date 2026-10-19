@@ -30,7 +30,7 @@ class LeaveRequest extends FormRequest
             'start_date' => ['required', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'reason' => ['required', 'string'],
-            'status' => ['required', 'string', Rule::in(['pending', 'approved', 'rejected'])],
+            'status' => ['sometimes', 'required', 'string', Rule::in(['pending', 'approved', 'rejected'])],
         ];
     }
 

@@ -18,13 +18,20 @@ return new class extends Migration
             $table->foreignId('employee_id')
                 ->constrained('employees')
                 ->cascadeOnDelete();
+            $table->foreignId('user_id')
+                ->nullable()
+                ->constrained('users')
+                ->cascadeOnDelete();
 
             $table->date('start_date');
             $table->date('end_date');
-            $table->enum('leave_type', ['Annual', 'Medical','casual']);
+            $table->enum('leave_type', ['Annual', 'Medical', 'casual']);
             $table->text('reason');
             $table->integer('level')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->text('remarks')->nullable();
+            $table->timestamp('approved_at')->nullable();
+
         });
     }
 

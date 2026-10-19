@@ -54,6 +54,30 @@ class LeaveController extends Controller
             ->with('success', 'Leave has been successfully updated.');
     }
 
+    public function updateApproval(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'leave_id' => ['required', 'integer', 'exists:leaves,id'],
+            'status' => ['required', 'string', Rule::in(['pending', 'approved', 'rejected'])],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        $approvedAt = in_array($validated['status'], ['approved', 'rejected'])
+            ? now()
+            : null;
+
+        $leave = Leave::query()->findOrFail($validated['leave_id']);
+        $leave->update([
+            'status' => $validated['status'],
+            'remarks' => $validated['remarks'] ?? null,
+            'approved_at' => $approvedAt,
+            'user_id' => $approvedAt === null ? null : $request->user()->id,
+        ]);
+
+        return redirect()->route('leaves.index')
+            ->with('success', 'Leave approval has been successfully updated.');
+    }
+
     public function destroy(string $id, DeleteLeaveInteractors $deleteLeaveInteractors): RedirectResponse
     {
         $deleteLeaveInteractors->execute($id);

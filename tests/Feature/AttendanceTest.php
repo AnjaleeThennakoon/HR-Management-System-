@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Attendance;
+use App\Models\AttendanceImport;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -192,13 +193,15 @@ test('CSV with invalid rows and shows errors and saves valid ones', function () 
         ->from('/attendance')
         ->post('/attendance/upload', ['csv_file' => $file]);
 
-
     $response->assertStatus(302);
     $response->assertRedirect('/attendance');
-    $response->assertSessionHasErrors();
     $this->assertDatabaseCount('attendances', 2);
+    $attendanceImport = AttendanceImport::query()->findOrFail(
+        session('attendance_import_id')
+    );
 
-    $errors = session('errors')->getBag('default')->getMessages();
+    expect($attendanceImport->status)->toBe('completed')
+        ->and($attendanceImport->summary)->toBe('3 of 5 rows failed. 2 imported successfully.');
 
     $this->assertDatabaseHas('attendances', [
         'employee_id' => $employees[0]->id,
@@ -206,32 +209,21 @@ test('CSV with invalid rows and shows errors and saves valid ones', function () 
         'in_time' => '08:00:00',
         'out_time' => '17:30:00',
     ]);
-
-    $this->assertDatabaseMissing('attendances', [
-        'employee_id' => $employees[1]->id,
-    ]);
-
-    $this->assertArrayHasKey('row_3', $errors);
-    $this->assertStringContainsString('Invalid column count', $errors['row_3'][0]);
-    $this->assertDatabaseMissing('attendances', [
-        'employee_id' => 99999,
-    ]);
-
-    $this->assertArrayHasKey('row_4', $errors);
-    $this->assertStringContainsString('does not exist', $errors['row_4'][0]);
+    $this->assertDatabaseMissing('attendances', ['employee_id' => $employees[1]->id]);
+    expect($attendanceImport->rows[1]['row_number'])->toBe(3)
+        ->and($attendanceImport->rows[1]['errors'][0])->toContain('Invalid column count');
+    $this->assertDatabaseMissing('attendances', ['employee_id' => 99999]);
+    expect($attendanceImport->rows[2]['row_number'])->toBe(4)
+        ->and($attendanceImport->rows[2]['errors'][0])->toContain('does not exist');
     $this->assertDatabaseHas('attendances', [
         'employee_id' => $employees[2]->id,
         'date' => '2024-01-01',
         'in_time' => '08:00:00',
         'out_time' => '17:30:00',
     ]);
-
-    $this->assertDatabaseMissing('attendances', [
-        'employee_id' => 88888,
-    ]);
-    $this->assertArrayHasKey('row_6', $errors);
-    $this->assertStringContainsString('Invalid column count', $errors['row_6'][0]);
-
+    $this->assertDatabaseMissing('attendances', ['employee_id' => 88888]);
+    expect($attendanceImport->rows[4]['row_number'])->toBe(6)
+        ->and($attendanceImport->rows[4]['errors'][0])->toContain('Invalid column count');
     $this->get('/attendance')->assertOk();
 });
 
@@ -251,10 +243,15 @@ test('CSV with duplicate attendance shows error', function () {
         ->post('/attendance/upload', ['csv_file' => $file]);
     $response->assertStatus(302);
     $response->assertRedirect('/attendance');
-    $response->assertSessionHasErrors();
     $this->assertDatabaseCount('attendances', 1);
-    $errors = session('errors')->getBag('default')->getMessages();
-    $this->assertArrayHasKey('row_2', $errors);
+
+    $attendanceImport = AttendanceImport::query()->findOrFail(
+        session('attendance_import_id')
+    );
+
+    expect($attendanceImport->status)->toBe('completed')
+        ->and($attendanceImport->rows[0]['status'])->toBe('fail')
+        ->and($attendanceImport->rows[0]['errors'][0])->toContain('already exists');
 });
 
 test('non-CSV file is rejected', function () {
@@ -279,27 +276,26 @@ test('CSV import shows summary with row details', function () {
 
     $response->assertStatus(302);
     $response->assertRedirect('/attendance');
-    $response->assertSessionHasErrors();
-    $this->assertNotNull(session('import_summary'));
-    $this->assertStringContainsString('1 of 2 rows failed', session('import_summary'));
-    $this->assertStringContainsString('1 imported successfully', session('import_summary'));
-    $importRows = session('import_rows');
-    $this->assertIsArray($importRows);
-    $this->assertCount(2, $importRows);
-    $row1 = $importRows[0];
-    $this->assertEquals(2, $row1['row_number']);
-    $this->assertEquals($employees[0]->employee_id, $row1['employee_id']);
-    $this->assertEquals('success', $row1['status']);
-    $this->assertEmpty($row1['errors']);
-    $row2 = $importRows[1];
-    $this->assertEquals(3, $row2['row_number']);
-    $this->assertEquals('INVALID', $row2['employee_id']);
-    $this->assertEquals('fail', $row2['status']);
-    $this->assertNotEmpty($row2['errors']);
-    $this->assertStringContainsString(
-        'does not exist',
-        $row2['errors'][0]
+    $attendanceImport = AttendanceImport::query()->findOrFail(
+        session('attendance_import_id')
     );
+
+    expect($attendanceImport->status)->toBe('completed')
+        ->and($attendanceImport->summary)->toBe('1 of 2 rows failed. 1 imported successfully.');
+
+    $importRows = $attendanceImport->rows;
+    expect($importRows)->toHaveCount(2);
+    $row1 = $importRows[0];
+    expect($row1['row_number'])->toBe(2)
+        ->and($row1['employee_id'])->toBe($employees[0]->employee_id)
+        ->and($row1['status'])->toBe('success')
+        ->and($row1['errors'])->toBeEmpty();
+    $row2 = $importRows[1];
+    expect($row2['row_number'])->toBe(3)
+        ->and($row2['employee_id'])->toBe('INVALID')
+        ->and($row2['status'])->toBe('fail')
+        ->and($row2['errors'])->not->toBeEmpty()
+        ->and($row2['errors'][0])->toContain('does not exist');
 });
 
 test('CSV with duplicate rows show error', function () {
@@ -311,26 +307,20 @@ test('CSV with duplicate rows show error', function () {
 
     $response = $this->actingAs($this->user)
         ->from('/attendance')
-        ->post('/attendance/upload', ['csv_file' => $file,]);
+        ->post('/attendance/upload', ['csv_file' => $file]);
 
     $response->assertStatus(302);
     $response->assertRedirect('/attendance');
-    $response->assertSessionHasErrors();
     $this->assertDatabaseCount('attendances', 1);
-    $errors = session('errors')
-        ->getBag('default')
-        ->getMessages();
-    $this->assertArrayHasKey('row_3', $errors);
-    $this->assertStringContainsString(
-        'already exists',
-        $errors['row_3'][0]
+
+    $attendanceImport = AttendanceImport::query()->findOrFail(
+        session('attendance_import_id')
     );
-    $this->assertStringNotContainsString(
-        'SQLSTATE',
-        $errors['row_3'][0]
-    );
-    $this->assertStringNotContainsString(
-        'Integrity constraint violation',
-        $errors['row_3'][0]
-    );
+    $duplicateRowErrors = $attendanceImport->rows[1]['errors'];
+
+    expect($attendanceImport->status)->toBe('completed')
+        ->and($attendanceImport->rows[1]['row_number'])->toBe(3)
+        ->and($duplicateRowErrors[0])->toContain('already exists')
+        ->and($duplicateRowErrors[0])->not->toContain('SQLSTATE')
+        ->and($duplicateRowErrors[0])->not->toContain('Integrity constraint violation');
 });

@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Employee;
 use App\Models\leave;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -20,6 +21,9 @@ class LeaveFactory extends Factory
             'end_date' => $this->faker->date(),
             'reason' => $this->faker->sentence(),
             'status' => $this->faker->randomElement(['pending', 'approved', 'rejected']),
+            'remarks' => $this->faker->sentence(),
+            'approved_at' => $this->faker->optional()->dateTime(),
+            'user_id' => User::factory(),
         ];
     }
 }
