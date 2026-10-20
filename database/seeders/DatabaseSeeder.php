@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Department;
-use App\Models\Employee;
+use App\Models\user;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -17,7 +17,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        Employee::create([
+        user::create([
             'name' => 'Admin User',
             'email' => 'admin@hr.com',
             'password' => Hash::make('password123'),

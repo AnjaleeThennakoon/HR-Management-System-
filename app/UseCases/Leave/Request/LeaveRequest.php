@@ -24,14 +24,17 @@ class LeaveRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'employee_id' => ['required', 'integer', 'exists:employees,id'],
             'leave_type' => ['required', 'string', Rule::in(['Annual', 'Medical', 'casual'])],
             'start_date' => ['required', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],
             'reason' => ['required', 'string'],
             'status' => ['sometimes', 'required', 'string', Rule::in(['pending', 'approved', 'rejected'])],
+            'remarks' => ['nullable', 'string'],
         ];
+
+        return $rules;
     }
 
     public function after(): array

@@ -25,10 +25,9 @@ class EmployeeRequest extends FormRequest
             'nic' => ['required', 'regex:/^(?:\d{12}|\d{10}v)$/i', 'unique:employees,nic,'.$this->id],
             'phone' => ['required', 'digits:10'],
             'address' => ['required', 'string', 'max:255'],
-            'salary' =>['required','numeric','min:0'],
-            'shift_in' =>['required','date_format:H:i'],
-            'shift_out' =>['required','date_format:H:i','after:shift_in'],
-
+            'salary' => ['required', 'numeric', 'min:15000', 'max:350000'],
+            'shift_in' => ['required', 'date_format:H:i'],
+            'shift_out' => ['required', 'date_format:H:i', 'after:shift_in'],
 
         ];
     }

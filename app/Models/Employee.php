@@ -25,7 +25,7 @@ class Employee extends Model
         'address',
         'salary',
         'shift_in',
-        'shift_out'
+        'shift_out',
     ];
 
     public function department(): BelongsTo

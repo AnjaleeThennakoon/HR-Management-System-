@@ -33,7 +33,6 @@ class Leave extends LeaveSupport
         'department_id',
         'day',
         'user_id',
-        'remark',
         'remarks',
         'approved_user',
         'approved_at',
@@ -46,7 +45,7 @@ class Leave extends LeaveSupport
 
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(user::class);
     }
 
     public function department(): BelongsTo
@@ -56,6 +55,6 @@ class Leave extends LeaveSupport
 
     public function user(): BelongsTo
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(User::class);
     }
 }

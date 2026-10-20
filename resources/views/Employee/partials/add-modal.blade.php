@@ -30,14 +30,14 @@
               class="space-y-4">
             @csrf
             <div class="grid grid-cols-2 gap-4">
-                <x-form.field name="employee_id" label="Employee ID" required/>
-                <x-form.field name="phone" label="Phone" required/>
+                <x-form.field name="employee_id" label="Employee ID" placeholder="EMP1" required/>
+                <x-form.field name="phone" label="Phone" placeholder="0771234567" required/>
             </div>
 
 
             <div class="grid grid-cols-2 gap-4">
-                <x-form.field name="first_name" label="First Name" required/>
-                <x-form.field name="last_name" label="Last Name" required/>
+                <x-form.field name="first_name" label="First Name" placeholder="John" required/>
+                <x-form.field name="last_name" label="Last Name" placeholder="Doe" required/>
             </div>
 
 
@@ -147,17 +147,19 @@
             <x-form.field
                 name="nic"
                 label="NIC"
+                placeholder="199012345678 or 901234567v"
                 required
             />
 
             <x-form.field
                 name="address"
                 label="Address"
+                placeholder="No 123, Main Street, Colombo"
                 required
             />
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <x-form.field name="salary" label="Salary" type="number" min="0" step="0.01" />
+                <x-form.field name="salary" label="Salary" type="number" min="0" step="0.01" placeholder="50000.00" />
                 <x-form.field name="shift_in" label="Shift in" type="time" />
                 <x-form.field name="shift_out" label="Shift out" type="time" />
             </div>

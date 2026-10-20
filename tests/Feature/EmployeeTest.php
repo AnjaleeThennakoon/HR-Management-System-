@@ -3,13 +3,13 @@
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
-use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = Employee::factory()->create();
+    $this->user = User::factory()->create();
 });
 
 test('employee list page loads successfully', function () {
@@ -116,6 +116,9 @@ test('an employee can be updated', function () {
         'nic' => $employee->nic,
         'phone' => '0771234567',
         'address' => 'Australia',
+        'salary' => 75000,
+        'shift_in' => '08:00',
+        'shift_out' => '17:00',
     ];
 
     $response = $this->actingAs($this->user)->put("/employees/{$employee->id}", $employeedata);
@@ -224,4 +227,44 @@ test('employee gender must be valid', function () {
     $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
 
     $response->assertSessionHasErrors('gender');
+});
+
+test('employee salary cannot be negative', function () {
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP011',
+        'salary' => -1,
+    ]);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
+
+    $response->assertSessionHasErrors('salary');
+});
+
+test('employee salary below 15000 is rejected', function () {
+    $employee1 = Employee::factory()->create([
+        'employee_id' => 'EMP007',
+        'salary' => 50000,
+    ]);
+    $employee2 = Employee::factory()->make([
+        'employee_id' => 'EMP008',
+        'salary' => 10000,
+    ]);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee2->toArray());
+
+    $response->assertStatus(302);
+    $response->assertSessionHasErrors('salary');
+    $this->assertDatabaseCount('employees', 1);
+});
+
+test('employee salary above 350000 is rejected', function () {
+    $employee = Employee::factory()->make([
+        'employee_id' => 'EMP012',
+        'salary' => 350001,
+    ]);
+
+    $response = $this->actingAs($this->user)->post('/employees', $employee->toArray());
+
+    $response->assertSessionHasErrors('salary');
+    $this->assertDatabaseCount('employees', 0);
 });

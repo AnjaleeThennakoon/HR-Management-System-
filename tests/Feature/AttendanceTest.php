@@ -3,7 +3,7 @@
 use App\Models\Attendance;
 use App\Models\AttendanceImport;
 use App\Models\Employee;
-use App\Models\Employee;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = Employee::factory()->create();
+    $this->user = User::factory()->create();
 });
 
 test('attendance list loads successfully', function () {

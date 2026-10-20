@@ -7,6 +7,7 @@ use App\UseCases\Attendance\UploadAttendanceInteractors;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -229,3 +230,35 @@ test('permanently failed CSV jobs update their import status', function () {
         'error_message' => 'CSV processing failed. Please check the file and try again.',
     ]);
 });
+
+test('uploaded CSV rows are displayed in the table on the page', function () {
+    Storage::fake('local');
+    Config::set('queue.default', 'sync');
+    $user = Employee::factory()->create();
+    $employee = Employee::factory()->create();
+    $fileContent = "employee_id,date,in_time,out_time\n".
+        "{$employee->employee_id},2024-01-01,08:00,17:30\n";
+    $file = UploadedFile::fake()->createWithContent('attendance.csv', $fileContent);
+
+    $response = $this->actingAs(new GenericUser([
+        'id' => $user->id,
+        'employee_id' => $user->id,
+    ]))->post('/attendance/upload', ['csv_file' => $file]);
+
+    $attendanceImport = AttendanceImport::query()->firstOrFail();
+    $response->assertRedirect(route('attendance.index'));
+    $this->assertDatabaseHas('attendance_imports', [
+        'id' => $attendanceImport->id,
+        'status' => 'completed',
+    ]);
+    $this->actingAs(new GenericUser([
+        'id' => $user->id,
+        'employee_id' => $user->id,
+    ]))
+        ->get(route('attendance.index', ['import' => $attendanceImport->id]))
+        ->assertSee($employee->employee_id)
+        ->assertSee('01 Jan 2024')
+        ->assertSee('08:00:00')
+        ->assertSee('17:30:00');
+});
+

@@ -8,8 +8,8 @@ class DeleteEmployeeInteractors
 {
     public function execute(string $id): bool
     {
-        $Employee = Employee::findOrFail($id);
+        $employee = Employee::findOrFail($id);
 
-        return $Employee->delete();
+        return $employee->delete();
     }
 }

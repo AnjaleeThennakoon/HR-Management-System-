@@ -44,7 +44,7 @@
                                     <span class="attendance-employee text-gray-800 font-medium">
                                         {{ $attendance->employee ? $attendance->employee->first_name.' '.$attendance->employee->last_name : 'N/A' }}
                                     </span>
-                                    <p class="text-xs text-gray-400">ID: {{ $attendance->employee_id }}</p>
+                                    <p class="text-xs text-gray-400">ID: {{ $attendance->employee->employee_id ?? $attendance->employee_id }}</p>
                                 </div>
                             </div>
                         </td>

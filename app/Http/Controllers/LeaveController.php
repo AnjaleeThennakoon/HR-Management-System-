@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Employee;
 use App\Models\Leave;
-use App\Models\Support\LeaveSupport;
 use App\Models\SystemConfiguration;
+use App\Models\user;
 use App\UseCases\Leave\DeleteLeaveInteractors;
+use App\UseCases\Leave\LeaveAuthorizedInteractors;
+use App\UseCases\Leave\LeaveBalanceInteractors;
 use App\UseCases\Leave\ListLeaveInteractors;
 use App\UseCases\Leave\Request\LeaveRequest;
 use App\UseCases\Leave\StoreLeaveInteractors;
@@ -27,7 +28,7 @@ class LeaveController extends Controller
 
         return view('Leave.LeaveDashbord', [
             'leaves' => $leaves,
-            'employees' => Employee::all(),
+            'employees' => user::all(),
             'leaveCounts' => [
                 'Annual' => SystemConfiguration::getLeaveCount('Annual'),
                 'Medical' => SystemConfiguration::getLeaveCount('Medical'),
@@ -54,7 +55,7 @@ class LeaveController extends Controller
             ->with('success', 'Leave has been successfully updated.');
     }
 
-    public function updateApproval(Request $request): RedirectResponse
+    public function LeaveAuthorizer(Request $request, LeaveAuthorizedInteractors $leaveAuthorizedInteractors): RedirectResponse
     {
         $validated = $request->validate([
             'leave_id' => ['required', 'integer', 'exists:leaves,id'],
@@ -62,17 +63,7 @@ class LeaveController extends Controller
             'remarks' => ['nullable', 'string'],
         ]);
 
-        $approvedAt = in_array($validated['status'], ['approved', 'rejected'])
-            ? now()
-            : null;
-
-        $leave = Leave::query()->findOrFail($validated['leave_id']);
-        $leave->update([
-            'status' => $validated['status'],
-            'remarks' => $validated['remarks'] ?? null,
-            'approved_at' => $approvedAt,
-            'user_id' => $approvedAt === null ? null : $request->user()->id,
-        ]);
+        $leaveAuthorizedInteractors->execute($validated, (int) $request->user()->id);
 
         return redirect()->route('leaves.index')
             ->with('success', 'Leave approval has been successfully updated.');
@@ -86,34 +77,15 @@ class LeaveController extends Controller
             ->with('success', 'Leave has been successfully deleted.');
     }
 
-    public function getBalance(Request $leaveBalanceRequest): JsonResponse
+    public function LeaveBalance(Request $request, LeaveBalanceInteractors $leaveBalanceInteractors): JsonResponse
     {
-        $validated = $leaveBalanceRequest->validate([
+        $validated = $request->validate([
             'employee_id' => ['required', 'integer', 'exists:employees,id'],
             'leave_type' => ['nullable', 'string', Rule::in(['Annual', 'Medical', 'casual'])],
         ]);
 
-        $employeeId = (int) $validated['employee_id'];
+        $result = $leaveBalanceInteractors->execute($validated);
 
-        if (! empty($validated['leave_type'])) {
-            $balance = LeaveSupport::getBalance(
-                $employeeId,
-                $validated['leave_type']
-            );
-
-            return response()->json([
-                'success' => true,
-                'balance' => $balance,
-            ]);
-        }
-
-        return response()->json([
-            'success' => true,
-            'balances' => [
-                'Annual' => LeaveSupport::getBalance($employeeId, 'Annual'),
-                'Medical' => LeaveSupport::getBalance($employeeId, 'Medical'),
-                'casual' => LeaveSupport::getBalance($employeeId, 'casual'),
-            ],
-        ]);
+        return response()->json($result);
     }
 }

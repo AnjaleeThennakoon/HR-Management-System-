@@ -9,6 +9,10 @@ use Illuminate\Support\Carbon;
 
 class LeaveSupport extends Model
 {
+    protected $fillable = [
+        'status',
+    ];
+
     public static function getRemainingDays(
         int $employeeId,
         string $leaveType,

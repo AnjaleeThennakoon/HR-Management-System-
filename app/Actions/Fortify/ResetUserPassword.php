@@ -2,7 +2,7 @@
 
 namespace App\Actions\Fortify;
 
-use App\Models\Employee;
+use App\Models\user;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -19,7 +19,7 @@ class ResetUserPassword implements ResetsUserPasswords
      *
      * @throws ValidationException
      */
-    public function reset(Employee $user, array $input): void
+    public function reset(user $user, array $input): void
     {
         Validator::make($input, [
             'password' => $this->passwordRules(),

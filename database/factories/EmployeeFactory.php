@@ -31,8 +31,8 @@ class EmployeeFactory extends Factory
             'department_id' => Department::factory(),
             'designation_id' => Designation::factory(),
             'salary' => $this->faker->randomFloat(2, 10000, 350000),
-            'shift_in' => '08:00:00',
-            'shift_out' => '17:00:00',
+            'shift_in' => '08:00',
+            'shift_out' => '17:00',
         ];
     }
 }
