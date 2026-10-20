@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\user;
+use App\Models\Employee;
 use App\Models\Leave;
 use App\Models\Support\LeaveSupport;
 use App\Models\SystemConfiguration;
@@ -14,7 +14,9 @@ beforeEach(function () {
 });
 
 test('leave list page successfully loads', function () {
-    Leave::factory()->count(10)->create();
+    Leave::factory()->count(10)->create([
+        'employee_id' => Employee::factory(),
+    ]);
 
     $response = $this->actingAs($this->user)->get('/leaves');
 
@@ -31,6 +33,7 @@ test('leave list displays the name of the user who approved it', function () {
     Leave::factory()->create([
         'status' => 'approved',
         'user_id' => $approver->id,
+        'employee_id' => Employee::factory(),
     ]);
 
     $response = $this->actingAs($approver)->get(route('leaves.index'));
@@ -40,7 +43,7 @@ test('leave list displays the name of the user who approved it', function () {
 
 test('Leave can be created', function () {
     $leaveData = [
-        'employee_id' => user::factory()->create()->id,
+        'employee_id' => Employee::factory()->create()->id,
         'leave_type' => 'Annual',
         'start_date' => '2024-01-01',
         'end_date' => '2024-01-10',
@@ -63,7 +66,7 @@ test('Leave can be created', function () {
 });
 
 test('Leave can be Updated', function () {
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
     $leave = Leave::factory()->create([
         'employee_id' => $employee->id,
         'leave_type' => 'Annual',
@@ -103,6 +106,7 @@ test('leave approval can be updated', function () {
         'status' => 'pending',
         'remarks' => null,
         'approved_at' => null,
+        'employee_id' => Employee::factory(),
     ]);
 
     $response = $this->actingAs($this->user)->post(route('leave-approval.store'), [
@@ -125,6 +129,7 @@ test('leave approval can be updated', function () {
 test('leave approval rejects an invalid status without changing the leave', function () {
     $leave = Leave::factory()->create([
         'status' => 'pending',
+        'employee_id' => Employee::factory(),
     ]);
 
     $response = $this->actingAs($this->user)->from(route('leaves.index'))
@@ -144,6 +149,7 @@ test('resetting leave approval to pending clears its approval timestamp', functi
     $leave = Leave::factory()->create([
         'status' => 'approved',
         'approved_at' => '2026-10-18 10:00:00',
+        'employee_id' => Employee::factory(),
     ]);
 
     $response = $this->actingAs($this->user)->post(route('leave-approval.store'), [
@@ -160,7 +166,7 @@ test('resetting leave approval to pending clears its approval timestamp', functi
 });
 
 test('Leave can be Deleted', function () {
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
     $leave = Leave::factory()->create([
         'employee_id' => $employee->id,
         'leave_type' => 'Annual',
@@ -180,7 +186,7 @@ test('Leave can be Deleted', function () {
 });
 
 test('an employee cannot have multiple leave types on the same day', function () {
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
 
     Leave::factory()->create([
         'employee_id' => $employee->id,
@@ -233,7 +239,7 @@ test('employee remaining leave decreases after taking leave', function () {
         ],
         ]
     );
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
     Leave::factory()->create([
         'employee_id' => $employee->id,
         'leave_type' => 'Annual',
@@ -268,7 +274,7 @@ test('employee can not get the leave, when he get the full leave', function () {
         ],
         ]
     );
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
     Leave::factory()->create([
         'employee_id' => $employee->id,
         'leave_type' => 'Medical',
@@ -296,7 +302,7 @@ test('employee cannot request leave after using the full allowance', function ()
         ],
         ]
     );
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
     Leave::factory()->create([
         'employee_id' => $employee->id,
         'leave_type' => 'Medical',
@@ -328,7 +334,7 @@ test('employee remaining leave decreases by requested number of days', function 
         ]]
     );
 
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
 
     Leave::factory()->create([
         'employee_id' => $employee->id,
@@ -354,7 +360,7 @@ test('leave balance endpoint returns the employee balance for the current year',
             'casual' => 5,
         ]]
     );
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
     Leave::factory()->create([
         'employee_id' => $employee->id,
         'leave_type' => 'Annual',
@@ -380,7 +386,7 @@ test('leave balance endpoint returns the employee balance for the current year',
 });
 
 test('leave balance endpoint rejects unsupported leave types', function () {
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
 
     $response = $this->actingAs($this->user)->getJson(route('leaves.balance', [
         'employee_id' => $employee->id,
@@ -402,7 +408,7 @@ test('leave balance endpoint returns 422 for an unknown employee', function () {
 });
 
 test('leave can be created without an end date and defaults to start date', function () {
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
 
     $response = $this->actingAs($this->user)->post(route('leaves.store'), [
         'employee_id' => $employee->id,
@@ -432,7 +438,7 @@ test('leave balance endpoint returns all leave balances when leave_type is omitt
             'casual' => 5,
         ]]
     );
-    $employee = user::factory()->create();
+    $employee = Employee::factory()->create();
     Leave::factory()->create([
         'employee_id' => $employee->id,
         'leave_type' => 'Annual',
