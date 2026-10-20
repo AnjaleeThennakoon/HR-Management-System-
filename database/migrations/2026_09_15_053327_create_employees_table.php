@@ -23,6 +23,9 @@ return new class extends Migration
             $table->string('nic')->unique();
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
+            $table->decimal('salary', 10, 2)->nullable();
+            $table->time('shift_in')->nullable();
+            $table->time('shift_out')->nullable();
 
             $table->foreignId('department_id')->constrained('departments')->cascadeOnDelete();
 

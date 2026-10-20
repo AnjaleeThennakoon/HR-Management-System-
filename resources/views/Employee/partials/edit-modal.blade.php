@@ -64,6 +64,12 @@
             <x-form.field name="nic" label="NIC" id="edit_nic" />
             <x-form.field name="address" label="Address" id="edit_address" />
 
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <x-form.field name="salary" label="Salary" type="number" min="0" step="0.01" id="edit_salary" />
+                <x-form.field name="shift_in" label="Shift in" type="time" id="edit_shift_in" />
+                <x-form.field name="shift_out" label="Shift out" type="time" id="edit_shift_out" />
+            </div>
+
             <div class="flex justify-end gap-2 pt-4">
                 <button type="button" onclick="closeEditModal()"
                         class="inline-flex items-center justify-center rounded-md bg-gray-100 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 transition">

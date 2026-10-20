@@ -47,7 +47,7 @@
                         <td class="py-3.5 px-4">
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 font-semibold text-xs flex-shrink-0">
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 font-semibold text-xs shrink-0">
                                     {{ strtoupper(substr($emp->first_name, 0, 1) . substr($emp->last_name, 0, 1)) }}
                                 </div>
                                 <span
@@ -110,8 +110,6 @@
 
     </div>
 
-    @include('components.partials.add-modal')
-    @include('components.partials.edit-modal')
-
+    @include('Employee.partials.employee-modal')
 
 </x-layout>

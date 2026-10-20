@@ -156,6 +156,12 @@
                 required
             />
 
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <x-form.field name="salary" label="Salary" type="number" min="0" step="0.01" />
+                <x-form.field name="shift_in" label="Shift in" type="time" />
+                <x-form.field name="shift_out" label="Shift out" type="time" />
+            </div>
+
 
             <div class="flex justify-end gap-2 pt-4">
 

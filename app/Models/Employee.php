@@ -23,6 +23,9 @@ class Employee extends Model
         'nic',
         'phone',
         'address',
+        'salary',
+        'shift_in',
+        'shift_out'
     ];
 
     public function department(): BelongsTo
