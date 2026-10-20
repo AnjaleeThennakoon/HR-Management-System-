@@ -4,13 +4,13 @@ use App\Models\Employee;
 use App\Models\Leave;
 use App\Models\Support\LeaveSupport;
 use App\Models\SystemConfiguration;
-use App\Models\User;
+use App\Models\Employee;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = Employee::factory()->create();
 });
 
 test('leave list page successfully loads', function () {

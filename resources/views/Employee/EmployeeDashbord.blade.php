@@ -80,7 +80,12 @@
                     <th class="py-3 px-4 font-semibold whitespace-nowrap">Date of Birth</th>
                     <th class="py-3 px-4 font-semibold">NIC</th>
                     <th class="py-3 px-4 font-semibold">Gender</th>
+                    <th class="py-3 px-4 font-semibold">Salary</th>
+                    <th class="py-3 px-4 font-semibold">Shift in </th>
+                    <th class="py-3 px-4 font-semibold">Shift out </th>
                     <th class="py-3 px-4 font-semibold text-right">Actions</th>
+
+
                 </tr>
                 </thead>
                 <tbody id="employeesTable" class="divide-y divide-gray-100">
@@ -114,6 +119,10 @@
                         <td class="py-3.5 px-4 text-gray-600">{{ $emp->date_of_birth ?? '-' }}</td>
                         <td class="py-3.5 px-4 text-gray-600">{{ $emp->nic ?? '-' }}</td>
                         <td class="py-3.5 px-4 text-gray-600">{{ $emp->gender ?? '-' }}</td>
+                        <td class="py-3.5 px-4 text-gray-600">{{ $emp->salary ?? '-' }}</td>
+                        <td class="py-3.5 px-4 text-gray-600">{{ $emp->shift_in ?? '-' }}</td>
+                        <td class="py-3.5 px-4 text-gray-600">{{ $emp->shift_out ?? '-' }}</td>
+
                         <td class="py-3.5 px-4 text-right">
                             <div class="inline-flex items-center gap-1">
                                 <x-Form.editbutton

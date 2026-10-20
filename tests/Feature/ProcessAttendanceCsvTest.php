@@ -3,8 +3,8 @@
 use App\Jobs\ProcessAttendanceCsv;
 use App\Models\AttendanceImport;
 use App\Models\Employee;
-use App\Models\User;
 use App\UseCases\Attendance\UploadAttendanceInteractors;
+use Illuminate\Auth\GenericUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -15,10 +15,10 @@ uses(RefreshDatabase::class);
 
 test('queued CSV processing reads files from the local disk root', function () {
     Storage::fake('local');
-    $user = User::factory()->create();
+    $owner = Employee::factory()->create();
     $employee = Employee::factory()->create();
     $attendanceImport = AttendanceImport::query()->create([
-        'user_id' => $user->id,
+        'employee_id' => $owner->id,
         'file_path' => 'temp/attendance.csv',
     ]);
     Storage::disk('local')->put(
@@ -26,7 +26,7 @@ test('queued CSV processing reads files from the local disk root', function () {
         "employee_id,date,in_time,out_time\n{$employee->employee_id},2024-01-01,08:00,17:30\n"
     );
 
-    $job = new ProcessAttendanceCsv($attendanceImport->id, $attendanceImport->file_path, $user->id);
+    $job = new ProcessAttendanceCsv($attendanceImport->id, $attendanceImport->file_path, $owner->id);
     $job->handle(app(UploadAttendanceInteractors::class));
 
     $this->assertDatabaseHas('attendances', [
@@ -45,27 +45,27 @@ test('queued CSV processing reads files from the local disk root', function () {
 
 test('queued CSV processing logs invalid rows without failing the job', function () {
     Storage::fake('local');
-    $user = User::factory()->create();
+    $owner = Employee::factory()->create();
     $employee = Employee::factory()->create();
     $attendanceImport = AttendanceImport::query()->create([
-        'user_id' => $user->id,
+        'employee_id' => $owner->id,
         'file_path' => 'temp/invalid.csv',
     ]);
 
     Storage::disk('local')->put(
         $attendanceImport->file_path,
-        "employee_id,date,in_time,out_time\n
-        {$employee->employee_id},2024-01-01,08:00,17:30\n
-        INVALID_EMP,2024-01-01,08:00,17:30\n"
+        "employee_id,date,in_time,out_time\n".
+        "{$employee->employee_id},2024-01-01,08:00,17:30\n".
+        "INVALID_EMP,2024-01-01,08:00,17:30\n"
     );
 
-    $job = new ProcessAttendanceCsv($attendanceImport->id, $attendanceImport->file_path, $user->id);
+    $job = new ProcessAttendanceCsv($attendanceImport->id, $attendanceImport->file_path, $owner->id);
 
     Log::shouldReceive('warning')
         ->once()
         ->with(
             'Attendance CSV import completed with invalid rows.',
-            Mockery::on(fn (array $context): bool => $context['user_id'] === $user->id
+            Mockery::on(fn (array $context): bool => $context['employee_id'] === $owner->id
                 && isset($context['errors']['row_3']))
         );
 
@@ -88,13 +88,16 @@ test('queued CSV processing logs invalid rows without failing the job', function
 test('attendance upload redirects to a queued import and dispatches its job', function () {
     Storage::fake('local');
     Queue::fake([ProcessAttendanceCsv::class]);
-    $user = User::factory()->create();
+    $employee = Employee::factory()->create();
     $file = UploadedFile::fake()->createWithContent(
         'attendance.csv',
         "employee_id,date,in_time,out_time\n"
     );
 
-    $response = $this->actingAs($user)->post('/attendance/upload', [
+    $response = $this->actingAs(new GenericUser([
+        'id' => $employee->id,
+        'employee_id' => $employee->id,
+    ]))->post('/attendance/upload', [
         'csv_file' => $file,
     ]);
 
@@ -103,7 +106,7 @@ test('attendance upload redirects to a queued import and dispatches its job', fu
     $response->assertSessionHas('attendance_import_id', $attendanceImport->id);
     $this->assertDatabaseHas('attendance_imports', [
         'id' => $attendanceImport->id,
-        'user_id' => $user->id,
+        'employee_id' => $employee->id,
         'status' => 'queued',
     ]);
     Queue::assertPushed(
@@ -114,31 +117,40 @@ test('attendance upload redirects to a queued import and dispatches its job', fu
 });
 
 test('only the owner can check an attendance import status', function () {
-    $owner = User::factory()->create();
-    $otherUser = User::factory()->create();
+    $owner = Employee::factory()->create();
+    $otherUser = Employee::factory()->create();
     $attendanceImport = AttendanceImport::query()->create([
-        'user_id' => $owner->id,
+        'employee_id' => $owner->id,
         'file_path' => 'temp/private.csv',
     ]);
 
-    $this->actingAs($owner)
+    $this->actingAs(new GenericUser([
+        'id' => $owner->id,
+        'employee_id' => $owner->id,
+    ]))
         ->getJson(route('attendance.imports.status', $attendanceImport->id))
         ->assertOk()
         ->assertJsonPath('status', 'queued');
 
-    $this->actingAs($otherUser)
+    $this->actingAs(new GenericUser([
+        'id' => $otherUser->id,
+        'employee_id' => $otherUser->id,
+    ]))
         ->getJson(route('attendance.imports.status', $attendanceImport->id))
         ->assertNotFound();
 });
 
 test('queued attendance imports show progress polling in the page', function () {
-    $user = User::factory()->create();
+    $user = Employee::factory()->create();
     $attendanceImport = AttendanceImport::query()->create([
-        'user_id' => $user->id,
+        'employee_id' => $user->id,
         'file_path' => 'temp/queued.csv',
     ]);
 
-    $this->actingAs($user)
+    $this->actingAs(new GenericUser([
+        'id' => $user->id,
+        'employee_id' => $user->id,
+    ]))
         ->get(route('attendance.index', ['import' => $attendanceImport->id]))
         ->assertSee('data-status-url="'.route('attendance.imports.status', $attendanceImport->id).'"', false)
         ->assertSee('This page will update automatically when it finishes.')
@@ -146,23 +158,26 @@ test('queued attendance imports show progress polling in the page', function () 
 });
 
 test('failed attendance imports display a useful status message', function () {
-    $user = User::factory()->create();
+    $user = Employee::factory()->create();
     $attendanceImport = AttendanceImport::query()->create([
-        'user_id' => $user->id,
+        'employee_id' => $user->id,
         'file_path' => 'temp/missing.csv',
         'status' => 'failed',
         'error_message' => 'CSV processing failed. Please check the file and try again.',
     ]);
 
-    $this->actingAs($user)
+    $this->actingAs(new GenericUser([
+        'id' => $user->id,
+        'employee_id' => $user->id,
+    ]))
         ->get(route('attendance.index', ['import' => $attendanceImport->id]))
         ->assertSee('CSV processing failed. Please check the file and try again.');
 });
 
 test('completed imports show row errors without requiring a details click', function () {
-    $user = User::factory()->create();
+    $user = Employee::factory()->create();
     $attendanceImport = AttendanceImport::query()->create([
-        'user_id' => $user->id,
+        'employee_id' => $user->id,
         'file_path' => 'temp/invalid.csv',
         'status' => 'completed',
         'summary' => '1 of 1 rows failed. 0 imported successfully.',
@@ -176,16 +191,22 @@ test('completed imports show row errors without requiring a details click', func
         ],
     ]);
 
-    $this->actingAs($user)
+    $this->actingAs(new GenericUser([
+        'id' => $user->id,
+        'employee_id' => $user->id,
+    ]))
         ->get(route('attendance.index', ['import' => $attendanceImport->id]))
         ->assertSee('Employee ID does not exist.')
         ->assertDontSee('id="errorDetailsList" class="hidden', false);
 });
 
 test('CSV file validation errors appear on the attendance page', function () {
-    $user = User::factory()->create();
+    $user = Employee::factory()->create();
 
-    $this->actingAs($user)
+    $this->actingAs(new GenericUser([
+        'id' => $user->id,
+        'employee_id' => $user->id,
+    ]))
         ->from('/attendance')
         ->followingRedirects()
         ->post('/attendance/upload')
@@ -193,9 +214,9 @@ test('CSV file validation errors appear on the attendance page', function () {
 });
 
 test('permanently failed CSV jobs update their import status', function () {
-    $user = User::factory()->create();
+    $user = Employee::factory()->create();
     $attendanceImport = AttendanceImport::query()->create([
-        'user_id' => $user->id,
+        'employee_id' => $user->id,
         'file_path' => 'temp/missing.csv',
     ]);
     $job = new ProcessAttendanceCsv($attendanceImport->id, $attendanceImport->file_path, $user->id);
