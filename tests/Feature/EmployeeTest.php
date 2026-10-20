@@ -3,13 +3,13 @@
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
-use App\Models\User;
+use App\Models\Employee;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = Employee::factory()->create();
 });
 
 test('employee list page loads successfully', function () {

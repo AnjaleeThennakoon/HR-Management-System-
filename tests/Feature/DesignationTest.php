@@ -1,13 +1,13 @@
 <?php
 
 use App\Models\Designation;
-use App\Models\User;
+use App\Models\Employee;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = Employee::factory()->create();
 });
 
 test('designation list page loads successfully', function () {
