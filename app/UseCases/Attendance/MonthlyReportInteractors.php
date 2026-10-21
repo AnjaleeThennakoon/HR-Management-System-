@@ -12,14 +12,14 @@ class MonthlyReportInteractors
 {
     public function execute(array $validated): array
     {
-        $selectedYear = !empty($validated['year']) ? (int) $validated['year'] : (int) date('Y');
+        $selectedYear = ! empty($validated['year']) ? (int) $validated['year'] : (int) date('Y');
         $rawMonth = $validated['month'] ?? null;
 
         if (is_string($rawMonth) && str_contains($rawMonth, '-')) {
             $parts = explode('-', $rawMonth);
             $selectedYear = (int) $parts[0];
             $selectedMonthNum = (int) $parts[1];
-        } elseif (!empty($rawMonth)) {
+        } elseif (! empty($rawMonth)) {
             $selectedMonthNum = (int) $rawMonth;
         } else {
             $selectedMonthNum = (int) date('n');
@@ -31,8 +31,9 @@ class MonthlyReportInteractors
         $employees = Employee::orderBy('first_name')->get();
         $employee = null;
         $attendances = [];
-        $holidays = collect();
         $leaves = collect();
+        $totalLateMinutes = 0;
+        $totalOtMinutes = 0;
 
         $startDate = Carbon::createFromDate($selectedYear, $selectedMonthNum, 1)->startOfMonth();
         $endDate = $startDate->copy()->endOfMonth();
@@ -86,6 +87,8 @@ class MonthlyReportInteractors
                         'ot_minutes' => $otMinutes,
                     ];
                 }
+                $totalLateMinutes = collect($attendances)->sum('late_minutes');
+                $totalOtMinutes = collect($attendances)->sum('ot_minutes');
             }
         }
 
@@ -99,6 +102,8 @@ class MonthlyReportInteractors
             'selectedMonthNum' => $selectedMonthNum,
             'selectedMonth' => $selectedMonth,
             'selectedEmployeeId' => $selectedEmployeeId,
+            'totalLateMinutes' => $totalLateMinutes,
+            'totalOtMinutes' => $totalOtMinutes,
         ];
     }
 }

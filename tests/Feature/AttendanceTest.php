@@ -371,3 +371,11 @@ test('monthly report only shows attendances for the selected month', function ()
         ->assertSee('data-date="2026-10-15"', false)
         ->assertDontSee('data-date="2026-11-15"', false);
 });
+
+test('monthly report initializes totals when no employee is selected', function () {
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report'));
+
+    $response->assertOk()
+        ->assertViewHas('totalLateMinutes', 0)
+        ->assertViewHas('totalOtMinutes', 0);
+});
