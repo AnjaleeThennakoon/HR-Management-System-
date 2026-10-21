@@ -36,12 +36,9 @@ class DesignationController extends Controller
             ->with('success', 'Designation created successfully.');
     }
 
-    public function update(DesignationRequest $request, string $id, UpdateDesignationInteractor $updateDesignationInteractor): RedirectResponse
+    public function update(DesignationRequest $designationRequest, string $id, UpdateDesignationInteractor $updateDesignationInteractor): RedirectResponse
     {
-        $updateDesignationInteractor->execute(
-            $id,
-            $request->validated()
-        );
+        $updateDesignationInteractor->execute($designationRequest);
 
         return redirect()
             ->route('designations.index')

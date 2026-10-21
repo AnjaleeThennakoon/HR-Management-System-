@@ -78,10 +78,8 @@ class AttendanceController extends Controller
             ->with('success', 'Attendance has been successfully deleted.');
     }
 
-    public function upload(
-        AttendanceCsvRequest $attendanceCsvRequest,
-        UploadAttendanceInteractors $uploadAttendanceInteractors
-    ): RedirectResponse {
+    public function upload(AttendanceCsvRequest $attendanceCsvRequest, UploadAttendanceInteractors $uploadAttendanceInteractors): RedirectResponse
+    {
         $attendanceImport = $uploadAttendanceInteractors->upload(
             $attendanceCsvRequest->file('csv_file'),
             auth()->user()?->employee_id
@@ -94,8 +92,7 @@ class AttendanceController extends Controller
 
     public function monthlyReport(MonthlyReportRequest $monthlyReportRequest, MonthlyReportInteractors $monthlyReportInteractors): View
     {
-        $validated = $monthlyReportRequest->validated();
-        $data = $monthlyReportInteractors->execute($validated);
+        $data = $monthlyReportInteractors->execute($monthlyReportRequest);
 
         return view('Attendance.MonthlyReport', $data);
     }

@@ -14,7 +14,7 @@ class AttendanceRequest extends FormRequest
 
     public function rules(): array
     {
-        $attendanceId = $this->route('attendance')?->id;
+        $attendanceId = $this->route('id');
 
         return [
             'employee_id' => [

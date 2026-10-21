@@ -6,8 +6,8 @@ use App\Models\Employee;
 
 class StoreEmployeeInteractors
 {
-    public function execute(array $employeedata): Employee
+    public function execute(array $employee): Employee
     {
-        return Employee::create($employeedata);
+        return Employee::create($employee);
     }
 }

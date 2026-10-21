@@ -6,87 +6,59 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Leave;
+use App\UseCases\Attendance\Request\MonthlyReportRequest;
 use Carbon\Carbon;
 
 class MonthlyReportInteractors
 {
-    public function execute(array $validated): array
+    public function execute(MonthlyReportRequest $monthlyReportRequest): array
     {
-        $selectedYear = ! empty($validated['year']) ? (int) $validated['year'] : (int) date('Y');
-        $rawMonth = $validated['month'] ?? null;
+        $validated = $monthlyReportRequest->validated();
+        $month = $validated['month'] ?? date('Y-m');
+        $selectedYear = $validated['year'] ?? date('Y');
 
-        if (is_string($rawMonth) && str_contains($rawMonth, '-')) {
-            $parts = explode('-', $rawMonth);
-            $selectedYear = (int) $parts[0];
-            $selectedMonthNum = (int) $parts[1];
-        } elseif (! empty($rawMonth)) {
-            $selectedMonthNum = (int) $rawMonth;
-        } else {
-            $selectedMonthNum = (int) date('n');
+        if (str_contains((string) $month, '-')) {
+            [$selectedYear, $month] = explode('-', $month);
         }
 
+        $selectedYear = (int) $selectedYear;
+        $selectedMonthNum = (int) $month;
         $selectedMonth = sprintf('%04d-%02d', $selectedYear, $selectedMonthNum);
-        $selectedEmployeeId = $validated['employee_id'] ?? null;
+
+        $startDate = Carbon::createFromDate($selectedYear, $selectedMonthNum, 1)->startOfMonth();
+        $endDate = $startDate->copy()->endOfMonth();
 
         $employees = Employee::orderBy('first_name')->get();
+
+        $holidays = Holiday::whereBetween('date', [
+            $startDate->toDateString(),
+            $endDate->toDateString(),
+        ])->get();
+
         $employee = null;
         $attendances = [];
         $leaves = collect();
         $totalLateMinutes = 0;
         $totalOtMinutes = 0;
 
-        $startDate = Carbon::createFromDate($selectedYear, $selectedMonthNum, 1)->startOfMonth();
-        $endDate = $startDate->copy()->endOfMonth();
-
-        $holidays = Holiday::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])->get();
+        $selectedEmployeeId = $validated['employee_id'] ?? null;
 
         if ($selectedEmployeeId) {
             $employee = Employee::find($selectedEmployeeId);
 
             if ($employee) {
-                $leaves = Leave::where('employee_id', $selectedEmployeeId)
-                    ->where(function ($q) use ($startDate, $endDate) {
-                        $q->whereBetween('start_date', [$startDate->toDateString(), $endDate->toDateString()])
-                            ->orWhereBetween('end_date', [$startDate->toDateString(), $endDate->toDateString()])
-                            ->orWhere(function ($sub) use ($startDate, $endDate) {
-                                $sub->where('start_date', '<=', $startDate->toDateString())
-                                    ->where('end_date', '>=', $endDate->toDateString());
-                            });
-                    })
-                    ->get();
+                $leaves = $this->getEmployeeLeaves(
+                    $selectedEmployeeId,
+                    $startDate,
+                    $endDate
+                );
 
-                $rawAttendances = Attendance::where('employee_id', $selectedEmployeeId)
-                    ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
-                    ->orderBy('date', 'asc')
-                    ->get();
+                $attendances = $this->getEmployeeAttendances(
+                    $employee,
+                    $startDate,
+                    $endDate
+                );
 
-                $shiftIn = Carbon::parse($employee->shift_in ?? '08:00:00');
-                $shiftOut = Carbon::parse($employee->shift_out ?? '17:00:00');
-
-                foreach ($rawAttendances as $attendance) {
-                    $inTime = $attendance->in_time ? Carbon::parse($attendance->in_time) : null;
-                    $outTime = $attendance->out_time ? Carbon::parse($attendance->out_time) : null;
-
-                    $lateMinutes = 0;
-                    if ($inTime && $inTime->greaterThan($shiftIn)) {
-                        $lateMinutes = (int) $inTime->diffInMinutes($shiftIn, true);
-                    }
-
-                    $otMinutes = 0;
-                    if ($outTime && $outTime->greaterThan($shiftOut)) {
-                        $otMinutes = (int) $outTime->diffInMinutes($shiftOut, true);
-                    }
-
-                    $dateKey = Carbon::parse($attendance->date)->toDateString();
-
-                    $attendances[$dateKey] = (object) [
-                        'date' => $attendance->date,
-                        'in_time' => $attendance->in_time,
-                        'out_time' => $attendance->out_time,
-                        'late_minutes' => $lateMinutes,
-                        'ot_minutes' => $otMinutes,
-                    ];
-                }
                 $totalLateMinutes = collect($attendances)->sum('late_minutes');
                 $totalOtMinutes = collect($attendances)->sum('ot_minutes');
             }
@@ -105,5 +77,77 @@ class MonthlyReportInteractors
             'totalLateMinutes' => $totalLateMinutes,
             'totalOtMinutes' => $totalOtMinutes,
         ];
+    }
+
+    private function getEmployeeLeaves(
+        int|string $employeeId,
+        Carbon $startDate,
+        Carbon $endDate
+    ) {
+        return Leave::where('employee_id', $employeeId)
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->whereBetween('start_date', [
+                    $startDate->toDateString(),
+                    $endDate->toDateString(),
+                ])
+                    ->orWhereBetween('end_date', [
+                        $startDate->toDateString(),
+                        $endDate->toDateString(),
+                    ])
+                    ->orWhere(function ($subQuery) use ($startDate, $endDate) {
+                        $subQuery->where('start_date', '<=', $startDate->toDateString())
+                            ->where('end_date', '>=', $endDate->toDateString());
+                    });
+            })
+            ->get();
+    }
+
+    private function getEmployeeAttendances(
+        Employee $employee,
+        Carbon $startDate,
+        Carbon $endDate
+    ): array {
+        $attendances = Attendance::where('employee_id', $employee->id)
+            ->whereBetween('date', [
+                $startDate->toDateString(),
+                $endDate->toDateString(),
+            ])
+            ->orderBy('date')
+            ->get();
+
+        $shiftIn = Carbon::parse($employee->shift_in ?? '08:00:00');
+        $shiftOut = Carbon::parse($employee->shift_out ?? '17:00:00');
+
+        $report = [];
+
+        foreach ($attendances as $attendance) {
+            $inTime = $attendance->in_time
+                ? Carbon::parse($attendance->in_time)
+                : null;
+
+            $outTime = $attendance->out_time
+                ? Carbon::parse($attendance->out_time)
+                : null;
+
+            $lateMinutes = $inTime && $inTime->greaterThan($shiftIn)
+                ? (int) $inTime->diffInMinutes($shiftIn, true)
+                : 0;
+
+            $otMinutes = $outTime && $outTime->greaterThan($shiftOut)
+                ? (int) $outTime->diffInMinutes($shiftOut, true)
+                : 0;
+
+            $dateKey = Carbon::parse($attendance->date)->toDateString();
+
+            $report[$dateKey] = (object) [
+                'date' => $attendance->date,
+                'in_time' => $attendance->in_time,
+                'out_time' => $attendance->out_time,
+                'late_minutes' => $lateMinutes,
+                'ot_minutes' => $otMinutes,
+            ];
+        }
+
+        return $report;
     }
 }

@@ -3,15 +3,17 @@
 namespace App\UseCases\Designation;
 
 use App\Models\Designation;
+use App\UseCases\Designation\Request\DesignationRequest;
 use Illuminate\Support\Facades\DB;
 
 class UpdateDesignationInteractor
 {
-    public function execute(string $id, array $designationData): Designation
+    public function execute(DesignationRequest $designationRequest): Designation
     {
-        return DB::transaction(function () use ($id, $designationData) {
+        $designationData = $designationRequest->validated();
 
-            $designation = Designation::findOrFail($id);
+        return DB::transaction(function () use ($designationRequest, $designationData) {
+            $designation = Designation::findOrFail($designationRequest->route('id'));
             $oldLevel = $designation->level;
 
             if (array_key_exists('upper_level', $designationData)) {
