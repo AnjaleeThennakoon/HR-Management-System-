@@ -324,3 +324,30 @@ test('CSV with duplicate rows show error', function () {
         ->and($duplicateRowErrors[0])->not->toContain('SQLSTATE')
         ->and($duplicateRowErrors[0])->not->toContain('Integrity constraint violation');
 });
+
+test('it calculates late time and overtime correctly for an employee', function () {
+    $employee = Employee::factory()->create([
+        'shift_in' => '08:00:00',
+        'shift_out' => '17:00:00',
+    ]);
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-10-15',
+        'in_time' => '08:15:00',
+        'out_time' => '17:30:00',
+    ]);
+    $filters = [
+        'month' => '2026-10',
+        'employee_id' => $employee->id,
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->get(route('attendance.monthly-report', $filters));
+
+    $response->assertOk()
+        ->assertSee($employee->first_name)
+        ->assertSee('08:00')
+        ->assertSee('17:00')
+        ->assertSee('15 mins')
+        ->assertSee('30 mins');
+});

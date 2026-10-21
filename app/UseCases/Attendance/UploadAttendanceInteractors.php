@@ -2,34 +2,62 @@
 
 namespace App\UseCases\Attendance;
 
+use App\Jobs\ProcessAttendanceCsv;
+use App\Models\AttendanceImport;
 use App\Models\Employee;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Arr;
-use Illuminate\Validation\ValidationException;
+use RuntimeException;
 
-readonly class UploadAttendanceInteractors
+class UploadAttendanceInteractors
 {
     public function __construct(
-        private StoreAttendanceInteractors $storeAttendanceInteractors
+        private readonly StoreAttendanceInteractors $storeAttendanceInteractors
     ) {}
 
-    /**
-     * Execute from UploadedFile object (for existing upload flow)
-     */
-    public function execute(UploadedFile $file): void
+    public function upload(UploadedFile $file, ?int $employeeId): AttendanceImport
     {
-        $result = $this->processCsv($file);
+        $employeeId ??= Employee::query()->value('id');
+        if ($employeeId === null) {
+            throw new RuntimeException('An employee is required to process the attendance CSV.');
+        }
 
-        if (! empty($result['errors'])) {
-            $this->handleErrors($result);
+        $path = $file->store('temp', 'local');
+        if ($path === false) {
+            throw new RuntimeException('The attendance CSV could not be stored.');
+        }
+
+        $attendanceImport = AttendanceImport::query()->create([
+            'employee_id' => $employeeId,
+            'file_path' => $path,
+        ]);
+
+        ProcessAttendanceCsv::dispatch($attendanceImport->id, $path, $employeeId);
+
+        return $attendanceImport;
+    }
+
+    /**
+     * Process CSV from UploadedFile (Direct Upload)
+     */
+    public function execute(UploadedFile $file): array
+    {
+        $fileHandle = fopen($file->getRealPath(), 'r');
+        if (! $fileHandle) {
+            throw new Exception('Could not open CSV file.');
+        }
+
+        try {
+            return $this->processRows($fileHandle);
+        } finally {
+            fclose($fileHandle);
         }
     }
 
     /**
-     * @throws Exception
+     * Process CSV from a file path (Used by Background Job)
      */
     public function executeFromPath(string $filePath): array
     {
@@ -38,211 +66,102 @@ readonly class UploadAttendanceInteractors
         }
 
         $fileHandle = fopen($filePath, 'r');
-
         if (! $fileHandle) {
             throw new Exception("Could not open CSV file: {$filePath}");
         }
 
         try {
-            $headers = array_map(
-                fn ($header) => strtolower(trim(preg_replace('/^\xEF\xBB\xBF/', '', $header))),
-                fgetcsv($fileHandle)
-            );
-
-            $result = $this->processRows($fileHandle, $headers);
-
-            return $result;
+            return $this->processRows($fileHandle);
         } finally {
             fclose($fileHandle);
         }
     }
 
     /**
-     * Handle validation errors
+     * Main Row Processing Logic
      */
-    private function handleErrors(array $result): void
+    private function processRows($fileHandle): array
     {
-        $flatErrors = [];
+        $headers = array_map(
+            fn ($header) => strtolower(trim(preg_replace('/^\xEF\xBB\xBF/', '', $header))),
+            fgetcsv($fileHandle)
+        );
 
-        foreach ($result['errors'] as $rowKey => $messages) {
-            $flatErrors[$rowKey] = is_array($messages)
-                ? implode(' ', Arr::flatten($messages))
-                : (string) $messages;
-        }
-
-        session()->flash('import_summary', $result['summary']);
-        session()->flash('import_rows', $result['rows']);
-
-        throw ValidationException::withMessages($flatErrors);
-    }
-
-    /**
-     * Process CSV from UploadedFile object
-     */
-    private function processCsv(UploadedFile $file): array
-    {
-        $fileHandle = fopen($file->getRealPath(), 'r');
-
-        if (! $fileHandle) {
-            throw new Exception('Could not open CSV file.');
-        }
-
-        try {
-            $headers = array_map(
-                fn ($header) => strtolower(trim(preg_replace('/^\xEF\xBB\xBF/', '', $header))),
-                fgetcsv($fileHandle)
-            );
-
-            return $this->processRows($fileHandle, $headers);
-        } finally {
-            fclose($fileHandle);
-        }
-    }
-
-    /**
-     * Process all rows
-     */
-    private function processRows($fileHandle, array $headers): array
-    {
-        $errors = [];
         $rows = [];
+        $errors = [];
         $rowNumber = 1;
-        $totalRows = 0;
         $successCount = 0;
 
         while (($row = fgetcsv($fileHandle)) !== false) {
             $rowNumber++;
-            $totalRows++;
 
-            $rowErrors = $this->processRow($row, $headers, $rowNumber);
+            $rowErrors = $this->validateAndStoreRow($row, $headers, $rowNumber);
             $csvEmployeeId = trim($row[0] ?? '');
 
             if (! empty($rowErrors)) {
                 $errors["row_{$rowNumber}"] = $rowErrors;
-                $rows[] = [
-                    'row_number' => $rowNumber,
-                    'employee_id' => $csvEmployeeId,
-                    'status' => 'fail',
-                    'errors' => $rowErrors,
-                ];
+                $rows[] = ['row_number' => $rowNumber, 'employee_id' => $csvEmployeeId, 'status' => 'fail', 'errors' => $rowErrors];
             } else {
                 $successCount++;
-                $rows[] = [
-                    'row_number' => $rowNumber,
-                    'employee_id' => $csvEmployeeId,
-                    'status' => 'success',
-                    'errors' => [],
-                ];
+                $rows[] = ['row_number' => $rowNumber, 'employee_id' => $csvEmployeeId, 'status' => 'success', 'errors' => []];
             }
         }
 
-        $summary = sprintf(
-            '%d of %d rows failed. %d imported successfully.',
-            count($errors),
-            $totalRows,
-            $successCount
-        );
+        $summary = sprintf('%d of %d rows failed. %d imported successfully.', count($errors), $rowNumber - 1, $successCount);
 
-        return [
-            'errors' => $errors,
-            'rows' => $rows,
-            'summary' => $summary,
-        ];
+        return ['errors' => $errors, 'rows' => $rows, 'summary' => $summary];
     }
 
     /**
-     * Process a single row
+     * Validate a single row and try to store it
      */
-    private function processRow(array $row, array $headers, int $rowNumber): array
+    private function validateAndStoreRow(array $row, array $headers, int $rowNumber): array
     {
         if (count($row) !== count($headers)) {
-            $csvEmployeeId = trim($row[0] ?? 'Unknown');
-
-            return [
-                "Row {$rowNumber} ({$csvEmployeeId}): Invalid column count. "
-                .'Expected '.count($headers)
-                .' columns, but received '.count($row).'.',
-            ];
+            return ["Row {$rowNumber}: Invalid column count. Expected ".count($headers).'.'];
         }
 
-        $rowData = array_combine($headers, $row);
+        $data = array_combine($headers, $row);
+        $csvEmployeeId = trim($data['employee_id'] ?? '');
+        $errors = [];
 
-        if (! array_key_exists('employee_id', $rowData)) {
-            return [
-                "Row {$rowNumber}: Missing 'employee_id' column. Please check your CSV headers.",
-            ];
+        if (empty($csvEmployeeId)) {
+            $errors[] = 'Employee ID is empty.';
         }
-
-        $rowErrors = [];
-        $csvEmployeeId = trim($rowData['employee_id'] ?? '');
-
-        if ($csvEmployeeId === '') {
-            $rowErrors[] = 'Employee ID is empty.';
+        if (empty(trim($data['date'] ?? ''))) {
+            $errors[] = 'Date is empty.';
         }
-
-        if (empty(trim($rowData['date'] ?? ''))) {
-            $rowErrors[] = 'Date is empty.';
-        }
-
-        if (empty(trim($rowData['in_time'] ?? ''))) {
-            $rowErrors[] = 'In time is empty.';
+        if (empty(trim($data['in_time'] ?? ''))) {
+            $errors[] = 'In time is empty.';
         }
 
         $employeeId = null;
         if ($csvEmployeeId !== '') {
-            $employeeId = $this->findEmployeeId($csvEmployeeId);
+            $employeeId = Employee::where('employee_id', $csvEmployeeId)->value('id');
             if ($employeeId === null) {
-                $rowErrors[] = "Employee ID '{$csvEmployeeId}' does not exist.";
+                $errors[] = "Employee ID '{$csvEmployeeId}' does not exist.";
             }
         }
 
-        if (! empty($rowErrors)) {
-            return array_map(
-                fn ($error) => "Row {$rowNumber} ({$csvEmployeeId}): {$error}",
-                $rowErrors
-            );
+        if (! empty($errors)) {
+            return array_map(fn ($err) => "Row {$rowNumber} ({$csvEmployeeId}): {$err}", $errors);
         }
 
         try {
-            $date = Carbon::parse($rowData['date'])->format('Y-m-d');
-            $inTime = Carbon::parse($rowData['in_time'])->format('H:i');
-            $outTime = ! empty($rowData['out_time'])
-                ? Carbon::parse($rowData['out_time'])->format('H:i')
-                : null;
-
             $this->storeAttendanceInteractors->execute([
                 'employee_id' => $employeeId,
-                'date' => $date,
-                'in_time' => $inTime,
-                'out_time' => $outTime,
+                'date' => Carbon::parse($data['date'])->format('Y-m-d'),
+                'in_time' => Carbon::parse($data['in_time'])->format('H:i'),
+                'out_time' => ! empty($data['out_time']) ? Carbon::parse($data['out_time'])->format('H:i') : null,
             ]);
 
             return [];
-
-        } catch (QueryException $exception) {
-            if ($exception->getCode() === '23000') {
-                return [
-                    "Row {$rowNumber} ({$csvEmployeeId}): Attendance already exists for this employee on this date.",
-                ];
-            }
-
-            return [
-                "Row {$rowNumber} ({$csvEmployeeId}): Database error. Please try again.",
-            ];
-        } catch (Exception $exception) {
-            return [
-                "Row {$rowNumber} ({$csvEmployeeId}): {$exception->getMessage()}",
-            ];
+        } catch (QueryException $e) {
+            return $e->getCode() === '23000'
+                ? ["Row {$rowNumber} ({$csvEmployeeId}): Attendance already exists."]
+                : ["Row {$rowNumber} ({$csvEmployeeId}): Database error."];
+        } catch (Exception $e) {
+            return ["Row {$rowNumber} ({$csvEmployeeId}): {$e->getMessage()}"];
         }
-    }
-
-    /**
-     * Find employee by employee_id
-     */
-    private function findEmployeeId(string $employeeId): ?int
-    {
-        return Employee::query()
-            ->where('employee_id', $employeeId)
-            ->value('id');
     }
 }

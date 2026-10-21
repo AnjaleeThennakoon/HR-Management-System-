@@ -2,36 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\ProcessAttendanceCsv;
 use App\Models\Attendance;
-use App\Models\AttendanceImport;
 use App\Models\Employee;
 use App\UseCases\Attendance\DeleteAttendanceInteractors;
 use App\UseCases\Attendance\ListAttendanceInteractors;
+use App\UseCases\Attendance\MonthlyReportInteractors;
 use App\UseCases\Attendance\Request\AttendanceCsvRequest;
 use App\UseCases\Attendance\Request\AttendanceRequest;
+use App\UseCases\Attendance\Request\MonthlyReportRequest;
 use App\UseCases\Attendance\StoreAttendanceInteractors;
 use App\UseCases\Attendance\UpdateAttendanceInteractors;
+use App\UseCases\Attendance\UploadAttendanceInteractors;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
 {
     public function index(ListAttendanceInteractors $listAttendanceInteractors): View
     {
-        $attendances = $listAttendanceInteractors->execute(
-            request('search'),
-            request('per_page')
-        );
         $importId = request()->integer('import') ?: (int) session('attendance_import_id', 0);
-        $attendanceImport = $importId > 0
-            ? AttendanceImport::query()
-                ->when(auth()->user()?->employee_id, fn ($q, $empId) => $q->where('employee_id', $empId))
-                ->findOrFail($importId)
-            : null;
+        $attendances = $listAttendanceInteractors->execute(request('search'), request('per_page'));
+        $attendanceImport = $listAttendanceInteractors->getImportStatus($importId, auth()->user()?->employee_id);
 
         return view('Attendance.AttendanceDashbord', [
             'attendances' => $attendances,
@@ -40,11 +33,9 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function importStatus(Request $request, int $id): JsonResponse
+    public function importStatus(Request $request, int $id, ListAttendanceInteractors $listAttendanceInteractors): JsonResponse
     {
-        $attendanceImport = AttendanceImport::query()
-            ->when($request->user()?->employee_id, fn ($q, $empId) => $q->where('employee_id', $empId))
-            ->findOrFail($id);
+        $attendanceImport = $listAttendanceInteractors->getImportStatus($id, $request->user()?->employee_id);
 
         return response()->json([
             'status' => $attendanceImport->status,
@@ -79,31 +70,25 @@ class AttendanceController extends Controller
             ->with('success', 'Attendance has been successfully deleted.');
     }
 
-    public function upload(AttendanceCsvRequest $attendanceCsvRequest): RedirectResponse
-    {
-        $file = $attendanceCsvRequest->file('csv_file');
-
-        $filename = uniqid().'_'.time().'.csv';
-
-        $path = Storage::disk('local')->putFileAs('temp', $file, $filename);
-        if ($path === false) {
-            throw new \RuntimeException('The attendance CSV could not be stored.');
-        }
-
-        $employeeId = $attendanceCsvRequest->input('employee_id')
-            ?? auth()->user()?->employee_id
-            ?? Employee::query()->value('id')
-            ?? Employee::factory()->create()->id;
-
-        $attendanceImport = AttendanceImport::query()->create([
-            'employee_id' => $employeeId,
-            'file_path' => $path,
-        ]);
-
-        ProcessAttendanceCsv::dispatch($attendanceImport->id, $path, $employeeId);
+    public function upload(
+        AttendanceCsvRequest $attendanceCsvRequest,
+        UploadAttendanceInteractors $uploadAttendanceInteractors
+    ): RedirectResponse {
+        $attendanceImport = $uploadAttendanceInteractors->upload(
+            $attendanceCsvRequest->file('csv_file'),
+            auth()->user()?->employee_id
+        );
 
         return redirect()->route('attendance.index')
             ->with('attendance_import_id', $attendanceImport->id)
             ->with('success', 'CSV is being processed in the background.');
+    }
+
+    public function monthlyReport(MonthlyReportRequest $monthlyReportRequest, MonthlyReportInteractors $monthlyReportInteractors): View
+    {
+        $validated = $monthlyReportRequest->validated();
+        $data = $monthlyReportInteractors->execute($validated);
+
+        return view('Attendance.MonthlyReport', $data);
     }
 }

@@ -55,6 +55,7 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/attendance/{id}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
     Route::post('/attendance/upload', [AttendanceController::class, 'upload'])->name('attendance.upload');
     Route::get('/attendance/imports/{id}/status', [AttendanceController::class, 'importStatus'])->name('attendance.imports.status');
+    Route::get('/attendance/monthly-report', [AttendanceController::class, 'monthlyReport'])->name('attendance.monthly-report');
 
     Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
     Route::post('leaves', [LeaveController::class, 'store'])->name('leaves.store');
