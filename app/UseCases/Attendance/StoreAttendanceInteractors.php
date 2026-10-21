@@ -8,15 +8,16 @@ use Illuminate\Validation\ValidationException;
 
 class StoreAttendanceInteractors
 {
-    public function execute(array $attendance): Attendance
+    public function execute(array $attendanceRequest): Attendance
     {
-        $validate = $this->validate($attendance);
-        return Attendance::create($attendance);
+        $validated = $this->validate($attendanceRequest);
+
+        return Attendance::create($validated);
     }
 
-    private function validate(array $attendance): array
+    private function validate(array $attendanceRequest): array
     {
-        $validator = Validator::make($attendance, [
+        $validator = Validator::make($attendanceRequest, [
             'employee_id' => [
                 'required',
                 'integer',

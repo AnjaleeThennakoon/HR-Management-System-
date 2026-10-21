@@ -279,10 +279,8 @@ test('CSV import shows summary with row details', function () {
     $attendanceImport = AttendanceImport::query()->findOrFail(
         session('attendance_import_id')
     );
-
     expect($attendanceImport->status)->toBe('completed')
         ->and($attendanceImport->summary)->toBe('1 of 2 rows failed. 1 imported successfully.');
-
     $importRows = $attendanceImport->rows;
     expect($importRows)->toHaveCount(2);
     $row1 = $importRows[0];
@@ -350,4 +348,26 @@ test('it calculates late time and overtime correctly for an employee', function 
         ->assertSee('17:00')
         ->assertSee('15 mins')
         ->assertSee('30 mins');
+});
+
+test('monthly report only shows attendances for the selected month', function () {
+    $employee = Employee::factory()->create();
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-10-15',
+    ]);
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-11-15',
+    ]);
+    $employeeData = [
+        'month' => '2026-10',
+        'employee_id' => $employee->id,
+    ];
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $employeeData));
+
+    $response->assertOk()
+        ->assertSee('data-date="2026-10-15"', false)
+        ->assertDontSee('data-date="2026-11-15"', false);
 });

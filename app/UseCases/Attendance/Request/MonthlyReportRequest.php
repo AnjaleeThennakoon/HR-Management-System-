@@ -14,7 +14,8 @@ class MonthlyReportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'month' => ['nullable', 'date_format:Y-m'],
+            'year' => ['nullable', 'integer'],
+            'month' => ['nullable'],
             'employee_id' => ['nullable', 'integer', 'exists:employees,id'],
         ];
     }

@@ -45,18 +45,26 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function store(AttendanceRequest $attendanceRequest, StoreAttendanceInteractors $storeAttendanceInteractors): RedirectResponse
+    public function store(AttendanceRequest $attendanceRequest, StoreAttendanceInteractors $storeAttendanceInteractors): RedirectResponse|JsonResponse
     {
-        $storeAttendanceInteractors->execute($attendanceRequest->validated());
+        $attendance = $storeAttendanceInteractors->execute($attendanceRequest->validated());
+
+        if (request()->wantsJson()) {
+            return response()->json(['status' => 'ok', 'attendance' => $attendance]);
+        }
 
         return redirect()->route('attendance.index')
             ->with('success', 'Attendance has been successfully created.');
     }
 
-    public function update(string $id, AttendanceRequest $attendanceRequest, UpdateAttendanceInteractors $updateAttendanceInteractors): RedirectResponse
+    public function update(string $id, AttendanceRequest $attendanceRequest, UpdateAttendanceInteractors $updateAttendanceInteractors): RedirectResponse|JsonResponse
     {
         $attendance = Attendance::findOrFail($id);
-        $updateAttendanceInteractors->execute($attendanceRequest, $attendance);
+        $attendance = $updateAttendanceInteractors->execute($attendanceRequest, $attendance);
+
+        if (request()->wantsJson()) {
+            return response()->json(['status' => 'ok', 'attendance' => $attendance]);
+        }
 
         return redirect()->route('attendance.index')
             ->with('success', 'Attendance has been successfully updated.');
