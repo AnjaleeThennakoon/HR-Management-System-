@@ -588,4 +588,33 @@ test('can show error for a non selecting employee', function () {
     $response->assertSessionHasErrors('employee_id');
 });
 
+test('monthly report shows total late and ot minutes', function () {
+    $employee = Employee::factory()->create([
+        'shift_in'  => '08:00',
+        'shift_out' => '17:00',
+    ]);
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date'        => '2026-10-15',
+        'in_time'     => '08:15',
+        'out_time'    => '17:30',
+    ]);
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date'        => '2026-10-16',
+        'in_time'     => '08:10',
+        'out_time'    => '17:00',
+    ]);
+    $employeeData = [
+        'employee_id' => $employee->id,
+        'month'       => 10,
+        'year'        => 2026,
+    ];
 
+    $response = $this->actingAs($this->user)
+        ->get(route('attendance.monthly-report', $employeeData));
+
+    $response->assertOk();
+    $response->assertViewHas('totalLateMinutes', 25);
+    $response->assertViewHas('totalOtMinutes', 30);
+});
