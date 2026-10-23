@@ -25,9 +25,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('AdminDashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', function () {return view('AdminDashboard', ['employees' => \App\Models\Employee::all(),]);})->name('dashboard');
 
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
@@ -56,7 +54,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/attendance/upload', [AttendanceController::class, 'upload'])->name('attendance.upload');
     Route::get('/attendance/imports/{id}/status', [AttendanceController::class, 'importStatus'])->name('attendance.imports.status');
     Route::get('/attendance/monthly-report', [AttendanceController::class, 'monthlyReport'])->name('attendance.monthly-report');
-    Route::post('/attendance/update-time', [AttendanceController::class, 'updateTime'])->name('attendance.update-time');
 
     Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
     Route::post('leaves', [LeaveController::class, 'store'])->name('leaves.store');

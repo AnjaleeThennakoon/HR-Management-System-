@@ -11,12 +11,26 @@ class MonthlyReportRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $month = $this->input('month');
+
+        if (is_string($month) && preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) === 1) {
+            [$year, $month] = explode('-', $month);
+
+            $this->merge([
+                'year'  => $year,
+                'month' => $month,
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
-            'year' => ['nullable', 'integer'],
-            'month' => ['nullable'],
-            'employee_id' => ['nullable', 'integer', 'exists:employees,id'],
+            'year'        => ['required', 'integer'],
+            'month'       => ['required', 'integer', 'between:1,12'],
+            'employee_id' => ['required', 'integer', 'exists:employees,id'],
         ];
     }
 }

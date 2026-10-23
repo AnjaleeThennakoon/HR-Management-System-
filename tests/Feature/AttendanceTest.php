@@ -392,30 +392,6 @@ test('attendance cannot be updated to a duplicate employee and date', function (
     $this->assertDatabaseCount('attendances', 2);
 });
 
-test('it calculates late time and overtime correctly', function () {
-    $employee = Employee::factory()->create([
-        'shift_in' => '08:00:00',
-        'shift_out' => '17:00:00',
-    ]);
-    Attendance::factory()->create([
-        'employee_id' => $employee->id,
-        'date' => '2026-10-15',
-        'in_time' => '08:15:00',
-        'out_time' => '17:30:00',
-    ]);
-    $employeeData = ['month' => '2026-10', 'employee_id' => $employee->id];
-
-    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $employeeData));
-
-    $response->assertOk();
-    $response->assertViewHas('attendances', function ($attendances) {
-        $attendance = $attendances['2026-10-15'];
-
-        return $attendance->late_minutes === 15
-            && $attendance->ot_minutes === 30;
-    });
-});
-
 test('monthly report only shows attendances for the selected month', function () {
     $employee = Employee::factory()->create();
     Attendance::factory()->create([
@@ -485,3 +461,131 @@ test('saving attendance from the report page updates existing records', function
         'out_time' => '17:00:00',
     ]);
 });
+
+test('monthly report loads with employee, month and year', function () {
+    $employee = Employee::factory()->create();
+    $employeeData = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $employeeData));
+
+    $response->assertOk()
+        ->assertViewHas('employee_id')
+        ->assertViewHas('month', 10)
+        ->assertViewHas('year', 2026);
+});
+
+test('monthly report includes attendances for the selected month', function () {
+    $employee = Employee::factory()->create();
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-10-15',
+        'in_time' => '09:00',
+        'out_time' => '17:00',
+    ]);
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ]));
+
+    $response->assertOk();
+    $response->assertViewHas('attendances', function ($attendances) {
+        return $attendances->count() === 1;
+    });
+    $response->assertViewHas('attendances', function ($attendances) {
+        return $attendances->first()->date === '2026-10-15';
+    });
+});
+
+test('one month report for only this month attendance only', function () {
+    $employee = Employee::factory()->create();
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-10-15',
+    ]);
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-11-15',
+    ]);
+    $employeeData = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $employeeData));
+
+    $response->assertOk();
+    $response->assertViewHas('employee_id', $employee->id);
+    $response->assertViewHas('month', 10);
+    $this->assertDatabaseCount('attendances', 2);
+    $response->assertViewHas('attendances', function ($attendances) {
+        return $attendances->count() === 1
+            && $attendances->first()->date === '2026-10-15';
+    });
+});
+
+test('monthly report shows employee shift times', function () {
+    $employee = Employee::factory()->create([
+        'shift_in' => '08:00',
+        'shift_out' => '17:00',
+    ]);
+    $employeeData = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $employeeData));
+
+    $response->assertOk();
+    $response->assertSee('08:00');
+    $response->assertSee('17:00');
+});
+
+test('it calculates late time and overtime correctly', function () {
+    $employee = Employee::factory()->create([
+        'shift_in'  => '08:00',
+        'shift_out' => '17:00',
+    ]);
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date'        => '2026-10-15',
+        'in_time'     => '08:15',
+        'out_time'    => '17:30',
+    ]);
+    $employeeData = [
+        'month'       => '10',
+        'year'        => '2026',
+        'employee_id' => $employee->id,
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->get(route('attendance.monthly-report', $employeeData));
+
+    $response->assertOk();
+    $response->assertViewHas('attendances', function ($attendances) {
+        $attendance = $attendances->first();
+        return $attendance->late_minutes === 15
+            && $attendance->ot_minutes === 30;
+    });
+});
+
+test('can show error for a non selecting employee', function () {
+    $employeeData = [
+        'month' => 10,
+        'year'  => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $employeeData));
+
+    $response->assertStatus(302);
+    $response->assertSessionHasErrors('employee_id');
+});
+
+

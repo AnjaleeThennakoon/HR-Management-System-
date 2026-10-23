@@ -10,6 +10,9 @@ class Attendance extends Model
 {
     use HasFactory;
 
+    /**
+     * @var int|mixed
+     */
     protected $fillable = [
         'employee_frist_name',
         'employee_last_name',
