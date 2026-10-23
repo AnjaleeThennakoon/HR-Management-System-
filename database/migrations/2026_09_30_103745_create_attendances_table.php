@@ -18,6 +18,8 @@ return new class extends Migration
             $table->date('date');
             $table->time('in_time');
             $table->time('out_time')->nullable();
+            $table->integer('late_minutes')->default(0);
+            $table->integer('ot_minutes')->default(0);
 
             $table->unique(['employee_id', 'date'], 'unique_employee_date');
         });

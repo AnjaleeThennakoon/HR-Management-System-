@@ -19,6 +19,7 @@ class AttendanceRequest extends FormRequest
         return [
             'employee_id' => [
                 'required',
+
                 'integer',
                 'exists:employees,id',
                 Rule::unique('attendances', 'employee_id')

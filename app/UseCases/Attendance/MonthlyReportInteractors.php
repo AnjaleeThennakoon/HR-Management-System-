@@ -30,19 +30,24 @@ class MonthlyReportInteractors
 
         foreach ($attendance as $record) {
             $this->calculateLateAndOT($record);
+
         }
 
+        [$totalLate, $totalOt] = $this->LateAndOTTotal($attendance);
+
         return [
-            'employee_id'   => $employeeID,
-            'month'         => $month,
-            'year'          => $year,
-            'attendances'   => $attendance,
-            'employees'     => Employee::all(),
-            'employee'      => Employee::find($employeeID),
-            'holidays'      => Holiday::whereMonth('date', $month)->whereYear('date', $year)->get(),
-            'leaves'        => Leave::where('employee_id', $employeeID)->get(),
-            'selectedMonth' => $month,
-            'selectedYear'  => $year,
+            'employee_id'      => $employeeID,
+            'month'            => $month,
+            'year'             => $year,
+            'attendances'      => $attendance,
+            'employees'        => Employee::all(),
+            'employee'         => Employee::find($employeeID),
+            'holidays'         => Holiday::whereMonth('date', $month)->whereYear('date', $year)->get(),
+            'leaves'           => Leave::where('employee_id', $employeeID)->get(),
+            'selectedMonth'    => $month,
+            'selectedYear'     => $year,
+            'totalLateMinutes' => $totalLate,
+            'totalOtMinutes'   => $totalOt,
         ];
     }
 

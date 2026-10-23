@@ -6,6 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int|mixed $late_minutes
+ * @property int|mixed $ot_minutes
+ */
 class Attendance extends Model
 {
     use HasFactory;
@@ -20,6 +24,8 @@ class Attendance extends Model
         'date',
         'in_time',
         'out_time',
+        'late_minutes',
+        'ot_minutes',
     ];
 
     public function employee(): BelongsTo

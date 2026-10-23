@@ -28,8 +28,8 @@ class MonthlyReportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'year'        => ['required', 'integer'],
-            'month'       => ['required', 'integer', 'between:1,12'],
+            'year'  => ['required', 'integer', 'min:1900', 'max:' . now()->year],
+            'month' => ['required', 'integer', 'between:1,12'],
             'employee_id' => ['required', 'integer', 'exists:employees,id'],
         ];
     }

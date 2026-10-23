@@ -17,6 +17,8 @@ class AttendanceFactory extends Factory
             'date' => $this->faker->date(),
             'in_time' => $this->faker->time(),
             'out_time' => $this->faker->time(),
+            'late_minutes' => 0,
+            'ot_minutes'   => 0,
         ];
     }
 }
