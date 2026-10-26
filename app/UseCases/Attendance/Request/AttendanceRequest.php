@@ -15,15 +15,15 @@ class AttendanceRequest extends FormRequest
     public function rules(): array
     {
         $attendanceId = $this->route('id');
+        $date = $this->input('date');
 
         return [
             'employee_id' => [
                 'required',
-
                 'integer',
                 'exists:employees,id',
                 Rule::unique('attendances', 'employee_id')
-                    ->where('date', $this->date)
+                    ->where('date', $date)
                     ->ignore($attendanceId),
             ],
             'date' => ['required', 'date'],
