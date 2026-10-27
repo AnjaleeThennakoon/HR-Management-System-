@@ -26,6 +26,7 @@ class Attendance extends Model
         'out_time',
         'late_minutes',
         'ot_minutes',
+        'nonWorkingDays',
     ];
 
     public function employee(): BelongsTo

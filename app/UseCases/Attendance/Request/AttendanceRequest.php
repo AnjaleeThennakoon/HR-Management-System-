@@ -27,7 +27,7 @@ class AttendanceRequest extends FormRequest
                     ->ignore($attendanceId),
             ],
             'date' => ['required', 'date'],
-            'in_time' => ['required', 'date_format:H:i', 'before:out_time'],
+            'in_time' => ['nullable', 'date_format:H:i', 'before:out_time'],
             'out_time' => ['nullable', 'date_format:H:i', 'after:in_time'],
         ];
     }

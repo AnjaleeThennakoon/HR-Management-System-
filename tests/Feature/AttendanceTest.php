@@ -3,7 +3,10 @@
 use App\Models\Attendance;
 use App\Models\AttendanceImport;
 use App\Models\Employee;
+use App\Models\Holiday;
+use App\Models\Leave;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -67,7 +70,7 @@ test('an attendance record can be updated', function () {
         'out_time' => '18:00',
     ];
 
-    $response = $this->actingAs($this->user)->put("/attendance/{$attendance->id}", $updatedAttendance);
+    $response = $this->actingAs($this->user)->put("/attendance/$attendance->id", $updatedAttendance);
 
     $response->assertStatus(302);
     $response->assertRedirect('/attendance');
@@ -88,7 +91,7 @@ test('an attendance record can be deleted', function () {
         'out_time' => '17:00',
     ]);
 
-    $response = $this->actingAs($this->user)->delete("/attendance/{$attendance->id}");
+    $response = $this->actingAs($this->user)->delete("/attendance/$attendance->id}");
 
     $response->assertStatus(302);
     $response->assertRedirect('/attendance');
@@ -341,7 +344,6 @@ test('attendance cannot be created for a nonexistent employee', function () {
 
 test('attendance cannot be created with an invalid date', function () {
     $employee = Employee::factory()->create();
-
     $attendanceData = [
         'employee_id' => $employee->id,
         'date' => 'invalid-date',
@@ -349,46 +351,42 @@ test('attendance cannot be created with an invalid date', function () {
         'out_time' => '17:00',
     ];
 
-    $response = $this->actingAs($this->user)
-        ->post('/attendance', $attendanceData);
+    $response = $this->actingAs($this->user)->post('/attendance', $attendanceData);
 
     $response->assertSessionHasErrors('date');
-
     $this->assertDatabaseCount('attendances', 0);
 });
 
 test('attendance cannot be updated to a duplicate employee and date', function () {
     $employee = Employee::factory()->create();
-
     Attendance::factory()->create([
         'employee_id' => $employee->id,
         'date' => '2026-10-15',
         'in_time' => '08:00',
         'out_time' => '17:00',
     ]);
-
     $attendanceToUpdate = Attendance::factory()->create([
         'employee_id' => $employee->id,
         'date' => '2026-10-16',
         'in_time' => '09:00',
         'out_time' => '18:00',
     ]);
-
-    $response = $this->actingAs($this->user)
-        ->put("/attendance/{$attendanceToUpdate->id}", [
+    $attendanceData = [
+        [
             'employee_id' => $employee->id,
             'date' => '2026-10-15',
             'in_time' => '09:00',
             'out_time' => '18:00',
-        ]);
+        ],
+    ];
+
+    $response = $this->actingAs($this->user)->put("/attendance/{$attendanceToUpdate->id}", $attendanceData);
 
     $response->assertSessionHasErrors('employee_id');
-
     $this->assertDatabaseHas('attendances', [
         'id' => $attendanceToUpdate->id,
         'date' => '2026-10-16',
     ]);
-
     $this->assertDatabaseCount('attendances', 2);
 });
 
@@ -403,8 +401,8 @@ test('monthly report only shows attendances for the selected month', function ()
         'date' => '2026-11-15',
     ]);
     $employeeData = [
-        'month'       => 10,
-        'year'        => 2026,
+        'month' => 10,
+        'year' => 2026,
         'employee_id' => $employee->id,
     ];
 
@@ -444,9 +442,9 @@ test('monthly report loads with employee, month and year', function () {
     $employee = Employee::factory()->create();
     Attendance::factory()->create([
         'employee_id' => $employee->id,
-        'date'        => '2026-10-15',
-        'in_time'     => '08:00',
-        'out_time'    => '17:00',
+        'date' => '2026-10-15',
+        'in_time' => '08:00',
+        'out_time' => '17:00',
     ]);
     $attendanceData = [
         'employee_id' => $employee->id,
@@ -462,8 +460,9 @@ test('monthly report loads with employee, month and year', function () {
         ->assertViewHas('year', 2026)
         ->assertViewHas('attendances', function ($attendances) {
             $first = $attendances->first();
+
             return $attendances->count() === 1
-                && ($first->date instanceof \Carbon\Carbon
+                && ($first->date instanceof Carbon
                     ? $first->date->format('Y-m-d')
                     : $first->date) === '2026-10-15';
         });
@@ -474,7 +473,7 @@ test('monthly report includes only attendances for the selected month', function
     foreach (range(1, 30) as $day) {
         Attendance::factory()->create([
             'employee_id' => $employee->id,
-            'date' => \Carbon\Carbon::create(2026, 10, $day)->toDateString(),
+            'date' => Carbon::create(2026, 10, $day)->toDateString(),
             'in_time' => '09:00',
             'out_time' => '17:00',
         ]);
@@ -495,10 +494,15 @@ test('monthly report includes only attendances for the selected month', function
     $this->assertDatabaseCount('attendances', 31);
     $response->assertViewHas('attendances', function ($attendances) {
         $countIsCorrect = $attendances->count() === 30;
-        $hasFirstDay = $attendances->contains('date', '2026-10-01');
-        $hasTwentiethDay = $attendances->contains('date', '2026-10-20');
-        $doesNotHaveNextMonth = !$attendances->contains('date', '2026-11-15');
-        return $countIsCorrect && $hasFirstDay && $hasTwentiethDay && $doesNotHaveNextMonth;
+        $doesNotHaveNextMonth = ! $attendances->contains('date', '2026-11-15');
+
+        $allDaysPresent = collect(range(1, 30))->every(function ($day) use ($attendances) {
+            $dateStr = Carbon::create(2026, 10, $day)->toDateString();
+
+            return $attendances->contains('date', $dateStr);
+        });
+
+        return $countIsCorrect && $allDaysPresent && $doesNotHaveNextMonth;
     });
 });
 
@@ -522,18 +526,18 @@ test('monthly report shows employee shift times', function () {
 
 test('it calculates late time and overtime correctly', function () {
     $employee = Employee::factory()->create([
-        'shift_in'  => '08:00',
+        'shift_in' => '08:00',
         'shift_out' => '17:00',
     ]);
     Attendance::factory()->create([
         'employee_id' => $employee->id,
-        'date'        => '2026-10-15',
-        'in_time'     => '08:15',
-        'out_time'    => '17:30',
+        'date' => '2026-10-15',
+        'in_time' => '08:15',
+        'out_time' => '17:30',
     ]);
     $employeeData = [
-        'month'       => '10',
-        'year'        => '2026',
+        'month' => '10',
+        'year' => '2026',
         'employee_id' => $employee->id,
     ];
 
@@ -543,6 +547,7 @@ test('it calculates late time and overtime correctly', function () {
     $response->assertOk();
     $response->assertViewHas('attendances', function ($attendances) {
         $attendance = $attendances->first();
+
         return $attendance->late_minutes === 15
             && $attendance->ot_minutes === 30;
     });
@@ -551,7 +556,7 @@ test('it calculates late time and overtime correctly', function () {
 test('can show error for a non selecting employee', function () {
     $employeeData = [
         'month' => 10,
-        'year'  => 2026,
+        'year' => 2026,
     ];
 
     $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $employeeData));
@@ -562,25 +567,25 @@ test('can show error for a non selecting employee', function () {
 
 test('monthly report shows total late and ot minutes', function () {
     $employee = Employee::factory()->create([
-        'shift_in'  => '08:00',
+        'shift_in' => '08:00',
         'shift_out' => '17:00',
     ]);
     $attendance1 = Attendance::factory()->create([
         'employee_id' => $employee->id,
-        'date'        => '2026-10-15',
-        'in_time'     => '08:15',
-        'out_time'    => '17:30',
+        'date' => '2026-10-15',
+        'in_time' => '08:15',
+        'out_time' => '17:30',
     ]);
     $attendance2 = Attendance::factory()->create([
         'employee_id' => $employee->id,
-        'date'        => '2026-10-16',
-        'in_time'     => '08:10',
-        'out_time'    => '17:00',
+        'date' => '2026-10-16',
+        'in_time' => '08:10',
+        'out_time' => '17:00',
     ]);
     $employeeData = [
         'employee_id' => $employee->id,
-        'month'       => 10,
-        'year'        => 2026,
+        'month' => 10,
+        'year' => 2026,
     ];
 
     $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $employeeData));
@@ -598,4 +603,100 @@ test('monthly report shows total late and ot minutes', function () {
         'late_minutes' => 10,
         'ot_minutes' => 0,
     ]);
+});
+
+test('it correctly calculates the total non-working days for the month', function () {
+    $employee = Employee::factory()->create();
+    foreach (range(1, 5) as $day) {
+        Attendance::factory()->create([
+            'employee_id' => $employee->id,
+            'date' => Carbon::create(2026, 10, $day)->toDateString(),
+            'in_time' => '09:00',
+            'out_time' => '17:00',
+        ]);
+    }
+    foreach (range(6, 10) as $day) {
+        Attendance::factory()->create([
+            'employee_id' => $employee->id,
+            'date' => Carbon::create(2026, 10, $day)->toDateString(),
+            'in_time' => null,
+            'out_time' => null,
+        ]);
+    }
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+    $expectedNonWorkingDays = 19;
+
+    $response = $this->actingAs($this->user ?? User::factory()->create())->get(route('attendance.monthly-report', $payload));
+
+    $response->assertOk();
+    $response->assertViewHas('nonworkingDays', $expectedNonWorkingDays);
+    $response->assertViewHas('attendances', function ($attendances) {
+        return $attendances->count() === 10;
+    });
+});
+
+test('empty count excludes weekends, holidays, and leaves', function () {
+    $employee = Employee::factory()->create();
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-10-01',
+        'in_time' => '09:00',
+        'out_time' => '17:00',
+    ]);
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-10-02',
+        'in_time' => '09:00',
+        'out_time' => '17:00',
+    ]);
+    Holiday::create([
+        'name' => 'Test Holiday',
+        'date' => '2026-10-12',
+        'type' => 'public',
+    ]);
+    Leave::create([
+        'employee_id' => $employee->id,
+        'start_date' => '2026-10-13',
+        'end_date' => '2026-10-14',
+        'leave_type' => 'casual',
+        'reason' => 'Personal',
+        'status' => 'approved',
+    ]);
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+    $expectedNonWorkingDays = 17;
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $payload));
+
+    $response->assertOk();
+    $response->assertViewHas('nonworkingDays', $expectedNonWorkingDays);
+});
+
+test('weekend attendance is not counted as a non-working day', function () {
+    $employee = Employee::factory()->create();
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-10-03',
+        'in_time' => '09:00',
+        'out_time' => '17:00'
+    ]);
+    $reportData = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $reportData));
+
+
+    $response->assertOk();
+    $response->assertViewHas('nonWorkingDays', function ($nonWorkingDays) {
+        return $nonWorkingDays === 0;
+    });
 });

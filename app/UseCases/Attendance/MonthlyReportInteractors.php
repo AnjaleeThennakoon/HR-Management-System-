@@ -15,52 +15,67 @@ class MonthlyReportInteractors
     {
         $validated = $monthlyReportRequest->validated();
 
-        $month = (int) $validated['month'];
-        $year  = (int) $validated['year'];
-        $employeeID = $validated['employee_id'];
+        $month = (int) ($validated['month'] ?? now()->month);
+        $year = (int) ($validated['year'] ?? now()->year);
+        $employeeID = $validated['employee_id'] ?? null;
 
-        $attendance = Attendance::with('employee')
-            ->where('employee_id', $employeeID)
-            ->whereMonth('date', $month)
-            ->whereYear('date', $year)
-            ->get()
-            ->keyBy(fn ($record) => $record->date instanceof Carbon
-                ? $record->date->format('Y-m-d')
-                : $record->date);
+        $employee = $employeeID ? Employee::find($employeeID) : null;
+        $holidays = Holiday::whereMonth('date', $month)->whereYear('date', $year)->get();
 
-        foreach ($attendance as $record) {
-            $this->calculateLateAndOT($record);
-            $record->save();
+        if ($employee) {
+            $attendance = Attendance::with('employee')
+                ->where('employee_id', $employeeID)
+                ->whereMonth('date', $month)
+                ->whereYear('date', $year)
+                ->get()
+                ->keyBy(fn ($record) => $record->date instanceof Carbon
+                    ? $record->date->format('Y-m-d')
+                    : Carbon::parse($record->date)->format('Y-m-d'));
+
+            foreach ($attendance as $record) {
+                $this->calculateLateAndOT($record);
+                $record->save();
+            }
+
+            $leaves = Leave::where('employee_id', $employeeID)->get();
+
+            $nonWorkingDaysCount = $this->checkNonWorkingDay($month, $year, $attendance, $holidays, $leaves);
+
+        } else {
+            $attendance = collect();
+            $leaves = collect();
+            $nonWorkingDaysCount = 0;
         }
 
         return [
-            'employee_id'  => $employeeID,
-            'month'     => $month,
-            'year'    => $year,
-            'attendances'  => $attendance,
-            'employees'   => Employee::all(),
-            'employee'   => Employee::find($employeeID),
-            'holidays'    => Holiday::whereMonth('date', $month)->whereYear('date', $year)->get(),
-            'leaves'    => Leave::where('employee_id', $employeeID)->get(),
-            'selectedMonth'  => $month,
-            'selectedYear'   => $year,
+            'employee_id' => $employeeID,
+            'month' => $month,
+            'year' => $year,
+            'attendances' => $attendance,
+            'employees' => Employee::all(),
+            'employee' => $employee,
+            'holidays' => $holidays,
+            'leaves' => $leaves,
+            'selectedMonth' => $month,
+            'selectedYear' => $year,
             'totalLateMinutes' => $attendance->sum('late_minutes'),
-            'totalOtMinutes'   => $attendance->sum('ot_minutes'),
+            'totalOtMinutes' => $attendance->sum('ot_minutes'),
+            'nonWorkingDays' => $nonWorkingDaysCount,
         ];
     }
 
     private function calculateLateAndOT(Attendance $attendance): void
     {
         $attendance->late_minutes = 0;
-        $attendance->ot_minutes   = 0;
+        $attendance->ot_minutes = 0;
 
         $employee = $attendance->employee;
-        if (!$employee) {
+        if (! $employee) {
             return;
         }
 
         if ($attendance->in_time && $employee->shift_in) {
-            $inTime  = Carbon::parse($attendance->in_time);
+            $inTime = Carbon::parse($attendance->in_time);
             $shiftIn = Carbon::parse($employee->shift_in);
 
             if ($inTime->greaterThan($shiftIn)) {
@@ -69,12 +84,8 @@ class MonthlyReportInteractors
         }
 
         if ($attendance->out_time && $employee->shift_out) {
-            $outTime  = Carbon::parse($attendance->out_time);
+            $outTime = Carbon::parse($attendance->out_time);
             $shiftOut = Carbon::parse($employee->shift_out);
-
-            if ($shiftOut->lessThanOrEqualTo($shiftIn ?? Carbon::parse($employee->shift_in))) {
-                $shiftOut->addDay();
-            }
 
             if ($outTime->greaterThan($shiftOut)) {
                 $attendance->ot_minutes = (int) $shiftOut->diffInMinutes($outTime);
@@ -82,4 +93,41 @@ class MonthlyReportInteractors
         }
     }
 
+    private function checkNonWorkingDay(int $month, int $year, $attendance, $holidays, $leaves): int
+    {
+        $nonWorkingDays = collect();
+        $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfMonth();
+        $totalDays = $startOfMonth->daysInMonth;
+
+        for ($day = 1; $day <= $totalDays; $day++) {
+            $dateObj = Carbon::createFromDate($year, $month, $day);
+            $dateStr = $dateObj->toDateString();
+
+            if ($dateObj->isWeekend()) {
+                continue;
+            }
+
+            $isHoliday = $holidays->contains(fn ($holiday) => Carbon::parse($holiday->date)->toDateString() === $dateStr);
+            if ($isHoliday) {
+                continue;
+            }
+
+            $isLeave = $leaves->contains(function ($leave) use ($dateStr) {
+                $leaveStart = Carbon::parse($leave->start_date)->toDateString();
+                $leaveEnd = Carbon::parse($leave->end_date ?? $leave->start_date)->toDateString();
+                return $dateStr >= $leaveStart && $dateStr <= $leaveEnd;
+            });
+            if ($isLeave) {
+                continue;
+            }
+
+            $record = $attendance->get($dateStr);
+
+            if (! $record || (empty($record->in_time) && empty($record->out_time))) {
+                $nonWorkingDays->push($dateStr);
+            }
+        }
+
+        return $nonWorkingDays->count();
+    }
 }

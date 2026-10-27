@@ -1,3 +1,4 @@
+@php use Carbon\Carbon; @endphp
 <x-layout title="Monthly Attendance Report - HR System">
 
     <div class="flex h-[calc(100vh-65px)] flex-col gap-4 overflow-hidden bg-slate-50/50 p-4">
@@ -38,8 +39,6 @@
                         </div>
 
                         <div class="space-y-4 p-4">
-
-                            {{-- Month & Year (Separate Dropdowns) --}}
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label for="year" class="mb-1.5 block text-xs font-semibold text-slate-500">Year</label>
@@ -112,14 +111,18 @@
 
                     <section class="shrink-0 rounded-xl border border-slate-200 bg-white p-4">
                         <h2 class="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Monthly Totals</h2>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div class="rounded-lg bg-rose-50 p-3">
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="rounded-lg bg-rose-50 p-2 text-center">
                                 <p class="text-xs font-semibold text-rose-600">Late</p>
-                                <p class="mt-1 text-lg font-extrabold text-rose-700">{{ number_format($totalLateMinutes ?? 0) }} <span class="text-xs">mins</span></p>
+                                <p class="mt-1 text-lg font-extrabold text-rose-700">{{ number_format($totalLateMinutes ?? 0) }} <span class="text-[10px]">m</span></p>
                             </div>
-                            <div class="rounded-lg bg-indigo-50 p-3">
-                                <p class="text-xs font-semibold text-indigo-600">Overtime</p>
-                                <p class="mt-1 text-lg font-extrabold text-indigo-700">{{ number_format($totalOtMinutes ?? 0) }} <span class="text-xs">mins</span></p>
+                            <div class="rounded-lg bg-indigo-50 p-2 text-center">
+                                <p class="text-xs font-semibold text-indigo-600">OT</p>
+                                <p class="mt-1 text-lg font-extrabold text-indigo-700">{{ number_format($totalOtMinutes ?? 0) }} <span class="text-[10px]">m</span></p>
+                            </div>
+                            <div class="rounded-lg bg-slate-100 p-2 text-center">
+                                <p class="text-xs font-semibold text-slate-600">Empty Days</p>
+                                <p class="mt-1 text-lg font-extrabold text-slate-700">{{ $nonworkingDays ?? 0 }} <span class="text-[10px]">d</span></p>
                             </div>
                         </div>
                     </section>
@@ -132,7 +135,7 @@
                     @php
                         $year  = (int) ($selectedYear ?? date('Y'));
                         $month = (int) ($selectedMonth ?? date('n'));
-                        $startOfMonth = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth();
+                        $startOfMonth = Carbon::createFromDate($year, $month, 1)->startOfMonth();
                         $totalDays    = $startOfMonth->daysInMonth;
                     @endphp
 
@@ -145,6 +148,7 @@
                             <span class="rounded-md bg-emerald-50 px-2 py-1 font-semibold text-emerald-700">On Time</span>
                             <span class="rounded-md bg-rose-50 px-2 py-1 font-semibold text-rose-700">Late</span>
                             <span class="rounded-md bg-indigo-50 px-2 py-1 font-semibold text-indigo-700">Overtime</span>
+                            <span class="rounded-md bg-blue-100 px-2 py-1 font-semibold text-blue-800 border border-blue-200">Weekend</span>
                         </div>
                     </div>
 
@@ -164,33 +168,47 @@
                             <tbody class="divide-y divide-slate-100">
                             @for ($day = 1; $day <= $totalDays; $day++)
                                 @php
-                                    $dateObj   = \Carbon\Carbon::createFromDate($year, $month, $day);
+                                    $dateObj   = Carbon::createFromDate($year, $month, $day);
                                     $dateStr   = $dateObj->toDateString();
                                     $isWeekend = $dateObj->isWeekend();
-                                    $holiday = ($holidays ?? collect())->first(fn ($h) => \Carbon\Carbon::parse($h->date)->toDateString() === $dateStr);
+                                    $holiday = ($holidays ?? collect())->first(fn ($h) => Carbon::parse($h->date)->toDateString() === $dateStr);
                                     $leave = ($leaves ?? collect())->first(function ($l) use ($dateStr) {
-                                        $leaveStart = \Carbon\Carbon::parse($l->start_date)->toDateString();
-                                        $leaveEnd   = \Carbon\Carbon::parse($l->end_date ?? $l->start_date)->toDateString();
+                                        $leaveStart = Carbon::parse($l->start_date)->toDateString();
+                                        $leaveEnd   = Carbon::parse($l->end_date ?? $l->start_date)->toDateString();
                                         return $dateStr >= $leaveStart && $dateStr <= $leaveEnd;
                                     });
                                     $att = $attendances[$dateStr] ?? null;
-                                    $rowType = $holiday ? 'holiday' : ($leave ? 'leave' : (($isWeekend && !$att) ? 'weekend' : 'normal'));
+                                    $hasAttendance = $att && ($att->in_time || $att->out_time);
+
+                                    if ($holiday) {
+                                        $rowType = 'holiday';
+                                    } elseif ($leave) {
+                                        $rowType = 'leave';
+                                    } elseif ($isWeekend) {
+                                        $rowType = 'weekend';
+                                    } elseif (! $hasAttendance) {
+                                        $rowType = 'empty';
+                                    } else {
+                                        $rowType = 'normal';
+                                    }
 
                                     $inTimeDisplay = ($att && $att->in_time) ? \Carbon\Carbon::parse($att->in_time)->format('H:i') : null;
                                     $outTimeDisplay = ($att && $att->out_time) ? \Carbon\Carbon::parse($att->out_time)->format('H:i') : null;
                                 @endphp
 
-                                <tr class="attendance-row {{ $rowType === 'holiday' ? 'bg-rose-50/50' : ($rowType === 'leave' ? 'bg-amber-50/50' : ($rowType === 'weekend' ? 'bg-slate-50' : 'hover:bg-indigo-50/40')) }}" data-attendance-id="{{ $att->id ?? '' }}" data-employee-id="{{ $employee->id }}" data-date="{{ $dateStr }}">
-                                    <td class="whitespace-nowrap px-3 py-3 font-semibold text-slate-700">
-                                        {{ $dateObj->format('d M') }} <span class="text-slate-400">({{ $dateObj->format('D') }})</span>
+                                <tr class="attendance-row {{ $rowType === 'holiday' ? 'bg-rose-50/50' : ($rowType === 'leave' ? 'bg-amber-50/50' : ($rowType === 'weekend' ? 'bg-blue-100/70 hover:bg-blue-100/90' : ($rowType === 'empty' ? 'bg-slate-50/60' : 'hover:bg-indigo-50/40'))) }}" data-attendance-id="{{ $att->id ?? '' }}" data-employee-id="{{ $employee->id }}" data-date="{{ $dateStr }}">
+                                    <td class="whitespace-nowrap px-3 py-3 font-semibold {{ $rowType === 'weekend' ? 'text-blue-900' : 'text-slate-700' }}">
+                                        {{ $dateObj->format('d M') }} <span class="{{ $rowType === 'weekend' ? 'inline-flex items-center rounded-md bg-blue-200/80 px-1.5 py-0.5 text-[10px] font-extrabold text-blue-800' : 'text-slate-400' }}">({{ $dateObj->format('D') }})</span>
                                     </td>
 
                                     @if ($rowType === 'holiday')
                                         <td colspan="4" class="px-2 py-3"><span class="rounded-md bg-rose-100 px-2 py-1 font-semibold text-rose-700">{{ $holiday->name ?? 'Public Holiday' }}</span></td>
                                     @elseif ($rowType === 'leave')
                                         <td colspan="4" class="px-2 py-3"><span class="rounded-md bg-amber-100 px-2 py-1 font-semibold text-amber-700">{{ $leave->leave_type ?? 'On Leave' }}</span></td>
-                                    @elseif ($rowType === 'weekend')
-                                        <td colspan="4" class="px-2 py-3 italic text-slate-400">Weekend (Off)</td>
+                                    @elseif ($rowType === 'weekend' && ! $hasAttendance)
+                                        <td colspan="4" class="px-2 py-3"><span class="inline-flex items-center rounded-md bg-blue-200/80 px-2.5 py-1 text-xs font-bold text-blue-800 border border-blue-300/60">Weekend</span></td>
+                                    @elseif ($rowType === 'empty')
+                                        <td colspan="4" class="px-2 py-3"><span class="rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-500">Empty (Off)</span></td>
                                     @else
                                         <td class="px-2 py-3">@if ($inTimeDisplay)<span class="rounded-md bg-emerald-50 px-2 py-1 font-semibold text-emerald-700">{{ $inTimeDisplay }}</span>@else<span class="text-slate-300">-</span>@endif</td>
                                         <td class="px-2 py-3">@if ($outTimeDisplay)<span class="rounded-md bg-indigo-50 px-2 py-1 font-semibold text-indigo-700">{{ $outTimeDisplay }}</span>@else<span class="text-slate-300">-</span>@endif</td>
@@ -199,7 +217,7 @@
                                     @endif
 
                                     <td class="px-2 py-3 text-right">
-                                        @if ($rowType === 'normal')
+                                        @if ($rowType === 'normal' || $rowType === 'empty' || $rowType === 'weekend')
                                             <div class="flex items-center justify-end gap-1">
                                                 <div class="view-mode">
                                                     <button type="button" class="edit-btn rounded-md p-1.5 text-slate-400 hover:bg-indigo-50 hover:text-indigo-600" title="Edit attendance">
@@ -233,27 +251,7 @@
         </div>
     </div>
 
-    <style>
-        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 transparent; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
-    </style>
-
     <script>
-        function formatTimeTo24H(timeStr) {
-            if (!timeStr) return null;
-            if (timeStr.toUpperCase().includes('AM') || timeStr.toUpperCase().includes('PM')) {
-                let [time, modifier] = timeStr.trim().split(' ');
-                let [hours, minutes] = time.split(':');
-                if (hours === '12') hours = '00';
-                if (modifier.toUpperCase() === 'PM') hours = parseInt(hours, 10) + 12;
-                return String(hours).padStart(2, '0') + ':' + String(minutes).padStart(2, '0');
-            }
-            return timeStr;
-        }
-
         document.addEventListener('click', async function (event) {
             const row = event.target.closest('.attendance-row');
             if (!row) return;
@@ -279,14 +277,11 @@
                 const outInput = row.querySelector('.out-time-input');
                 const attendanceId = row.dataset.attendanceId;
 
-                const formattedInTime = formatTimeTo24H(inInput.value);
-                const formattedOutTime = formatTimeTo24H(outInput.value);
-
                 const payload = {
                     employee_id: row.dataset.employeeId,
                     date: row.dataset.date,
-                    in_time: formattedInTime,
-                    out_time: formattedOutTime,
+                    in_time: inInput.value || null,
+                    out_time: outInput.value || null,
                 };
 
                 const url = attendanceId ? `{{ url('/attendance') }}/${attendanceId}` : `{{ route('attendance.store') }}`;
