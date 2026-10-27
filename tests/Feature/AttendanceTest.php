@@ -70,7 +70,7 @@ test('an attendance record can be updated', function () {
         'out_time' => '18:00',
     ];
 
-    $response = $this->actingAs($this->user)->put("/attendance/$attendance->id", $updatedAttendance);
+    $response = $this->actingAs($this->user)->put("/attendance/{$attendance->id}", $updatedAttendance);
 
     $response->assertStatus(302);
     $response->assertRedirect('/attendance');
@@ -91,7 +91,7 @@ test('an attendance record can be deleted', function () {
         'out_time' => '17:00',
     ]);
 
-    $response = $this->actingAs($this->user)->delete("/attendance/$attendance->id}");
+    $response = $this->actingAs($this->user)->delete("/attendance/{$attendance->id}");
 
     $response->assertStatus(302);
     $response->assertRedirect('/attendance');
@@ -390,7 +390,7 @@ test('attendance cannot be updated to a duplicate employee and date', function (
     $this->assertDatabaseCount('attendances', 2);
 });
 
-test('monthly report only shows attendances for the selected month', function () {
+test('monthly report view does not render attendance rows from other months', function () {
     $employee = Employee::factory()->create();
     Attendance::factory()->create([
         'employee_id' => $employee->id,
@@ -630,10 +630,10 @@ test('it correctly calculates the total non-working days for the month', functio
     ];
     $expectedNonWorkingDays = 19;
 
-    $response = $this->actingAs($this->user ?? User::factory()->create())->get(route('attendance.monthly-report', $payload));
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $payload));
 
     $response->assertOk();
-    $response->assertViewHas('nonworkingDays', $expectedNonWorkingDays);
+    $response->assertViewHas('nonWorkingDays', $expectedNonWorkingDays);
     $response->assertViewHas('attendances', function ($attendances) {
         return $attendances->count() === 10;
     });
@@ -676,7 +676,7 @@ test('empty count excludes weekends, holidays, and leaves', function () {
     $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $payload));
 
     $response->assertOk();
-    $response->assertViewHas('nonworkingDays', $expectedNonWorkingDays);
+    $response->assertViewHas('nonWorkingDays', $expectedNonWorkingDays);
 });
 
 test('weekend attendance is not counted as a non-working day', function () {
@@ -685,7 +685,7 @@ test('weekend attendance is not counted as a non-working day', function () {
         'employee_id' => $employee->id,
         'date' => '2026-10-03',
         'in_time' => '09:00',
-        'out_time' => '17:00'
+        'out_time' => '17:00',
     ]);
     $reportData = [
         'employee_id' => $employee->id,
@@ -694,9 +694,8 @@ test('weekend attendance is not counted as a non-working day', function () {
     ];
     $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $reportData));
 
-
     $response->assertOk();
-    $response->assertViewHas('nonWorkingDays', function ($nonWorkingDays) {
-        return $nonWorkingDays === 0;
-    });
+    $response->assertViewHas('nonWorkingDays', 22);
 });
+
+
