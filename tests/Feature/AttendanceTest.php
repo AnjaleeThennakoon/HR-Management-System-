@@ -698,4 +698,27 @@ test('weekend attendance is not counted as a non-working day', function () {
     $response->assertViewHas('nonWorkingDays', 22);
 });
 
+test('add shift time for a weekend, after showing error in monthly report', function () {
+    $employee = Employee::factory()->create([
+        'shift_in' => '08:00',
+        'shift_out' => '17:00',
+    ]);
+    Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-10-03',
+        'in_time' => '09:00',
+        'out_time' => '17:00',
+    ]);
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
 
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $payload));
+
+    $response->assertOk()
+        ->assertSee('09:00')
+        ->assertSee('17:00')
+        ->assertSee('Cannot add time for the weekend days');
+});

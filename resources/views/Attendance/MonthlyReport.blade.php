@@ -122,7 +122,7 @@
                             </div>
                             <div class="rounded-lg bg-slate-100 p-2 text-center">
                                 <p class="text-xs font-semibold text-slate-600">Empty Days</p>
-                                <p class="mt-1 text-lg font-extrabold text-slate-700">{{ $nonworkingDays ?? 0 }} <span class="text-[10px]">d</span></p>
+                                <p class="mt-1 text-lg font-extrabold text-slate-700">{{ $nonWorkingDays ?? $nonworkingDays ?? 0 }} <span class="text-[10px]">d</span></p>
                             </div>
                         </div>
                     </section>
@@ -207,6 +207,10 @@
                                         <td colspan="4" class="px-2 py-3"><span class="rounded-md bg-amber-100 px-2 py-1 font-semibold text-amber-700">{{ $leave->leave_type ?? 'On Leave' }}</span></td>
                                     @elseif ($rowType === 'weekend' && ! $hasAttendance)
                                         <td colspan="4" class="px-2 py-3"><span class="inline-flex items-center rounded-md bg-blue-200/80 px-2.5 py-1 text-xs font-bold text-blue-800 border border-blue-300/60">Weekend</span></td>
+                                    @elseif ($rowType === 'weekend' && $hasAttendance)
+                                        <td class="px-2 py-3">@if ($inTimeDisplay)<span class="rounded-md bg-emerald-50 px-2 py-1 font-semibold text-emerald-700">{{ $inTimeDisplay }}</span>@else<span class="text-slate-300">-</span>@endif</td>
+                                        <td class="px-2 py-3">@if ($outTimeDisplay)<span class="rounded-md bg-indigo-50 px-2 py-1 font-semibold text-indigo-700">{{ $outTimeDisplay }}</span>@else<span class="text-slate-300">-</span>@endif</td>
+                                        <td colspan="2" class="px-2 py-3"><span class="rounded-md bg-rose-100 px-2 py-1 font-semibold text-rose-700">Cannot add time for the weekend days</span></td>
                                     @elseif ($rowType === 'empty')
                                         <td colspan="4" class="px-2 py-3"><span class="rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-500">Empty (Off)</span></td>
                                     @else
