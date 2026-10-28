@@ -6,6 +6,8 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Leave;
+use App\Models\Support\LeaveSupport;
+use App\Models\SystemConfiguration;
 use App\UseCases\Attendance\Request\MonthlyReportRequest;
 use Carbon\Carbon;
 
@@ -41,10 +43,25 @@ class MonthlyReportInteractors
 
             $nonWorkingDaysCount = $this->checkNonWorkingDay($month, $year, $attendance, $holidays, $leaves);
 
+            $leaveBalances = [
+                'Annual' => LeaveSupport::getRemainingDays($employeeID, 'Annual', $year),
+                'Medical' => LeaveSupport::getRemainingDays($employeeID, 'Medical', $year),
+                'casual' => LeaveSupport::getRemainingDays($employeeID, 'casual', $year),
+            ];
+            $totalRemainingLeaveDays = array_sum($leaveBalances);
+            $allLeaveBalancesUsed = ($totalRemainingLeaveDays <= 0);
+            $nonPayDaysCount = $allLeaveBalancesUsed
+                ? $nonWorkingDaysCount
+                : max(0, $nonWorkingDaysCount - $totalRemainingLeaveDays);
+
         } else {
             $attendance = collect();
             $leaves = collect();
             $nonWorkingDaysCount = 0;
+            $leaveBalances = ['Annual' => 0, 'Medical' => 0, 'casual' => 0];
+            $totalRemainingLeaveDays = 0;
+            $allLeaveBalancesUsed = false;
+            $nonPayDaysCount = 0;
         }
 
         return [
@@ -61,6 +78,15 @@ class MonthlyReportInteractors
             'totalLateMinutes' => $attendance->sum('late_minutes'),
             'totalOtMinutes' => $attendance->sum('ot_minutes'),
             'nonWorkingDays' => $nonWorkingDaysCount,
+            'nonPayDays' => $nonPayDaysCount,
+            'totalRemainingLeaveDays' => $totalRemainingLeaveDays,
+            'allLeaveBalancesUsed' => $allLeaveBalancesUsed,
+            'leaveBalances' => $leaveBalances,
+            'leaveCounts' => [
+                'Annual' => SystemConfiguration::getLeaveCount('Annual'),
+                'Medical' => SystemConfiguration::getLeaveCount('Medical'),
+                'casual' => SystemConfiguration::getLeaveCount('casual'),
+            ],
         ];
     }
 
@@ -115,6 +141,7 @@ class MonthlyReportInteractors
             $isLeave = $leaves->contains(function ($leave) use ($dateStr) {
                 $leaveStart = Carbon::parse($leave->start_date)->toDateString();
                 $leaveEnd = Carbon::parse($leave->end_date ?? $leave->start_date)->toDateString();
+
                 return $dateStr >= $leaveStart && $dateStr <= $leaveEnd;
             });
             if ($isLeave) {

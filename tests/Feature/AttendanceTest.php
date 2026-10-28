@@ -5,6 +5,7 @@ use App\Models\AttendanceImport;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Leave;
+use App\Models\SystemConfiguration;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -722,3 +723,71 @@ test('add shift time for a weekend, after showing error in monthly report', func
         ->assertSee('17:00')
         ->assertSee('Cannot add time for the weekend days');
 });
+
+test('monthly report page displays mark as leave and delete row action buttons', function () {
+    $employee = Employee::factory()->create([
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+    ]);
+    $attendance = Attendance::factory()->create([
+        'employee_id' => $employee->id,
+        'date' => '2026-10-01',
+        'in_time' => '09:00',
+        'out_time' => '17:00',
+    ]);
+
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $payload));
+
+    $response->assertOk()
+        ->assertSee('title="Mark as a leave"', false)
+        ->assertSee('title="Delete row"', false)
+        ->assertSee('id="markLeaveModal"', false);
+});
+
+test('it calculates no-pay days correctly after the leave period ends', function () {
+    $employee = Employee::factory()->create();
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => ['Annual' => 0, 'Medical' => 0, 'casual' => 0]]
+    );
+
+    Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'start_date' => '2026-10-12',
+        'end_date' => '2026-10-13',
+        'leave_type' => 'casual',
+        'reason' => 'Personal',
+        'status' => 'approved',
+    ]);
+    foreach (range(1, 31) as $day) {
+        $date = Carbon::create(2026, 10, $day);
+
+        if ($date->isWeekend() || in_array($day, [12, 13, 14, 15], true)) {
+            continue;
+        }
+
+        Attendance::factory()->create([
+            'employee_id' => $employee->id,
+            'date' => $date->toDateString(),
+            'in_time' => '09:00',
+            'out_time' => '17:00',
+        ]);
+    }
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $payload));
+
+    $response->assertOk();
+    $response->assertViewHas('nonPayDays', 2);
+});
+

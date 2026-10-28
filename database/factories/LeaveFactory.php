@@ -2,8 +2,9 @@
 
 namespace Database\Factories;
 
-use App\Models\user;
+use App\Models\Employee;
 use App\Models\Leave;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -14,7 +15,7 @@ class LeaveFactory extends Factory
     public function definition(): array
     {
         return [
-            'employee_id' => user::factory(),
+            'employee_id' => Employee::factory(),
             'leave_type' => $this->faker->randomElement(['Annual', 'Medical', 'casual']),
             'start_date' => $this->faker->date(),
             'end_date' => $this->faker->date(),

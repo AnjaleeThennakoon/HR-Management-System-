@@ -45,7 +45,7 @@ class Leave extends LeaveSupport
 
     public function employee(): BelongsTo
     {
-        return $this->belongsTo(user::class);
+        return $this->belongsTo(Employee::class);
     }
 
     public function department(): BelongsTo

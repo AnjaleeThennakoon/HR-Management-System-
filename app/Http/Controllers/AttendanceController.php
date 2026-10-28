@@ -70,9 +70,13 @@ class AttendanceController extends Controller
             ->with('success', 'Attendance has been successfully updated.');
     }
 
-    public function destroy(DeleteAttendanceInteractors $deleteAttendanceInteractors, string $id): RedirectResponse
+    public function destroy(DeleteAttendanceInteractors $deleteAttendanceInteractors, string $id): RedirectResponse|JsonResponse
     {
         $deleteAttendanceInteractors->execute($id);
+
+        if (request()->wantsJson()) {
+            return response()->json(['status' => 'ok']);
+        }
 
         return redirect()->route('attendance.index')
             ->with('success', 'Attendance has been successfully deleted.');

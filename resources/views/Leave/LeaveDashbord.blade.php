@@ -82,7 +82,9 @@
                                         {{ $leave->id }},
                                         {{ $leave->employee_id }},
                                         '{{ $leave->status }}',
-                                        '{{ addslashes($leave->remarks ?? '') }}'
+                                        '{{ addslashes($leave->remarks ?? '') }}',
+                                        '{{ $leave->approved_at ? \Carbon\Carbon::parse($leave->approved_at)->format('d M Y, h:i A') : '-' }}',
+                                        '{{ addslashes($leave->user?->name ?? '-') }}'
                                     )"
                                     class="leave-status inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer transition {{ $statusColors[$leave->status] ?? 'bg-gray-100 text-gray-700' }}"
                                     title="Click to update approval status">
@@ -100,11 +102,13 @@
                                 {{-- Update Leave Approval --}}
                                 <button type="button"
                                         onclick="openApprovalModal(
-                                            {{ $leave->id }},
-                                            {{ $leave->employee_id }},
-                                            '{{ $leave->status }}',
-                                            '{{ addslashes($leave->remarks ?? '') }}'
-                                        )"
+                                        {{ $leave->id }},
+                                        {{ $leave->employee_id }},
+                                        '{{ $leave->status }}',
+                                        '{{ addslashes($leave->remarks ?? '') }}',
+                                        '{{ $leave->approved_at ? \Carbon\Carbon::parse($leave->approved_at)->format('d M Y, h:i A') : '-' }}',
+                                        '{{ addslashes($leave->user?->name ?? '-') }}'
+                                    )"
                                         class="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"
                                         title="Update Leave Approval">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
@@ -122,7 +126,10 @@
                                             '{{ $leave->leave_type }}',
                                             '{{ $leave->start_date }}',
                                             '{{ $leave->end_date }}',
-                                            '{{ addslashes($leave->reason) }}'
+                                            '{{ addslashes($leave->reason) }}',
+                                            '{{ $leave->approved_at ? \Carbon\Carbon::parse($leave->approved_at)->format('d M Y, h:i A') : '-' }}',
+                                            '{{ addslashes($leave->user?->name ?? '-') }}',
+                                            '{{ $leave->status }}'
                                         )"
                                         class="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                                         title="Edit Leave">
@@ -187,12 +194,25 @@
             document.getElementById('leaveSubmit').textContent = 'Add Leave';
             document.getElementById('edit_leave_id').value = '';
 
+            // Reset approval details
+            const approvedAtEl = document.getElementById('leaveApprovedAt');
+            const approvedUserEl = document.getElementById('leaveApprovedUser');
+            const statusBadge = document.getElementById('leaveStatusBadge');
+            if (approvedAtEl) approvedAtEl.value = '-';
+            if (approvedUserEl) approvedUserEl.value = '-';
+            if (statusBadge) {
+                statusBadge.textContent = 'Pending';
+                statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full font-medium bg-yellow-50 text-yellow-700';
+            }
+
             const balanceCard = document.getElementById('leaveBalanceCard');
             if (balanceCard) balanceCard.classList.add('hidden');
             const quotaBadge = document.getElementById('leaveQuotaBadge');
             if (quotaBadge) quotaBadge.classList.add('hidden');
             const overviewContainer = document.getElementById('employeeBalancesOverview');
             if (overviewContainer) overviewContainer.classList.add('hidden');
+
+            updateLeaveCount();
 
             document.getElementById('leaveModal').classList.remove('hidden');
         }
@@ -201,7 +221,7 @@
             document.getElementById('leaveModal').classList.add('hidden');
         }
 
-        function openEditModal(id, employeeId, leaveType, startDate, endDate, reason) {
+        function openEditModal(id, employeeId, leaveType, startDate, endDate, reason, approvedAt = '-', approvedUser = '-', status = 'pending') {
             const form = document.getElementById('leaveForm');
             form.action = '/leaves/' + id;
             document.getElementById('leaveMethod').disabled = false;
@@ -214,23 +234,80 @@
             document.getElementById('leaveModalTitle').textContent = 'Edit Leave';
             document.getElementById('leaveSubmit').textContent = 'Update Leave';
 
+            // Populate approval details
+            const approvedAtEl = document.getElementById('leaveApprovedAt');
+            const approvedUserEl = document.getElementById('leaveApprovedUser');
+            const statusBadge = document.getElementById('leaveStatusBadge');
+            if (approvedAtEl) approvedAtEl.value = approvedAt || '-';
+            if (approvedUserEl) approvedUserEl.value = approvedUser || '-';
+            if (statusBadge) {
+                const displayStatus = (status.charAt(0).toUpperCase() + status.slice(1)) || 'Pending';
+                statusBadge.textContent = displayStatus;
+                if (status === 'approved') {
+                    statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full font-medium bg-green-50 text-green-700';
+                } else if (status === 'rejected') {
+                    statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full font-medium bg-red-50 text-red-700';
+                } else {
+                    statusBadge.className = 'text-xs px-2.5 py-0.5 rounded-full font-medium bg-yellow-50 text-yellow-700';
+                }
+            }
+
+            updateLeaveCount();
             loadEmployeeBalances(employeeId);
             checkLeaveBalance();
 
             document.getElementById('leaveModal').classList.remove('hidden');
         }
 
+        // ===== Leave Count Calculation =====
+        function updateLeaveCount() {
+            const startInput = document.getElementById('leaveStartDate');
+            const endInput = document.getElementById('leaveEndDate');
+            const countText = document.getElementById('leaveDaysCountText');
+            const countDisplay = document.getElementById('leaveDaysCountDisplay');
+            const countHidden = document.getElementById('leaveDaysCount');
+
+            if (!startInput || !startInput.value) {
+                if (countText) countText.textContent = '0 days';
+                if (countDisplay) countDisplay.textContent = '0 days';
+                if (countHidden) countHidden.value = 0;
+                return;
+            }
+
+            const startDate = new Date(startInput.value);
+            const endDate = endInput && endInput.value ? new Date(endInput.value) : new Date(startInput.value);
+
+            if (endDate < startDate) {
+                if (countText) countText.textContent = 'Invalid date range';
+                if (countDisplay) countDisplay.textContent = 'Invalid';
+                if (countHidden) countHidden.value = 0;
+                return;
+            }
+
+            const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const label = `${diffDays} ${diffDays === 1 ? 'day' : 'days'}`;
+
+            if (countText) countText.textContent = label;
+            if (countDisplay) countDisplay.textContent = label;
+            if (countHidden) countHidden.value = diffDays;
+        }
+
         // ===== Approval Modal =====
-        function openApprovalModal(leaveId, employeeId, status, remarks) {
+        function openApprovalModal(leaveId, employeeId, status, remarks, approvedAt = '-', approvedUser = '-') {
             const form = document.getElementById('approvalForm');
             form.action = "{{ route('leave-approval.store') }}";
 
             document.getElementById('approvalLeaveId').value      = leaveId;
             document.getElementById('approvalEmployeeId').value   = employeeId;
             document.getElementById('approvalLeaveDisplay').value = '#' + leaveId;
-            // approvalStatus hidden input එකට දැනට තියෙන status එක දානවා
             document.getElementById('approvalStatus').value       = status || 'pending';
             document.getElementById('approvalRemarks').value      = remarks || '';
+
+            const approvedAtEl = document.getElementById('approvalApprovedAtDisplay');
+            const approvedUserEl = document.getElementById('approvalApprovedUserDisplay');
+            if (approvedAtEl) approvedAtEl.value = approvedAt || '-';
+            if (approvedUserEl) approvedUserEl.value = approvedUser || '-';
 
             document.getElementById('approvalModal').classList.remove('hidden');
         }
@@ -253,7 +330,9 @@
             overviewContainer.classList.remove('hidden');
             if (loadingEl) loadingEl.classList.remove('hidden');
 
-            fetch(`{{ route('leaves.balance') }}?employee_id=${employeeId}`)
+            const editLeaveId = document.getElementById('edit_leave_id')?.value;
+            const excludeParam = editLeaveId ? `&exclude_leave_id=${editLeaveId}` : '';
+            fetch(`{{ route('leaves.balance') }}?employee_id=${employeeId}${excludeParam}`)
                 .then(response => {
                     if (!response.ok) throw new Error('Failed to load balances');
                     return response.json();
@@ -318,7 +397,9 @@
                 return;
             }
 
-            fetch(`{{ route('leaves.balance') }}?employee_id=${employeeId}&leave_type=${leaveType}`)
+            const editLeaveId = document.getElementById('edit_leave_id')?.value;
+            const excludeParam = editLeaveId ? `&exclude_leave_id=${editLeaveId}` : '';
+            fetch(`{{ route('leaves.balance') }}?employee_id=${employeeId}&leave_type=${leaveType}${excludeParam}`)
                 .then(response => {
                     if (!response.ok) throw new Error('Balance check failed');
                     return response.json();
@@ -359,6 +440,23 @@
             }
             if (typeSelect) {
                 typeSelect.addEventListener('change', checkLeaveBalance);
+            }
+
+            const startDateInput = document.getElementById('leaveStartDate');
+            const endDateInput = document.getElementById('leaveEndDate');
+            if (startDateInput) {
+                startDateInput.addEventListener('change', function () {
+                    updateLeaveCount();
+                    checkLeaveBalance();
+                });
+                startDateInput.addEventListener('input', updateLeaveCount);
+            }
+            if (endDateInput) {
+                endDateInput.addEventListener('change', function () {
+                    updateLeaveCount();
+                    checkLeaveBalance();
+                });
+                endDateInput.addEventListener('input', updateLeaveCount);
             }
         });
 

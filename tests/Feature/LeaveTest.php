@@ -447,8 +447,7 @@ test('leave balance endpoint returns all leave balances when leave_type is omitt
         'status' => 'approved',
     ]);
 
-    $response = $this->actingAs($this->user)->getJson(route('leaves.balance', [
-        'employee_id' => $employee->id,
+    $response = $this->actingAs($this->user)->getJson(route('leaves.balance', ['employee_id' => $employee->id,
     ]));
 
     $response->assertOk()->assertJson([
@@ -473,5 +472,127 @@ test('leave balance endpoint returns all leave balances when leave_type is omitt
                 'year' => 2026,
             ],
         ],
+    ]);
+});
+
+test('leave form contains approved at, approved user and leave count elements', function () {
+    $response = $this->actingAs($this->user)->get(route('leaves.index'));
+
+    $response->assertOk()
+        ->assertSee('Approved At', false)
+        ->assertSee('Approved User', false)
+        ->assertSee('id="leaveApprovedAt"', false)
+        ->assertSee('id="leaveApprovedUser"', false)
+        ->assertSee('id="leaveApprovalSection"', false)
+        ->assertSee('id="approvalApprovedAtDisplay"', false)
+        ->assertSee('id="approvalApprovedUserDisplay"', false)
+        ->assertSee('id="leaveDaysCountText"', false)
+        ->assertSee('id="leaveDaysCount"', false);
+});
+
+test('updating leave dates updates the leave record and employee remaining leave count', function () {
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => [
+            'Annual' => 14,
+            'Medical' => 7,
+            'casual' => 5,
+        ]]
+    );
+
+    $employee = Employee::factory()->create();
+    $leave = Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-05',
+        'reason' => 'Initial vacation',
+        'status' => 'approved',
+    ]);
+
+    expect(LeaveSupport::getRemainingDays($employee->id, 'Annual', 2026))->toBe(9);
+
+    $response = $this->actingAs($this->user)->put(route('leaves.update', $leave->id), [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-02',
+        'reason' => 'Shortened vacation',
+        'status' => 'approved',
+    ]);
+
+    $response->assertRedirect(route('leaves.index'));
+    $this->assertDatabaseHas('leaves', [
+        'id' => $leave->id,
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-02',
+        'status' => 'approved',
+    ]);
+
+    expect(LeaveSupport::getRemainingDays($employee->id, 'Annual', 2026))->toBe(12);
+});
+
+test('leave balance endpoint excludes current leave being updated when calculating remaining count', function () {
+    SystemConfiguration::updateOrCreate(
+        ['key' => 'leave'],
+        ['value' => [
+            'Annual' => 14,
+            'Medical' => 7,
+            'casual' => 5,
+        ]]
+    );
+
+    $employee = Employee::factory()->create();
+    $leave = Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-04',
+        'status' => 'approved',
+    ]);
+
+    $respWithout = $this->actingAs($this->user)->getJson(route('leaves.balance', [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+    ]));
+    $respWithout->assertOk()->assertJsonPath('balance.remaining_days', 10);
+
+    $respWith = $this->actingAs($this->user)->getJson(route('leaves.balance', [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'exclude_leave_id' => $leave->id,
+    ]));
+    $respWith->assertOk()->assertJsonPath('balance.remaining_days', 14);
+});
+
+test('updating leave status to approved sets approved_at and user_id', function () {
+    $this->travelTo('2026-10-27 10:00:00');
+
+    $employee = Employee::factory()->create();
+    $leave = Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-02',
+        'status' => 'pending',
+        'approved_at' => null,
+        'user_id' => null,
+    ]);
+
+    $response = $this->actingAs($this->user)->put(route('leaves.update', $leave->id), [
+        'employee_id' => $employee->id,
+        'leave_type' => 'Annual',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-02',
+        'reason' => 'Approved request',
+        'status' => 'approved',
+    ]);
+
+    $response->assertRedirect(route('leaves.index'));
+    $this->assertDatabaseHas('leaves', [
+        'id' => $leave->id,
+        'status' => 'approved',
+        'approved_at' => '2026-10-27 10:00:00',
+        'user_id' => $this->user->id,
     ]);
 });

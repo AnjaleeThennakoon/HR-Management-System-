@@ -55,14 +55,16 @@ class LeaveSupport extends Model
     public static function getBalance(
         int $employeeId,
         string $leaveType,
-        ?int $year = null
+        ?int $year = null,
+        ?int $excludeLeaveId = null
     ): array {
         $year = $year ?? now()->year;
 
         $remainingDays = self::getRemainingDays(
             $employeeId,
             $leaveType,
-            $year
+            $year,
+            $excludeLeaveId
         );
 
         $maxDays = SystemConfiguration::getLeaveCount($leaveType);

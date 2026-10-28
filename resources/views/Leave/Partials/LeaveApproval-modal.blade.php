@@ -25,6 +25,23 @@
                        class="w-full px-3 py-2 text-sm border border-gray-100 bg-gray-50 rounded-lg text-gray-600">
             </div>
 
+            {{-- Approval Information (Approved At & Approved User) --}}
+            <div id="approvalInfoSection" class="p-3.5 bg-gray-50/80 rounded-xl border border-gray-100 space-y-2">
+                <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Current Approval Status</span>
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div>
+                        <label for="approvalApprovedAtDisplay" class="block text-xs font-medium text-gray-500 mb-1">Approved At</label>
+                        <input type="text" id="approvalApprovedAtDisplay" readonly value="-" placeholder="Not yet approved"
+                               class="w-full px-2.5 py-1.5 text-xs border border-gray-200 bg-white rounded-lg text-gray-700 font-medium cursor-default">
+                    </div>
+                    <div>
+                        <label for="approvalApprovedUserDisplay" class="block text-xs font-medium text-gray-500 mb-1">Approved User</label>
+                        <input type="text" id="approvalApprovedUserDisplay" readonly value="-" placeholder="-"
+                               class="w-full px-2.5 py-1.5 text-xs border border-gray-200 bg-white rounded-lg text-gray-700 font-medium cursor-default">
+                    </div>
+                </div>
+            </div>
+
             {{-- Remarks --}}
             <div>
                 <label for="approvalRemarks" class="block text-sm font-medium text-gray-700 mb-1.5">Remarks</label>

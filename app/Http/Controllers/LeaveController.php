@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\Leave;
 use App\Models\SystemConfiguration;
-use App\Models\user;
 use App\UseCases\Leave\DeleteLeaveInteractors;
 use App\UseCases\Leave\LeaveAuthorizedInteractors;
 use App\UseCases\Leave\LeaveBalanceInteractors;
@@ -28,7 +28,7 @@ class LeaveController extends Controller
 
         return view('Leave.LeaveDashbord', [
             'leaves' => $leaves,
-            'employees' => user::all(),
+            'employees' => Employee::all(),
             'leaveCounts' => [
                 'Annual' => SystemConfiguration::getLeaveCount('Annual'),
                 'Medical' => SystemConfiguration::getLeaveCount('Medical'),
@@ -37,9 +37,13 @@ class LeaveController extends Controller
         ]);
     }
 
-    public function store(LeaveRequest $leaveRequest, StoreLeaveInteractors $storeLeaveInteractors): RedirectResponse
+    public function store(LeaveRequest $leaveRequest, StoreLeaveInteractors $storeLeaveInteractors): RedirectResponse|JsonResponse
     {
-        $storeLeaveInteractors->execute($leaveRequest);
+        $leave = $storeLeaveInteractors->execute($leaveRequest);
+
+        if (request()->wantsJson()) {
+            return response()->json(['status' => 'ok', 'leave' => $leave]);
+        }
 
         return redirect()->route('leaves.index')
             ->with('success', 'Leave has been successfully created.');
@@ -69,9 +73,13 @@ class LeaveController extends Controller
             ->with('success', 'Leave approval has been successfully updated.');
     }
 
-    public function destroy(string $id, DeleteLeaveInteractors $deleteLeaveInteractors): RedirectResponse
+    public function destroy(string $id, DeleteLeaveInteractors $deleteLeaveInteractors): RedirectResponse|JsonResponse
     {
         $deleteLeaveInteractors->execute($id);
+
+        if (request()->wantsJson()) {
+            return response()->json(['status' => 'ok']);
+        }
 
         return redirect()->route('leaves.index')
             ->with('success', 'Leave has been successfully deleted.');
@@ -82,6 +90,7 @@ class LeaveController extends Controller
         $validated = $request->validate([
             'employee_id' => ['required', 'integer', 'exists:employees,id'],
             'leave_type' => ['nullable', 'string', Rule::in(['Annual', 'Medical', 'casual'])],
+            'exclude_leave_id' => ['nullable', 'integer', 'exists:leaves,id'],
         ]);
 
         $result = $leaveBalanceInteractors->execute($validated);
