@@ -771,7 +771,6 @@ test('it calculates no-pay days correctly after the leave period ends', function
         if ($date->isWeekend() || in_array($day, [12, 13, 14, 15], true)) {
             continue;
         }
-
         Attendance::factory()->create([
             'employee_id' => $employee->id,
             'date' => $date->toDateString(),
@@ -791,3 +790,32 @@ test('it calculates no-pay days correctly after the leave period ends', function
     $response->assertViewHas('nonPayDays', 2);
 });
 
+test('can finalize the month when every working day is accounted for', function () {
+    $employee = Employee::factory()->create();
+    for ($day = 1; $day <= 31; $day++) {
+        $date = \Carbon\Carbon::create(2026, 10, $day);
+        if ($date->isWeekend()) {
+            continue;
+        }
+        Attendance::factory()->create([
+            'employee_id' => $employee->id,
+            'date' => $date->toDateString(),
+            'in_time' => '09:00',
+            'out_time' => '17:00',
+        ]);
+    }
+    $attendance = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $attendance );
+
+    $response->assertRedirect();
+    $this->assertDatabaseHas('finalized_months', [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ]);
+});

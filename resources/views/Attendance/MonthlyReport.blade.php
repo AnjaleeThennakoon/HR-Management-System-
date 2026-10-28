@@ -78,7 +78,7 @@
                                 @enderror
                             </div>
 
-                            <button type="submit" class="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700">
+                            <button type="submit" class="w-full rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-indigo-700">
                                 Generate Report
                             </button>
                         </div>
@@ -141,6 +141,10 @@
                                     <p class="mt-1 text-lg font-extrabold text-slate-700">{{ $nonWorkingDays ?? $nonworkingDays ?? 0 }} <span class="text-[10px]">d</span></p>
                                 </div>
                             @endif
+                            <button type="submit" class="w-full rounded-lg bg-amber-200 border-amber-900 px-4 py-2.5 text-sm font-bold text-shadow-slate-900 transition hover:bg-amber-400">
+                                Finalize Month
+                            </button>
+
                         </div>
                     </section>
                 @endif
@@ -365,15 +369,15 @@
                     </div>
                 </div>
 
-                <div id="noLeaveBalanceNotice" class="{{ !empty($allLeaveBalancesUsed) ? '' : 'hidden' }} rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800 space-y-1">
+                <div id="noLeaveBalanceNotice" class="hidden rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800 space-y-1">
                     <div class="flex items-center gap-1.5 font-bold">
                         <svg class="h-4 w-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
-                        <span>Leave Balance Exhausted</span>
+                        <span>Non-Pay Day</span>
                     </div>
                     <p class="text-[11px] text-rose-700 leading-relaxed">
-                        All leave balances have been used. A leave cannot be granted for this day; this day is considered a <strong>Non-Pay Day</strong>.
+                        No days remain in this leave balance. If you record this leave, this date will add <strong>1 Non-Pay Day</strong> to the monthly report.
                     </p>
                 </div>
 
@@ -384,7 +388,7 @@
                         </label>
                         <span id="modalBalanceDisplay" class="text-[11px] font-medium text-indigo-600"></span>
                     </div>
-                    <select id="modalLeaveType" name="leave_type" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 focus:border-indigo-500 focus:ring-indigo-500">
+                    <select id="modalLeaveType" name="leave_type" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 focus:border-indigo-500 focus:ring-indigo-500">
                         <option value="casual" selected>Casual ({{ $leaveCounts['casual'] ?? 0 }} days)</option>
                         <option value="Annual">Annual ({{ $leaveCounts['Annual'] ?? 0 }} days)</option>
                         <option value="Medical">Medical ({{ $leaveCounts['Medical'] ?? 0 }} days)</option>
@@ -428,8 +432,12 @@
 
         async function fetchLeaveBalance(employeeId, leaveType) {
             const display = document.getElementById('modalBalanceDisplay');
+            const noPayNotice = document.getElementById('noLeaveBalanceNotice');
+            const submitBtn = document.getElementById('submitMarkLeaveBtn');
             if (!display || !employeeId) return;
             display.textContent = 'Checking balance...';
+            noPayNotice?.classList.add('hidden');
+            if (submitBtn) submitBtn.textContent = 'Checking Balance...';
 
             try {
                 const res = await fetch(`{{ route('leaves.balance') }}?employee_id=${employeeId}&leave_type=${leaveType}`, {
@@ -439,11 +447,16 @@
                     const data = await res.json();
                     if (data.balance) {
                         display.textContent = `Remaining: ${data.balance.remaining_days} / ${data.balance.max_days}d`;
+                        const isNonPayDay = Number(data.balance.remaining_days) <= 0;
+                        noPayNotice?.classList.toggle('hidden', !isNonPayDay);
+                        if (submitBtn) submitBtn.textContent = isNonPayDay ? 'Save as Non-Pay Day' : 'Save Leave';
                         return;
                     }
                 }
             } catch (e) {}
             display.textContent = '';
+            noPayNotice?.classList.add('hidden');
+            if (submitBtn) submitBtn.textContent = 'Save Leave';
         }
 
         document.getElementById('modalLeaveType')?.addEventListener('change', function () {
@@ -470,9 +483,12 @@
             const reason = document.getElementById('modalLeaveReason').value;
             const status = document.getElementById('modalLeaveStatus').value;
             const existingAttendanceId = document.getElementById('modalExistingAttendanceId').value;
+            const isNonPayDay = document.getElementById('noLeaveBalanceNotice')?.classList.contains('hidden') === false;
 
             try {
-                if (existingAttendanceId) {
+                const removeExistingAttendance = async () => {
+                    if (!existingAttendanceId) return;
+
                     const delRes = await fetch(`{{ url('/attendance') }}/${existingAttendanceId}`, {
                         method: 'POST',
                         headers: {
@@ -482,10 +498,16 @@
                         },
                         body: JSON.stringify({ _method: 'DELETE' }),
                     });
-                    if (!delRes.ok) {
+                    if (!delRes.ok && delRes.status !== 404) {
                         const delErr = await delRes.json().catch(() => ({}));
                         throw new Error(delErr.message || 'Unable to remove existing attendance record.');
                     }
+                };
+
+                if (isNonPayDay) {
+                    await removeExistingAttendance();
+                    window.location.reload();
+                    return;
                 }
 
                 const response = await fetch(`{{ route('leaves.store') }}`, {
@@ -514,12 +536,15 @@
                     throw new Error(msg);
                 }
 
+                await removeExistingAttendance();
                 window.location.reload();
             } catch (err) {
                 errorDiv.textContent = err.message || 'Something went wrong. Please try again.';
                 errorDiv.classList.remove('hidden');
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Save Leave';
+                submitBtn.textContent = document.getElementById('noLeaveBalanceNotice')?.classList.contains('hidden')
+                    ? 'Save Leave'
+                    : 'Save as Non-Pay Day';
             }
         });
 
