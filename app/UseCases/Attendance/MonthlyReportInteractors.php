@@ -16,7 +16,6 @@ class MonthlyReportInteractors
     public function execute(MonthlyReportRequest $monthlyReportRequest): array
     {
         $validated = $monthlyReportRequest->validated();
-
         $month = (int) ($validated['month'] ?? now()->month);
         $year = (int) ($validated['year'] ?? now()->year);
         $employeeID = $validated['employee_id'] ?? null;

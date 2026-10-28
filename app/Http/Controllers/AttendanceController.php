@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Attendance;
 use App\Models\Employee;
 use App\UseCases\Attendance\DeleteAttendanceInteractors;
+use App\UseCases\Attendance\FinalizedMonthInteractors;
 use App\UseCases\Attendance\ListAttendanceInteractors;
 use App\UseCases\Attendance\MonthlyReportInteractors;
 use App\UseCases\Attendance\Request\AttendanceCsvRequest;
@@ -84,10 +85,7 @@ class AttendanceController extends Controller
 
     public function upload(AttendanceCsvRequest $attendanceCsvRequest, UploadAttendanceInteractors $uploadAttendanceInteractors): RedirectResponse
     {
-        $attendanceImport = $uploadAttendanceInteractors->upload(
-            $attendanceCsvRequest->file('csv_file'),
-            auth()->user()?->employee_id
-        );
+        $attendanceImport = $uploadAttendanceInteractors->upload($attendanceCsvRequest->file('csv_file'), auth()->user()?->employee_id);
 
         return redirect()->route('attendance.index')
             ->with('attendance_import_id', $attendanceImport->id)
@@ -99,5 +97,13 @@ class AttendanceController extends Controller
         $data = $monthlyReportInteractors->execute($monthlyReportRequest);
 
         return view('Attendance.MonthlyReport', $data);
+    }
+
+    public function finalizedMonth(MonthlyReportRequest $monthlyReportRequest, FinalizedMonthInteractors $finalizedMonthInteractors): RedirectResponse
+    {
+        $finalizedMonthInteractors->execute($monthlyReportRequest);
+
+        return redirect()->back()->with('success', 'Month finalized successfully!');
+
     }
 }

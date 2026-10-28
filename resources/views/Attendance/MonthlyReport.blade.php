@@ -141,11 +141,24 @@
                                     <p class="mt-1 text-lg font-extrabold text-slate-700">{{ $nonWorkingDays ?? $nonworkingDays ?? 0 }} <span class="text-[10px]">d</span></p>
                                 </div>
                             @endif
-                            <button type="submit" class="w-full rounded-lg bg-amber-200 border-amber-900 px-4 py-2.5 text-sm font-bold text-shadow-slate-900 transition hover:bg-amber-400">
+                        </div>
+
+                        {{-- ✅ Finalize Month Form එක (වෙනම) --}}
+                        <form action="{{ route('attendance.finalize-month') }}" method="POST" onsubmit="return confirm('Are you sure you want to finalize this month? You won\'t be able to edit it later.');" class="mt-4">
+                            @csrf
+                            <input type="hidden" name="employee_id" value="{{ $employee->id }}">
+                            <input type="hidden" name="month" value="{{ $selectedMonth }}">
+                            <input type="hidden" name="year" value="{{ $selectedYear }}">
+
+                            <input type="hidden" name="total_late_minutes" value="{{ $totalLateMinutes ?? 0 }}">
+                            <input type="hidden" name="total_ot_minutes" value="{{ $totalOtMinutes ?? 0 }}">
+                            <input type="hidden" name="total_no_pay_days" value="{{ $nonPayDays ?? $nonWorkingDays ?? 0 }}">
+
+                            <button type="submit" class="w-full rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-600 shadow-sm">
                                 Finalize Month
                             </button>
+                        </form>
 
-                        </div>
                     </section>
                 @endif
             </aside>
@@ -561,7 +574,6 @@
             const viewMode = row.querySelector('.view-mode');
             const editMode = row.querySelector('.edit-mode');
 
-            // Handle edit button
             if (event.target.closest('.edit-btn') && viewMode && editMode) {
                 viewMode.classList.add('hidden');
                 viewMode.classList.remove('flex');
@@ -569,7 +581,6 @@
                 editMode.classList.add('flex');
             }
 
-            // Handle cancel button
             if (event.target.closest('.cancel-btn') && viewMode && editMode) {
                 editMode.classList.add('hidden');
                 editMode.classList.remove('flex');
@@ -577,7 +588,6 @@
                 viewMode.classList.add('flex');
             }
 
-            // Handle mark as leave button
             if (event.target.closest('.mark-leave-btn')) {
                 const employeeId = row.dataset.employeeId;
                 const employeeName = row.dataset.employeeName;
@@ -607,7 +617,6 @@
                 document.getElementById('markLeaveModal').classList.remove('hidden');
             }
 
-            // Handle delete row button
             if (event.target.closest('.delete-row-btn')) {
                 const attendanceId = row.dataset.attendanceId;
                 const leaveId = row.dataset.leaveId;
@@ -671,7 +680,6 @@
                 alert('No attendance or leave record exists to delete for this day.');
             }
 
-            // Handle save attendance button
             if (event.target.closest('.save-btn')) {
                 const inInput = row.querySelector('.in-time-input');
                 const outInput = row.querySelector('.out-time-input');
