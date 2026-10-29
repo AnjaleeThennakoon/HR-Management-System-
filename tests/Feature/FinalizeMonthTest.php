@@ -105,3 +105,61 @@ test('cannot finalize the same month twice', function () {
     $response->assertSessionHasErrors('month');
     $this->assertDatabaseCount('finalized_months', 1);
 });
+
+
+test('monthly report shows this day is empty when any working day is empty', function () {
+    $employee = Employee::factory()->create();
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ]));
+
+    $response->assertOk();
+    $response->assertSee('This day is empty');
+});
+
+test('monthly report shows finalize button with month name when all days are accounted for', function () {
+    $employee = Employee::factory()->create();
+
+    for ($day = 1; $day <= 31; $day++) {
+        $date = Carbon::create(2026, 10, $day);
+        if ($date->isWeekend()) {
+            continue;
+        }
+
+        Attendance::factory()->create([
+            'employee_id' => $employee->id,
+            'date' => $date->toDateString(),
+            'in_time' => '09:00',
+            'out_time' => '17:00',
+        ]);
+    }
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ]));
+
+    $response->assertOk();
+    $response->assertSee('Finalized October Month');
+});
+
+test('monthly report shows finalized state when month is already finalized', function () {
+    $finalized = FinalizedMonth::factory()->create([
+        'month' => 10,
+        'year' => 2026,
+    ]);
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', [
+        'employee_id' => $finalized->employee_id,
+        'month' => 10,
+        'year' => 2026,
+    ]));
+
+    $response->assertOk();
+    $response->assertSee('Finalized October Month');
+});
+

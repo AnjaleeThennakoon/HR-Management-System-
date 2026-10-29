@@ -1,5 +1,5 @@
 <div id="editModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-    <div class="bg-white rounded-2xl shadow-xl ring-1 ring-black/5 p-8 max-w-lg w-full">
+    <div class="max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-xl ring-1 ring-black/5 p-8 max-w-lg w-full">
 
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-lg font-bold text-gray-900">Edit Employee</h2>
@@ -15,7 +15,7 @@
             @method('PUT')
 
             <div class="grid grid-cols-2 gap-4">
-                <x-form.field name="employee_id" label="Employee ID" id="edit_employee_id" />
+                <x-form.field name="employee_id" label="Employee ID" id="edit_employee_id" readonly class="bg-gray-100 cursor-not-allowed text-gray-500" />
                 <x-form.field name="phone" label="Phone" id="edit_phone" />
             </div>
 
@@ -61,7 +61,7 @@
                 </div>
             </div>
 
-            <x-form.field name="nic" label="NIC" id="edit_nic" />
+            <x-form.field name="nic" label="NIC" id="edit_nic" readonly class="bg-gray-100 cursor-not-allowed text-gray-500" />
             <x-form.field name="address" label="Address" id="edit_address" />
 
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">

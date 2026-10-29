@@ -21,7 +21,14 @@
         ];
 
         fields.forEach((field) => {
-            document.getElementById(`edit_${field}`).value = employee[field] ?? '';
+            let val = employee[field] ?? '';
+            if (field === 'date_of_birth' && typeof val === 'string' && val.length >= 10) {
+                val = val.substring(0, 10);
+            }
+            if ((field === 'shift_in' || field === 'shift_out') && typeof val === 'string' && val.length >= 5) {
+                val = val.substring(0, 5);
+            }
+            document.getElementById(`edit_${field}`).value = val;
         });
 
         document.getElementById('edit_department_id').value = departmentId ?? '';

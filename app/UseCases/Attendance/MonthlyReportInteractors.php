@@ -4,6 +4,7 @@ namespace App\UseCases\Attendance;
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\FinalizedMonth;
 use App\Models\Holiday;
 use App\Models\Leave;
 use App\Models\Support\LeaveSupport;
@@ -22,6 +23,11 @@ class MonthlyReportInteractors
 
         $employee = $employeeID ? Employee::find($employeeID) : null;
         $holidays = Holiday::whereMonth('date', $month)->whereYear('date', $year)->get();
+        $finalizedMonth = $employeeID ? FinalizedMonth::where('employee_id', $employeeID)
+            ->where('month', $month)
+            ->where('year', $year)
+            ->first() : null;
+        $monthName = Carbon::createFromDate($year, $month, 1)->format('F');
 
         if ($employee) {
             $attendance = Attendance::with('employee')
@@ -67,6 +73,10 @@ class MonthlyReportInteractors
             'employee_id' => $employeeID,
             'month' => $month,
             'year' => $year,
+            'monthName' => $monthName,
+            'isFinalized' => (bool) $finalizedMonth,
+            'finalizedMonth' => $finalizedMonth,
+            'hasEmptyDays' => $nonWorkingDaysCount > 0,
             'attendances' => $attendance,
             'employees' => Employee::all(),
             'employee' => $employee,
