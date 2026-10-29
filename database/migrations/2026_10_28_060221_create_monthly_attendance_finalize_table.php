@@ -19,10 +19,12 @@ return new class extends Migration
             $table->integer('total_late_minutes')->default(0);
             $table->integer('total_ot_minutes')->default(0);
             $table->integer('total_no_pay_days')->default(0);
+            $table->string('attendance_hash', 64)->nullable();
             $table->foreignId('finalized_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamp('finalized_at')->nullable();
             $table->timestamps();
             $table->unique(['employee_id', 'month', 'year']);
+
         });
     }
 

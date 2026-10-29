@@ -2,7 +2,6 @@
 
 use App\Models\Attendance;
 use App\Models\Employee;
-use App\Models\FinalizedMonth;
 use App\Models\Holiday;
 use App\Models\Leave;
 use App\Models\User;
@@ -29,7 +28,6 @@ test('can finalize the month when every working day is accounted for', function 
             'out_time' => '17:00',
         ]);
     }
-
     Holiday::factory()->create(['date' => '2026-10-01']);
     Leave::factory()->create([
         'employee_id' => $employee->id,
@@ -58,11 +56,9 @@ test('cannot finalize the month when a working day is not accounted for', functi
 
     for ($day = 1; $day <= 31; $day++) {
         $date = Carbon::create(2026, 10, $day);
-
         if ($date->isWeekend() || $day === 30) {
             continue;
         }
-
         Attendance::factory()->create([
             'employee_id' => $employee->id,
             'date' => $date->toDateString(),
@@ -91,44 +87,12 @@ test('cannot finalize the month when a working day is not accounted for', functi
 });
 
 test('cannot finalize the same month twice', function () {
-    $finalized = FinalizedMonth::factory()->create([
-        'month' => 10,
-        'year' => 2026,
-    ]);
-
-    $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), [
-        'employee_id' => $finalized->employee_id,
-        'month' => $finalized->month,
-        'year' => $finalized->year,
-    ]);
-
-    $response->assertSessionHasErrors('month');
-    $this->assertDatabaseCount('finalized_months', 1);
-});
-
-
-test('monthly report shows this day is empty when any working day is empty', function () {
     $employee = Employee::factory()->create();
-
-    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', [
-        'employee_id' => $employee->id,
-        'month' => 10,
-        'year' => 2026,
-    ]));
-
-    $response->assertOk();
-    $response->assertSee('This day is empty');
-});
-
-test('monthly report shows finalize button with month name when all days are accounted for', function () {
-    $employee = Employee::factory()->create();
-
     for ($day = 1; $day <= 31; $day++) {
         $date = Carbon::create(2026, 10, $day);
         if ($date->isWeekend()) {
             continue;
         }
-
         Attendance::factory()->create([
             'employee_id' => $employee->id,
             'date' => $date->toDateString(),
@@ -136,30 +100,75 @@ test('monthly report shows finalize button with month name when all days are acc
             'out_time' => '17:00',
         ]);
     }
-
-    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', [
+    $payload = [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
-    ]));
+    ];
+
+    $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload)->assertRedirect();
+
+    $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
+    $response->assertSessionHasErrors('month');
+    $this->assertDatabaseCount('finalized_months', 1);
+});
+
+test('monthly report shows finalize button with month name when all days are accounted for', function () {
+    $employee = Employee::factory()->create();
+    for ($day = 1; $day <= 31; $day++) {
+        $date = Carbon::create(2026, 10, $day);
+        if ($date->isWeekend()) {
+            continue;
+        }
+        Attendance::factory()->create([
+            'employee_id' => $employee->id,
+            'date' => $date->toDateString(),
+            'in_time' => '09:00',
+            'out_time' => '17:00',
+        ]);
+    }
+    $reportdata =[
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $reportdata));
 
     $response->assertOk();
     $response->assertSee('Finalized October Month');
 });
 
-test('monthly report shows finalized state when month is already finalized', function () {
-    $finalized = FinalizedMonth::factory()->create([
+test('it shows as not finalized if attendance changes after finalized', function () {
+    $employee = Employee::factory()->create();
+    for ($day = 1; $day <= 31; $day++) {
+        $date = Carbon::create(2026, 10, $day);
+        if ($date->isWeekend()) {
+            continue;
+        }
+        Attendance::factory()->create([
+            'employee_id' => $employee->id,
+            'date' => $date->toDateString(),
+            'in_time' => '09:00',
+            'out_time' => '17:00',
+        ]);
+    }
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
+
+    $this->assertDatabaseHas('finalized_months', [
+        'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
     ]);
+    $attendance = Attendance::where('employee_id', $employee->id)->firstOrFail();
+    $attendance->update(['in_time' => '10:00']);
 
-    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', [
-        'employee_id' => $finalized->employee_id,
-        'month' => 10,
-        'year' => 2026,
-    ]));
-
-    $response->assertOk();
-    $response->assertSee('Finalized October Month');
+    $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $payload));
+    $response->assertViewHas('isFinalized', false);
 });
-

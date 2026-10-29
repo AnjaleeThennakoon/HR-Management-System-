@@ -4,11 +4,12 @@ namespace App\UseCases\Attendance;
 
 use App\Models\Attendance;
 use App\Models\Employee;
-use App\Models\FinalizedMonth;
 use App\Models\Holiday;
 use App\Models\Leave;
+use App\Models\MonthlyAttendanceFinalized;
 use App\Models\Support\LeaveSupport;
 use App\Models\SystemConfiguration;
+use App\UseCases\Attendance\MonthlyAttendanceFinalized as MonthlyAttendanceFinalizer;
 use App\UseCases\Attendance\Request\MonthlyReportRequest;
 use Carbon\Carbon;
 
@@ -22,12 +23,20 @@ class MonthlyReportInteractors
         $employeeID = $validated['employee_id'] ?? null;
 
         $employee = $employeeID ? Employee::find($employeeID) : null;
-        $holidays = Holiday::whereMonth('date', $month)->whereYear('date', $year)->get();
-        $finalizedMonth = $employeeID ? FinalizedMonth::where('employee_id', $employeeID)
-            ->where('month', $month)
-            ->where('year', $year)
-            ->first() : null;
         $monthName = Carbon::createFromDate($year, $month, 1)->format('F');
+
+        $holidays = Holiday::whereMonth('date', $month)->whereYear('date', $year)->get();
+
+        $isFinalized = false;
+        $finalizedMonth = null;
+        if ($employee) {
+            $isFinalized = app(MonthlyAttendanceFinalizer::class)->isFinalized($employee->id, $month, $year);
+            $finalizedMonth = MonthlyAttendanceFinalized::query()
+                ->where('employee_id', $employee->id)
+                ->where('month', $month)
+                ->where('year', $year)
+                ->first();
+        }
 
         if ($employee) {
             $attendance = Attendance::with('employee')
@@ -55,6 +64,7 @@ class MonthlyReportInteractors
             ];
             $totalRemainingLeaveDays = array_sum($leaveBalances);
             $allLeaveBalancesUsed = ($totalRemainingLeaveDays <= 0);
+
             $nonPayDaysCount = $allLeaveBalancesUsed
                 ? $nonWorkingDaysCount
                 : max(0, $nonWorkingDaysCount - $totalRemainingLeaveDays);
@@ -74,7 +84,7 @@ class MonthlyReportInteractors
             'month' => $month,
             'year' => $year,
             'monthName' => $monthName,
-            'isFinalized' => (bool) $finalizedMonth,
+            'isFinalized' => $isFinalized,
             'finalizedMonth' => $finalizedMonth,
             'hasEmptyDays' => $nonWorkingDaysCount > 0,
             'attendances' => $attendance,

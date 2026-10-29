@@ -5,9 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class FinalizedMonth extends Model
+class MonthlyAttendanceFinalized extends Model
 {
     use HasFactory;
+
+    protected $table = 'finalized_months';
 
     protected $fillable = [
         'employee_id',
@@ -16,6 +18,7 @@ class FinalizedMonth extends Model
         'total_late_minutes',
         'total_ot_minutes',
         'total_no_pay_days',
+        'attendance_hash',
         'finalized_by',
         'finalized_at',
     ];
