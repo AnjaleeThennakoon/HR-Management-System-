@@ -141,11 +141,51 @@
                                     <p class="mt-1 text-lg font-extrabold text-slate-700">{{ $nonWorkingDays ?? $nonworkingDays ?? 0 }} <span class="text-[10px]">d</span></p>
                                 </div>
                             @endif
-                            <button type="submit" class="w-full rounded-lg bg-amber-200 border-amber-900 px-4 py-2.5 text-sm font-bold text-shadow-slate-900 transition hover:bg-amber-400">
-                                Finalize Month
-                            </button>
-
                         </div>
+
+                        {{-- ✅ Finalize Month --}}
+                        @php
+                            $monthName = $monthName ?? \Carbon\Carbon::createFromDate($selectedYear ?? date('Y'), $selectedMonth ?? date('n'), 1)->format('F');
+                            $hasEmptyDays = $hasEmptyDays ?? (($nonWorkingDays ?? 0) > 0);
+                        @endphp
+
+                        @if (!empty($isFinalized))
+                            <div class="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-center">
+                                <div class="flex items-center justify-center gap-1.5 text-sm font-bold text-emerald-800">
+                                    <svg class="h-4 w-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    <span>Finalized {{ $monthName }} Month</span>
+                                </div>
+                                @if (!empty($finalizedMonth?->finalized_at))
+                                    <p class="mt-1 text-[11px] text-emerald-600">Finalized on {{ $finalizedMonth->finalized_at->format('d M Y') }}</p>
+                                @endif
+                            </div>
+                        @elseif ($hasEmptyDays)
+                            <div class="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-center">
+                                <p class="text-xs font-bold text-rose-700">This day is empty</p>
+                                <p class="mt-1 text-[11px] text-rose-600">All working days must have attendance, leave, or holiday before finalizing.</p>
+                                <button type="button" disabled class="mt-2 w-full cursor-not-allowed rounded-lg bg-rose-100 px-4 py-2.5 text-sm font-bold text-rose-500 shadow-sm">
+                                    This day is empty
+                                </button>
+                            </div>
+                        @else
+                            <form action="{{ route('attendance.finalize-month') }}" method="POST" onsubmit="return confirm('Are you sure you want to finalize this month? You won\'t be able to edit it later.');" class="mt-4">
+                                @csrf
+                                <input type="hidden" name="employee_id" value="{{ $employee->id }}">
+                                <input type="hidden" name="month" value="{{ $selectedMonth }}">
+                                <input type="hidden" name="year" value="{{ $selectedYear }}">
+
+                                <input type="hidden" name="total_late_minutes" value="{{ $totalLateMinutes ?? 0 }}">
+                                <input type="hidden" name="total_ot_minutes" value="{{ $totalOtMinutes ?? 0 }}">
+                                <input type="hidden" name="total_no_pay_days" value="{{ $nonPayDays ?? $nonWorkingDays ?? 0 }}">
+
+                                <button type="submit" class="w-full rounded-lg bg-amber-500 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-amber-600 shadow-sm">
+                                    Finalized {{ $monthName }} Month
+                                </button>
+                            </form>
+                        @endif
+
                     </section>
                 @endif
             </aside>
@@ -258,7 +298,7 @@
                                             </div>
                                         </td>
                                     @elseif ($rowType === 'empty')
-                                        <td colspan="4" class="px-2 py-3"><span class="rounded-md bg-slate-100 px-2 py-1 font-medium text-slate-500">Empty (Off)</span></td>
+                                        <td colspan="4" class="px-2 py-3"><span class="rounded-md bg-rose-100 px-2 py-1 font-semibold text-rose-700">This day is empty</span></td>
                                     @else
                                         <td class="px-2 py-3">@if ($inTimeDisplay)<span class="rounded-md bg-emerald-50 px-2 py-1 font-semibold text-emerald-700">{{ $inTimeDisplay }}</span>@else<span class="text-slate-300">-</span>@endif</td>
                                         <td class="px-2 py-3">@if ($outTimeDisplay)<span class="rounded-md bg-indigo-50 px-2 py-1 font-semibold text-indigo-700">{{ $outTimeDisplay }}</span>@else<span class="text-slate-300">-</span>@endif</td>
@@ -399,9 +439,11 @@
                     <label for="modalLeaveStatus" class="block text-xs font-semibold text-slate-700 mb-1.5">
                         Status <span class="text-red-500">*</span>
                     </label>
-                    <div id="modalLeaveStatus" name="status" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 focus:border-indigo-500 focus:ring-indigo-500">
-                        <div value="approved" selected>Approved</div>
-                    </div>
+                    {{-- ✅ මේක තමයි අපි වෙනස් කළේ (div එක වෙනුවට select එකක්) --}}
+                    <select id="modalLeaveStatus" name="status" required class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 focus:border-indigo-500 focus:ring-indigo-500">
+                        <option value="approved" selected>Approved</option>
+                        <option value="pending">Pending</option>
+                    </select>
                 </div>
 
                 <div>
@@ -561,7 +603,6 @@
             const viewMode = row.querySelector('.view-mode');
             const editMode = row.querySelector('.edit-mode');
 
-            // Handle edit button
             if (event.target.closest('.edit-btn') && viewMode && editMode) {
                 viewMode.classList.add('hidden');
                 viewMode.classList.remove('flex');
@@ -569,7 +610,6 @@
                 editMode.classList.add('flex');
             }
 
-            // Handle cancel button
             if (event.target.closest('.cancel-btn') && viewMode && editMode) {
                 editMode.classList.add('hidden');
                 editMode.classList.remove('flex');
@@ -577,7 +617,6 @@
                 viewMode.classList.add('flex');
             }
 
-            // Handle mark as leave button
             if (event.target.closest('.mark-leave-btn')) {
                 const employeeId = row.dataset.employeeId;
                 const employeeName = row.dataset.employeeName;
@@ -607,7 +646,6 @@
                 document.getElementById('markLeaveModal').classList.remove('hidden');
             }
 
-            // Handle delete row button
             if (event.target.closest('.delete-row-btn')) {
                 const attendanceId = row.dataset.attendanceId;
                 const leaveId = row.dataset.leaveId;
@@ -671,7 +709,6 @@
                 alert('No attendance or leave record exists to delete for this day.');
             }
 
-            // Handle save attendance button
             if (event.target.closest('.save-btn')) {
                 const inInput = row.querySelector('.in-time-input');
                 const outInput = row.querySelector('.out-time-input');

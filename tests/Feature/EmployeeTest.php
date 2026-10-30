@@ -124,6 +124,7 @@ test('an employee can be updated', function () {
     $response = $this->actingAs($this->user)->put("/employees/{$employee->id}", $employeedata);
 
     $response->assertStatus(302);
+    $response->assertSessionHasNoErrors();
     $this->assertDatabaseHas('employees', [
         'id' => $employee->id,
         'department_id' => $department->id,
@@ -132,6 +133,38 @@ test('an employee can be updated', function () {
         'last_name' => 'Crime',
         'phone' => '0771234567',
         'address' => 'Australia',
+    ]);
+});
+
+test('employee update preserves unique employee_id and nic without requiring changes', function () {
+    $employee = Employee::factory()->create([
+        'employee_id' => 'EMP999',
+        'nic' => '199512345678',
+    ]);
+    $department = Department::factory()->create();
+
+    $updateData = [
+        'department_id' => $department->id,
+        'first_name' => 'Jane',
+        'last_name' => 'Doe',
+        'date_of_birth' => '1995-05-10',
+        'gender' => 'Female',
+        'phone' => '0712345678',
+        'address' => 'Colombo',
+        'salary' => 85000,
+        'shift_in' => '09:00',
+        'shift_out' => '18:00',
+    ];
+
+    $response = $this->actingAs($this->user)->put("/employees/{$employee->id}", $updateData);
+
+    $response->assertStatus(302);
+    $response->assertSessionHasNoErrors();
+    $this->assertDatabaseHas('employees', [
+        'id' => $employee->id,
+        'employee_id' => 'EMP999',
+        'nic' => '199512345678',
+        'first_name' => 'Jane',
     ]);
 });
 

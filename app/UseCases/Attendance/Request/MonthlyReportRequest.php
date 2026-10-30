@@ -47,6 +47,9 @@ class MonthlyReportRequest extends FormRequest
             'employee_id' => $this->isInitialVisit
                 ? ['nullable', 'integer', 'exists:employees,id']
                 : ['required', 'integer', 'exists:employees,id'],
+            'total_late_minutes' => ['sometimes', 'integer', 'min:0'],
+            'total_ot_minutes' => ['sometimes', 'integer', 'min:0'],
+            'total_no_pay_days' => ['sometimes', 'integer', 'min:0'],
         ];
     }
 }

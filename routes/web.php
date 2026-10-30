@@ -7,6 +7,7 @@ use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LeaveController;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -25,7 +26,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function () {return view('AdminDashboard', ['employees' => \App\Models\Employee::all(),]);})->name('dashboard');
+    Route::get('/dashboard', function () {
+        return view('AdminDashboard', ['employees' => Employee::all()]);
+    })->name('dashboard');
 
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
@@ -54,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/attendance/upload', [AttendanceController::class, 'upload'])->name('attendance.upload');
     Route::get('/attendance/imports/{id}/status', [AttendanceController::class, 'importStatus'])->name('attendance.imports.status');
     Route::get('/attendance/monthly-report', [AttendanceController::class, 'monthlyReport'])->name('attendance.monthly-report');
+    Route::post('/attendance/finalize-month', [AttendanceController::class, 'finalizedMonth'])->name('attendance.finalize-month');
 
     Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
     Route::post('leaves', [LeaveController::class, 'store'])->name('leaves.store');

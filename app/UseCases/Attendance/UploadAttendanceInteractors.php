@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Validation\ValidationException;
 use RuntimeException;
 
 class UploadAttendanceInteractors
@@ -21,7 +22,9 @@ class UploadAttendanceInteractors
     {
         $employeeId ??= Employee::query()->value('id');
         if ($employeeId === null) {
-            throw new RuntimeException('An employee is required to process the attendance CSV.');
+            throw ValidationException::withMessages([
+                'csv_file' => 'Cannot process CSV. No employee is associated with your account.',
+            ]);
         }
 
         $path = $file->store('temp', 'local');

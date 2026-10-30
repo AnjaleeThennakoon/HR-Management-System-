@@ -6,8 +6,10 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Leave;
+use App\Models\MonthlyAttendanceFinalized;
 use App\Models\Support\LeaveSupport;
 use App\Models\SystemConfiguration;
+use App\UseCases\Attendance\MonthlyAttendanceFinalized as MonthlyAttendanceFinalizer;
 use App\UseCases\Attendance\Request\MonthlyReportRequest;
 use Carbon\Carbon;
 
@@ -16,13 +18,25 @@ class MonthlyReportInteractors
     public function execute(MonthlyReportRequest $monthlyReportRequest): array
     {
         $validated = $monthlyReportRequest->validated();
-
         $month = (int) ($validated['month'] ?? now()->month);
         $year = (int) ($validated['year'] ?? now()->year);
         $employeeID = $validated['employee_id'] ?? null;
 
         $employee = $employeeID ? Employee::find($employeeID) : null;
+        $monthName = Carbon::createFromDate($year, $month, 1)->format('F');
+
         $holidays = Holiday::whereMonth('date', $month)->whereYear('date', $year)->get();
+
+        $isFinalized = false;
+        $finalizedMonth = null;
+        if ($employee) {
+            $isFinalized = app(MonthlyAttendanceFinalizer::class)->isFinalized($employee->id, $month, $year);
+            $finalizedMonth = MonthlyAttendanceFinalized::query()
+                ->where('employee_id', $employee->id)
+                ->where('month', $month)
+                ->where('year', $year)
+                ->first();
+        }
 
         if ($employee) {
             $attendance = Attendance::with('employee')
@@ -50,6 +64,7 @@ class MonthlyReportInteractors
             ];
             $totalRemainingLeaveDays = array_sum($leaveBalances);
             $allLeaveBalancesUsed = ($totalRemainingLeaveDays <= 0);
+
             $nonPayDaysCount = $allLeaveBalancesUsed
                 ? $nonWorkingDaysCount
                 : max(0, $nonWorkingDaysCount - $totalRemainingLeaveDays);
@@ -68,6 +83,10 @@ class MonthlyReportInteractors
             'employee_id' => $employeeID,
             'month' => $month,
             'year' => $year,
+            'monthName' => $monthName,
+            'isFinalized' => $isFinalized,
+            'finalizedMonth' => $finalizedMonth,
+            'hasEmptyDays' => $nonWorkingDaysCount > 0,
             'attendances' => $attendance,
             'employees' => Employee::all(),
             'employee' => $employee,

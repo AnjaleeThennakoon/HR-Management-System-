@@ -7,9 +7,13 @@ use App\UseCases\Employee\Request\EmployeeRequest;
 
 class UpdateEmployeeInteractors
 {
-    public function execute(EmployeeRequest $employeeRequest, Employee $employee)
+    public function execute(EmployeeRequest $employeeRequest, Employee $employee): Employee
     {
-        $employee->update($employeeRequest->validated());
+        $data = collect($employeeRequest->validated())
+            ->except(['employee_id', 'nic'])
+            ->all();
+
+        $employee->update($data);
 
         return $employee->fresh();
     }
