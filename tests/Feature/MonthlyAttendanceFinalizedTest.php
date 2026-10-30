@@ -35,13 +35,13 @@ test('can finalize the month when every working day is accounted for', function 
         'end_date' => '2026-10-02',
         'status' => 'approved',
     ]);
-    $attendance = [
+    $payload = [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
     ];
 
-    $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $attendance);
+    $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
 
     $response->assertRedirect();
     $this->assertDatabaseHas('finalized_months', [
@@ -53,7 +53,6 @@ test('can finalize the month when every working day is accounted for', function 
 
 test('cannot finalize the month when a working day is not accounted for', function () {
     $employee = Employee::factory()->create();
-
     for ($day = 1; $day <= 31; $day++) {
         $date = Carbon::create(2026, 10, $day);
         if ($date->isWeekend() || $day === 30) {
