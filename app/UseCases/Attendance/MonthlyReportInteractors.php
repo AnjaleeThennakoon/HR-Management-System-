@@ -6,7 +6,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Leave;
-use App\Models\MonthlyAttendanceFinalized;
+use App\Models\MonthlyAttendanceFinalize;
 use App\Models\Support\LeaveSupport;
 use App\Models\SystemConfiguration;
 use App\UseCases\Attendance\MonthlyAttendanceFinalized as MonthlyAttendanceFinalizer;
@@ -31,7 +31,7 @@ class MonthlyReportInteractors
         $finalizedMonth = null;
         if ($employee) {
             $isFinalized = app(MonthlyAttendanceFinalizer::class)->isFinalized($employee->id, $month, $year);
-            $finalizedMonth = MonthlyAttendanceFinalized::query()
+            $finalizedMonth = MonthlyAttendanceFinalize::query()
                 ->where('employee_id', $employee->id)
                 ->where('month', $month)
                 ->where('year', $year)

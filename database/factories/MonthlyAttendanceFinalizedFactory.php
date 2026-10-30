@@ -3,13 +3,13 @@
 namespace Database\Factories;
 
 use App\Models\Employee;
-use App\Models\MonthlyAttendanceFinalized;
+use App\Models\MonthlyAttendanceFinalize;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class MonthlyAttendanceFinalizedFactory extends Factory
 {
-    protected $model = MonthlyAttendanceFinalized::class;
+    protected $model = MonthlyAttendanceFinalize::class;
 
     public function definition(): array
     {

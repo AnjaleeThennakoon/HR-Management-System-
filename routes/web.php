@@ -7,6 +7,7 @@ use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\PayrollController;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Route;
 
@@ -17,9 +18,7 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', function () {
-        return view('Auth.register');
-    })->name('register');
+    Route::get('/register', function () {return view('Auth.register');})->name('register');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -66,4 +65,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('leaves/balance', [LeaveController::class, 'LeaveBalance'])->name('leaves.balance');
     Route::post('leaves/approval', [LeaveController::class, 'LeaveAuthorizer'])->name('leave-approval.store');
 
+    Route::get('/payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
+    Route::post('/payroll/store', [PayrollController::class, 'store'])->name('payroll.store');
+    Route::Post('/Payroll/genarate', [PayrollController::class, 'generatePayroll'])->name('payroll.generate');
 });

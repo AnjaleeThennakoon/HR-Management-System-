@@ -6,7 +6,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Leave;
-use App\Models\MonthlyAttendanceFinalized as FinalizedAttendanceRecord;
+use App\Models\MonthlyAttendanceFinalize as FinalizedAttendanceRecord;
 use App\UseCases\Attendance\Request\MonthlyReportRequest;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
