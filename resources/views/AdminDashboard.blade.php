@@ -129,6 +129,23 @@
                 </div>
             </a>
 
+            <a href="{{ route('payrolls.index') }}"
+               class="group flex items-start gap-4 p-6 border border-gray-200 rounded-xl hover:border-indigo-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+                <div class="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors duration-200">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9.75h19.5m-16.5 3h3m-3 3h3m-3 3h3m6-6h3m-3 3h3m-3 3h3M3.75 4.5h16.5A1.5 1.5 0 0121.75 6v12a1.5 1.5 0 01-1.5 1.5H3.75A1.5 1.5 0 012.25 18V6a1.5 1.5 0 011.5-1.5z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-base font-semibold text-gray-900 mb-1">
+                        Monthly Payroll
+                    </h2>
+                    <p class="text-sm text-gray-500">
+                        View generated monthly payroll and salary details
+                    </p>
+                </div>
+            </a>
+
             <a href="{{ $employees->isNotEmpty() ? route('attendance.monthly-report', [
                     'employee_id' => $employees->first()->id,
                     'month'       => now()->month,

@@ -37,9 +37,9 @@ class GeneratePayrollInteractors
 
         $allowances = ($totalOtMinutes / 60) * $hourlyRate;
         $lateDeduction = ($totalLateMinutes / 60) * $hourlyRate;
-
-        $deductions = $lateDeduction ;
-        $netSalary = ($basicSalary + $allowances )- $deductions;
+        $noPayDeduction = $totalNoPayDays * $dailyRate;
+        $deductions = $lateDeduction + $noPayDeduction;
+        $netSalary = ($basicSalary + $allowances) - $deductions;
 
         return [
             'employee_id' => $employee->id,
@@ -51,5 +51,4 @@ class GeneratePayrollInteractors
             'net_salary' => $netSalary,
         ];
     }
-
 }
