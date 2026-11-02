@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class MonthlyAttendanceFinalize extends Model
+class MonthlyAttendanceFinalized extends Model
 {
     use HasFactory;
 
@@ -25,7 +26,7 @@ class MonthlyAttendanceFinalize extends Model
         'finalized_at' => 'datetime',
     ];
 
-    public function employee()
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
     }

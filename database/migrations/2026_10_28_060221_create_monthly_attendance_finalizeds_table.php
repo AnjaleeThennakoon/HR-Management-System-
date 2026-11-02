@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('monthly_attendance_finalizes', function (Blueprint $table) {
+        Schema::create('monthly_attendance_finalizeds', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->cascadeOnDelete();
             $table->integer('month');
@@ -33,6 +33,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('monthly_attendance_finalizes');
+        Schema::dropIfExists('monthly_attendance_finalizeds');
     }
 };

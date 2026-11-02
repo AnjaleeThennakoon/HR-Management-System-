@@ -66,6 +66,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('leaves/approval', [LeaveController::class, 'LeaveAuthorizer'])->name('leave-approval.store');
 
     Route::get('/payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
-    Route::post('/payroll/store', [PayrollController::class, 'store'])->name('payroll.store');
-    Route::Post('/Payroll/genarate', [PayrollController::class, 'generatePayroll'])->name('payroll.generate');
+    Route::post('/payrolls/store', [PayrollController::class, 'store'])->name('payrolls.store');
+    Route::Post('/Payrolls/genarate', [PayrollController::class, 'generatePayroll'])->name('payrolls.generate');
 });

@@ -6,7 +6,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\UseCases\Attendance\DeleteAttendanceInteractors;
 use App\UseCases\Attendance\ListAttendanceInteractors;
-use App\UseCases\Attendance\MonthlyAttendanceFinalized;
+use App\UseCases\Attendance\MonthlyAttendanceFinalizedInteractors;
 use App\UseCases\Attendance\MonthlyReportInteractors;
 use App\UseCases\Attendance\Request\AttendanceCsvRequest;
 use App\UseCases\Attendance\Request\AttendanceRequest;
@@ -99,7 +99,7 @@ class AttendanceController extends Controller
         return view('Attendance.MonthlyReport', $data);
     }
 
-    public function finalizedMonth(MonthlyReportRequest $monthlyReportRequest, MonthlyAttendanceFinalized $finalizedMonthInteractors): RedirectResponse
+    public function finalizedMonth(MonthlyReportRequest $monthlyReportRequest, MonthlyAttendanceFinalizedInteractors $finalizedMonthInteractors): RedirectResponse
     {
         $finalizedMonthInteractors->execute($monthlyReportRequest);
 

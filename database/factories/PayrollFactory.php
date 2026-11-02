@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Employee;
-use App\Models\MonthlyAttendanceFinalize;
 use App\Models\Payroll;
 use Illuminate\Database\Eloquent\Factories\Factory;
 

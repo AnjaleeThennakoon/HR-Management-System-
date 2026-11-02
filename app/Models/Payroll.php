@@ -4,12 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payroll extends Model
 {
     use HasFactory;
-
-    protected $table = 'payrolls';
 
     protected $fillable = [
         'employee_id',
@@ -21,17 +20,17 @@ class Payroll extends Model
         'net_salary',
     ];
 
-//    public function employee()
-//    {
-//        return $this->belongsTo(Employee::class);
-//    }
+    public function employee(): BelongsTo
+    {
+        return $this->belongsTo(Employee::class);
+    }
 
-//    public function finalizedMonthlyAttendance()
-//    {
-//        return $this->belongsTo(MonthlyAttendanceFinalize::class, 'employee_id', 'employee_id')
-//            ->where('month', $this->month)
-//            ->where('year', $this->year);
-//    }
+    public function MonthlyAttendanceFinalized(): BelongsTo
+    {
+        return $this->belongsTo(MonthlyAttendanceFinalized::class, 'employee_id', 'employee_id')
+            ->where('month', $this->month)
+            ->where('year', $this->year);
+    }
 
 
 }

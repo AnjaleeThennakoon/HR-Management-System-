@@ -1,8 +1,7 @@
 <?php
 
 use App\Models\Employee;
-use App\Models\Leave;
-use App\Models\MonthlyAttendanceFinalize;
+use App\Models\MonthlyAttendanceFinalized;
 use App\Models\Payroll;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -13,19 +12,21 @@ beforeEach(function () {
     $this->user = User::factory()->create();
 });
 
-test('monthly salary  page successfully loads', function () {
-    Payroll::factory()->count(10)->create([
-        'employee_id' => Employee::factory(),
-    ]);
+test('monthly salary page successfully loads', function () {
+    Payroll::factory()->count(10)->create();
 
-    $response = $this->actingAs($this->user)->get('/payrolls');
+    $response = $this->actingAs($this->user)
+        ->get(route('payrolls.index'));
 
-    $response->assertOk();
+    $response->assertOk()
+        ->assertViewHas('payrolls', function ($payrolls): bool {
+            return $payrolls->count() === 10;
+        });
 });
 
 test('can generate monthly salary using finalized attendance', function () {
-    $employee = Employee::factory()->create(['basic_salary' => 50000,]);
-    MonthlyAttendanceFinalize::factory()->create([
+    $employee = Employee::factory()->create(['salary' => 50000,]);
+    MonthlyAttendanceFinalized::factory()->create([
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
@@ -39,7 +40,36 @@ test('can generate monthly salary using finalized attendance', function () {
         'year' => 2026,
     ];
 
-    $response = $this->actingAs($this->user)->post(route('payroll.generate'), $payload);
+    $response = $this->actingAs($this->user)->post(route('payrolls.store'), $payload);
+
+    $response->assertRedirect(route('payrolls.index'));
+    $this->assertDatabaseHas('payrolls', [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+        'basic_salary' => 50000,
+        'allowances' => 480.77,
+        'deductions' => 4086.54,
+        'net_salary' => 46394.23,
+    ]);
+});
+
+test('can generate monthly salary', function () {
+    $employee = Employee::factory()->create(['salary' => 50000,]);
+    MonthlyAttendanceFinalized::factory()->create([
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+        'total_late_minutes' => 60,
+        'total_ot_minutes' => 120,
+    ]);
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->post(route('payrolls.store'), $payload);
 
     $response->assertRedirect(route('payrolls.index'))
         ->assertSessionHas('success', 'Monthly payroll has been generated.');
@@ -48,9 +78,9 @@ test('can generate monthly salary using finalized attendance', function () {
         'month' => 10,
         'year' => 2026,
         'basic_salary' => 50000,
-        'allowances' => 0,
-        'deductions' => 0,
-        'net_salary' => 50000,
+        'allowances' => 480.77,
+        'deductions' => 240.38,
+        'net_salary' => 50240.38,
     ]);
 
 });

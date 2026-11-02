@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\UseCases\Payroll\GeneratePayrollInteractors;
 use App\UseCases\Payroll\ListPayrollInteractors;
 use App\UseCases\Payroll\Request\PayrollRequest;
-use App\UseCases\Payroll\GenaratePayrollInteractors;
 use App\UseCases\Payroll\StorePayrollInteractors;
-use GenaratePayrollInteractors;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
@@ -20,7 +18,7 @@ class PayrollController extends Controller
             request('per_page')
         );
 
-        return view('Payroll.PayrollDashBord', compact('payrolls'));
+        return view('Payrolls.PayrollDashBord', compact('payrolls'));
     }
 
     public function store(PayrollRequest $payrollRequest, StorePayrollInteractors $storePayrollInteractors): RedirectResponse
@@ -35,7 +33,7 @@ class PayrollController extends Controller
     {
         $generatePayrollInteractors->execute($payrollRequest);
 
-        return view('Payroll.PayrollDashBord');
+        return view('Payrolls.PayrollDashBord');
     }
 
 
