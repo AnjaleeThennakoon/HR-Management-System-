@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Designation;
-use App\UseCases\Designation\DeleteDesignationInteractors;
-use App\UseCases\Designation\ListDesignationInteractors;
+use App\UseCases\Designation\DeleteDesignationInteractor;
+use App\UseCases\Designation\ListDesignationInteractor;
 use App\UseCases\Designation\Request\DesignationRequest;
-use App\UseCases\Designation\StoreDesignationInteractors;
+use App\UseCases\Designation\StoreDesignationInteractor;
 use App\UseCases\Designation\UpdateDesignationInteractor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
 class DesignationController extends Controller
 {
-    public function index(ListDesignationInteractors $listDesignationInteractor): View
+    public function index(ListDesignationInteractor $listDesignationInteractor): View
     {
         $designations = $listDesignationInteractor->execute(
             request('search'),
@@ -27,9 +27,9 @@ class DesignationController extends Controller
         ]);
     }
 
-    public function store(DesignationRequest $designationRequest, StoreDesignationInteractors $storeDesignationInteractors): RedirectResponse
+    public function store(DesignationRequest $designationRequest, StoreDesignationInteractor $storeDesignationInteractor): RedirectResponse
     {
-        $storeDesignationInteractors->execute($designationRequest);
+        $storeDesignationInteractor->execute($designationRequest);
 
         return redirect()
             ->route('designations.index')
@@ -45,7 +45,7 @@ class DesignationController extends Controller
             ->with('success', 'Designation updated successfully.');
     }
 
-    public function destroy(string $id, DeleteDesignationInteractors $deleteDesignationInteractor): RedirectResponse
+    public function destroy(string $id, DeleteDesignationInteractor $deleteDesignationInteractor): RedirectResponse
     {
         $deleteDesignationInteractor->execute($id);
 

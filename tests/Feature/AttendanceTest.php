@@ -789,3 +789,21 @@ test('it calculates no-pay days correctly after the leave period ends', function
     $response->assertOk();
     $response->assertViewHas('nonPayDays', 2);
 });
+test('attendance cannot be marked for a future date', function () {
+    $this->travelTo('2026-11-02 09:00:00');
+    $employee = Employee::factory()->create();
+    $attendanceData = [
+        'employee_id' => $employee->id,
+        'date' => now()->addDay()->toDateString(),
+        'in_time' => '08:00',
+        'out_time' => '17:00',
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->post('/attendance', $attendanceData);
+
+    $response->assertSessionHasErrors([
+        'date' => 'Attendance cannot be marked for a future date.',
+    ]);
+    $this->assertDatabaseCount('attendances', 0);
+});

@@ -172,3 +172,22 @@ test('it shows as not finalized if attendance changes after finalized', function
     $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $payload));
     $response->assertViewHas('isFinalized', false);
 });
+
+test('cannot finalized next month attendance', function () {
+    $employee = Employee::factory()->create();
+    $nextMonth = now()->addMonth();
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => $nextMonth->month,
+        'year' => $nextMonth->year,
+    ];
+
+    $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
+
+    $response->assertSessionHasErrors('month');
+    $this->assertDatabaseMissing(MonthlyAttendanceFinalized::class, [
+        'employee_id' => $employee->id,
+        'month' => $nextMonth->month,
+        'year' => $nextMonth->year,
+    ]);
+});

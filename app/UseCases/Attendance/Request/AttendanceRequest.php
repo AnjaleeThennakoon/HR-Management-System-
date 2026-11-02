@@ -26,7 +26,7 @@ class AttendanceRequest extends FormRequest
                     ->where('date', $date)
                     ->ignore($attendanceId),
             ],
-            'date' => ['required', 'date'],
+            'date' => ['required', 'date', 'before_or_equal:today'],
             'in_time' => ['nullable', 'date_format:H:i', 'before:out_time'],
             'out_time' => ['nullable', 'date_format:H:i', 'after:in_time'],
         ];
@@ -36,6 +36,7 @@ class AttendanceRequest extends FormRequest
     {
         return [
             'employee_id.unique' => 'This employee already has an attendance record for this date.',
+            'date.before_or_equal' => 'Attendance cannot be marked for a future date.',
         ];
     }
 }

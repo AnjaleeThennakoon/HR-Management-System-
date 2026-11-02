@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AttendanceImport;
-use App\UseCases\Attendance\UploadAttendanceInteractors;
+use App\UseCases\Attendance\UploadAttendanceInteractor;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,7 +33,7 @@ class ProcessAttendanceCsv implements ShouldQueue
     /**
      * @throws \Exception
      */
-    public function handle(UploadAttendanceInteractors $interactor): void
+    public function handle(UploadAttendanceInteractor $interactor): void
     {
         $attendanceImport = AttendanceImport::query()->findOrFail($this->attendanceImportId);
         $attendanceImport->update(['status' => 'processing']);

@@ -132,27 +132,21 @@ test('cannot generate monthly salary if month is not finalized', function () {
     ]);
 });
 
-test('can not generate next month salary if previous month is not finalized', function () {
+test('cannot process next month salary', function () {
+    $this->travelTo('2026-11-02 09:00:00');
     $employee = Employee::factory()->create(['salary' => 50000]);
-    MonthlyAttendanceFinalized::factory()->create([
-        'employee_id' => $employee->id,
-        'month' => 10,
-        'year' => 2026,
-        'total_late_minutes' => 60,
-        'total_ot_minutes' => 120,
-        'total_no_pay_days' => 0,
-    ]);
     $payload = [
         'employee_id' => $employee->id,
-        'month' => 11,
+        'month' => 12,
         'year' => 2026,
     ];
 
     $response = $this->actingAs($this->user)->post(route('payrolls.store'), $payload);
 
     $response->assertSessionHasErrors([
-        'month' => 'This month is not finalized yet.',
+        'month' => 'Cannot process next month salary.',
     ]);
+    $this->assertDatabaseCount('payrolls', 0);
 });
 
 test('cannot generate duplicate monthly salary for the same month and year', function () {
