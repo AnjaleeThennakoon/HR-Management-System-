@@ -1,0 +1,38 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        if (Schema::hasTable('attendance_imports')) {
+            return;
+        }
+
+        Schema::create('attendance_imports', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('employee_id')->constrained()->cascadeOnDelete();
+            $table->string('file_path');
+            $table->string('status')->default('queued');
+            $table->json('summary')->nullable();
+            $table->json('rows')->nullable();
+            $table->text('error_message')->nullable();
+            $table->timestamps();
+            $table->index(['employee_id', 'status']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // The original attendance import migration owns this table's lifecycle.
+    }
+};
