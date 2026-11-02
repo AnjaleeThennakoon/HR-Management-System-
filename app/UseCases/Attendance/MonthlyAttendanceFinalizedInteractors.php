@@ -16,9 +16,9 @@ class MonthlyAttendanceFinalizedInteractors
     /**
      * @throws \JsonException
      */
-    public function execute(MonthlyReportRequest $request): FinalizedAttendanceRecord
+    public function execute(MonthlyReportRequest $monthlyReportRequest): FinalizedAttendanceRecord
     {
-        $validated = $request->validated();
+        $validated = $monthlyReportRequest->validated();
         $employee = Employee::findOrFail($validated['employee_id']);
         $month = (int) $validated['month'];
         $year = (int) $validated['year'];

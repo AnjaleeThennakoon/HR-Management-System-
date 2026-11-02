@@ -42,10 +42,10 @@ test('can finalize the month when every working day is accounted for', function 
         'year' => 2026,
     ];
 
-    $response = $this->actingAs($this->user)->post(route('attendance.MonthlyAttendanceFinalizedInteractors'), $payload);
+    $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
 
     $response->assertRedirect();
-    $this->assertDatabaseHas('MonthlyAttendanceFinalizedInteractors', [
+    $this->assertDatabaseHas(MonthlyAttendanceFinalized::class, [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
@@ -79,7 +79,7 @@ test('cannot finalize the month when a working day is not accounted for', functi
 
     $response->assertRedirect();
     $response->assertSessionHasErrors('month');
-    $this->assertDatabaseMissing('MonthlyAttendanceFinalizedInteractors', [
+    $this->assertDatabaseMissing(MonthlyAttendanceFinalized::class, [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
@@ -110,7 +110,7 @@ test('cannot finalize the same month twice', function () {
 
     $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
     $response->assertSessionHasErrors('month');
-    $this->assertDatabaseCount('MonthlyAttendanceFinalizedInteractors', 1);
+    $this->assertDatabaseCount(MonthlyAttendanceFinalized::class, 1);
 });
 
 test('monthly report shows finalize button with month name when all days are accounted for', function () {
@@ -127,7 +127,7 @@ test('monthly report shows finalize button with month name when all days are acc
             'out_time' => '17:00',
         ]);
     }
-    $reportdata =[
+    $reportdata = [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
@@ -161,7 +161,7 @@ test('it shows as not finalized if attendance changes after finalized', function
 
     $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
 
-    $this->assertDatabaseHas('MonthlyAttendanceFinalizedInteractors', [
+    $this->assertDatabaseHas(MonthlyAttendanceFinalized::class, [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,

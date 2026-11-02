@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Attendance;
-use App\Models\AttendanceImport;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Leave;
@@ -9,8 +8,6 @@ use App\Models\SystemConfiguration;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -151,180 +148,6 @@ test('an employee cannot have two attendances on the same date', function () {
     $response->assertStatus(302);
     $response->assertSessionHasErrors('employee_id');
     $this->assertDatabaseCount('attendances', 1);
-});
-
-test('CSV with 5 rows imports 5 attendances', function () {
-    Storage::fake('local');
-
-    $employees = Employee::factory()->count(5)->create()->toArray();
-
-    $csvContent = "employee_id,date,in_time,out_time\n";
-    foreach ($employees as $employee) {
-        $csvContent .= "{$employee['employee_id']},2024-01-01,08:00,17:30\n";
-    }
-
-    $file = UploadedFile::fake()->createWithContent('attendance.csv', $csvContent);
-
-    $response = $this->actingAs($this->user)
-        ->post('/attendance/upload', ['csv_file' => $file]);
-
-    $response->assertStatus(302);
-    $response->assertRedirect('/attendance');
-    $response->assertSessionHasNoErrors();
-    $this->assertDatabaseCount('attendances', 5);
-
-    foreach ($employees as $employee) {
-        $this->assertDatabaseHas('attendances', [
-            'employee_id' => $employee['id'],
-            'date' => '2024-01-01',
-            'in_time' => '08:00:00',
-            'out_time' => '17:30:00',
-        ]);
-    }
-});
-
-test('CSV with invalid rows and shows errors and saves valid ones', function () {
-    $employees = Employee::factory()->count(3)->create();
-    $csvContent = "employee_id,date,in_time,out_time\n";
-    $csvContent .= "{$employees[0]->employee_id},2024-01-01,08:00,17:30\n";
-    $csvContent .= "{$employees[1]->employee_id},2024-01-01,08:00\n";
-    $csvContent .= "EMP99999,2024-01-01,08:00,17:30\n";
-    $csvContent .= "{$employees[2]->employee_id},2024-01-01,08:00,17:30\n";
-    $csvContent .= "EMP88888,2024-01-01\n";
-    $file = UploadedFile::fake()->createWithContent('attendance.csv', $csvContent);
-
-    $response = $this->actingAs($this->user)
-        ->from('/attendance')
-        ->post('/attendance/upload', ['csv_file' => $file]);
-
-    $response->assertStatus(302);
-    $response->assertRedirect('/attendance');
-    $this->assertDatabaseCount('attendances', 2);
-    $attendanceImport = AttendanceImport::query()->findOrFail(
-        session('attendance_import_id')
-    );
-
-    expect($attendanceImport->status)->toBe('completed')
-        ->and($attendanceImport->summary)->toBe('3 of 5 rows failed. 2 imported successfully.');
-
-    $this->assertDatabaseHas('attendances', [
-        'employee_id' => $employees[0]->id,
-        'date' => '2024-01-01',
-        'in_time' => '08:00:00',
-        'out_time' => '17:30:00',
-    ]);
-    $this->assertDatabaseMissing('attendances', ['employee_id' => $employees[1]->id]);
-    expect($attendanceImport->rows[1]['row_number'])->toBe(3)
-        ->and($attendanceImport->rows[1]['errors'][0])->toContain('Invalid column count');
-    $this->assertDatabaseMissing('attendances', ['employee_id' => 99999]);
-    expect($attendanceImport->rows[2]['row_number'])->toBe(4)
-        ->and($attendanceImport->rows[2]['errors'][0])->toContain('does not exist');
-    $this->assertDatabaseHas('attendances', [
-        'employee_id' => $employees[2]->id,
-        'date' => '2024-01-01',
-        'in_time' => '08:00:00',
-        'out_time' => '17:30:00',
-    ]);
-    $this->assertDatabaseMissing('attendances', ['employee_id' => 88888]);
-    expect($attendanceImport->rows[4]['row_number'])->toBe(6)
-        ->and($attendanceImport->rows[4]['errors'][0])->toContain('Invalid column count');
-    $this->get('/attendance')->assertOk();
-});
-
-test('CSV with duplicate attendance shows error', function () {
-    $employee = Employee::factory()->create();
-    Attendance::factory()->create([
-        'employee_id' => $employee->id,
-        'date' => '2024-01-01',
-    ]);
-    $csvContent = "employee_id,date,in_time,out_time\n";
-    $csvContent .= "{$employee->employee_id},2024-01-01,08:00,17:30\n";
-
-    $file = UploadedFile::fake()->createWithContent('attendance.csv', $csvContent);
-
-    $response = $this->actingAs($this->user)
-        ->from('/attendance')
-        ->post('/attendance/upload', ['csv_file' => $file]);
-    $response->assertStatus(302);
-    $response->assertRedirect('/attendance');
-    $this->assertDatabaseCount('attendances', 1);
-
-    $attendanceImport = AttendanceImport::query()->findOrFail(
-        session('attendance_import_id')
-    );
-
-    expect($attendanceImport->status)->toBe('completed')
-        ->and($attendanceImport->rows[0]['status'])->toBe('fail')
-        ->and($attendanceImport->rows[0]['errors'][0])->toContain('already exists');
-});
-
-test('non-CSV file is rejected', function () {
-    $file = UploadedFile::fake()->create('attendance.txt', 100);
-
-    $response = $this->actingAs($this->user)
-        ->post('/attendance/upload', ['csv_file' => $file]);
-
-    $response->assertSessionHasErrors('csv_file');
-});
-
-test('CSV import shows summary with row details', function () {
-    $employees = Employee::factory()->count(2)->create();
-    $csvContent = "employee_id,date,in_time,out_time\n";
-    $csvContent .= "{$employees[0]->employee_id},2024-01-01,08:00,17:30\n";
-    $csvContent .= "INVALID,2024-01-01,08:00,17:30\n";
-    $file = UploadedFile::fake()->createWithContent('attendance.csv', $csvContent);
-
-    $response = $this->actingAs($this->user)
-        ->from('/attendance')
-        ->post('/attendance/upload', ['csv_file' => $file]);
-
-    $response->assertStatus(302);
-    $response->assertRedirect('/attendance');
-    $attendanceImport = AttendanceImport::query()->findOrFail(
-        session('attendance_import_id')
-    );
-    expect($attendanceImport->status)->toBe('completed')
-        ->and($attendanceImport->summary)->toBe('1 of 2 rows failed. 1 imported successfully.');
-    $importRows = $attendanceImport->rows;
-    expect($importRows)->toHaveCount(2);
-    $row1 = $importRows[0];
-    expect($row1['row_number'])->toBe(2)
-        ->and($row1['employee_id'])->toBe($employees[0]->employee_id)
-        ->and($row1['status'])->toBe('success')
-        ->and($row1['errors'])->toBeEmpty();
-    $row2 = $importRows[1];
-    expect($row2['row_number'])->toBe(3)
-        ->and($row2['employee_id'])->toBe('INVALID')
-        ->and($row2['status'])->toBe('fail')
-        ->and($row2['errors'])->not->toBeEmpty()
-        ->and($row2['errors'][0])->toContain('does not exist');
-});
-
-test('CSV with duplicate rows show error', function () {
-    $employee = Employee::factory()->create();
-    $csvContent = "employee_id,date,in_time,out_time\n";
-    $csvContent .= "{$employee->employee_id},2026-10-07,08:30,17:30\n";
-    $csvContent .= "{$employee->employee_id},2026-10-07,08:30,17:30\n";
-    $file = UploadedFile::fake()->createWithContent('attendance.csv', $csvContent);
-
-    $response = $this->actingAs($this->user)
-        ->from('/attendance')
-        ->post('/attendance/upload', ['csv_file' => $file]);
-
-    $response->assertStatus(302);
-    $response->assertRedirect('/attendance');
-    $this->assertDatabaseCount('attendances', 1);
-
-    $attendanceImport = AttendanceImport::query()->findOrFail(
-        session('attendance_import_id')
-    );
-    $duplicateRowErrors = $attendanceImport->rows[1]['errors'];
-
-    expect($attendanceImport->status)->toBe('completed')
-        ->and($attendanceImport->rows[1]['row_number'])->toBe(3)
-        ->and($duplicateRowErrors[0])->toContain('already exists')
-        ->and($duplicateRowErrors[0])->not->toContain('SQLSTATE')
-        ->and($duplicateRowErrors[0])->not->toContain('Integrity constraint violation');
 });
 
 test('attendance cannot be created for a nonexistent employee', function () {

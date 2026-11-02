@@ -62,6 +62,7 @@ test('can generate monthly salary', function () {
         'year' => 2026,
         'total_late_minutes' => 60,
         'total_ot_minutes' => 120,
+        'total_no_pay_days' => 0,
     ]);
     $payload = [
         'employee_id' => $employee->id,
@@ -113,5 +114,42 @@ test('can generate monthly salary with non pay days', function () {
         'deductions' => 4086.54,
         'net_salary' => 46394.23,
     ]);
+});
 
+test('cannot genarate monthly salary if month is not finalized', function () {
+    $employee = Employee::factory()->create(['salary' => 50000]);
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->post(route('payrolls.store'), $payload);
+
+    $response->assertSessionHasErrors([
+        'month' => 'This month is not finalized yet.',
+    ]);
+});
+
+test('can not generate next month salary if previous month is not finalized', function () {
+    $employee = Employee::factory()->create(['salary' => 50000]);
+    MonthlyAttendanceFinalized::factory()->create([
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+        'total_late_minutes' => 60,
+        'total_ot_minutes' => 120,
+        'total_no_pay_days' => 0,
+    ]);
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 11,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->post(route('payrolls.store'), $payload);
+
+    $response->assertSessionHasErrors([
+        'month' => 'This month is not finalized yet.',
+    ]);
 });

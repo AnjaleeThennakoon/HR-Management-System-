@@ -161,8 +161,8 @@
                     </svg>
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-gray-900">Generate Monthly Salary</h3>
-                    <p class="text-xs text-gray-500">Calculate salary based on attendance records</p>
+                    <h3 class="text-lg font-bold text-gray-900">Process Monthly Payment</h3>
+                    <p class="text-xs text-gray-500">Calculate and save salary payment to database</p>
                 </div>
             </div>
 
@@ -242,7 +242,7 @@
 
                 <button type="submit"
                         class="px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium transition">
-                    Generate
+                    Process Payment
                 </button>
             </div>
 

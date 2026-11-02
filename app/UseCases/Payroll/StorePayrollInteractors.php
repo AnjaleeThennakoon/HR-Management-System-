@@ -7,13 +7,10 @@ use App\UseCases\Payroll\Request\PayrollRequest;
 
 class StorePayrollInteractors
 {
-    public function __construct(private GeneratePayrollInteractors $generatePayrollInteractors)
-    {
-    }
 
-    public function execute(PayrollRequest $payrollRequest): Payroll
+    public function execute(PayrollRequest $payrollRequest, GeneratePayrollInteractors $generatePayrollInteractors): Payroll
     {
-        $payrollData = $this->generatePayrollInteractors->execute($payrollRequest);
+        $payrollData = $generatePayrollInteractors->execute($payrollRequest);
 
         return Payroll::create($payrollData);
     }

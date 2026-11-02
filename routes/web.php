@@ -18,7 +18,9 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
-    Route::get('/register', function () {return view('Auth.register');})->name('register');
+    Route::get('/register', function () {
+        return view('Auth.register');
+    })->name('register');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -53,8 +55,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
     Route::put('/attendance/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
     Route::delete('/attendance/{id}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
-    Route::post('/attendance/upload', [AttendanceController::class, 'upload'])->name('attendance.upload');
-    Route::get('/attendance/imports/{id}/status', [AttendanceController::class, 'importStatus'])->name('attendance.imports.status');
+    Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn'])->name('attendance.check-in');
+    Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut'])->name('attendance.check-out');
     Route::get('/attendance/monthly-report', [AttendanceController::class, 'monthlyReport'])->name('attendance.monthly-report');
     Route::post('/attendance/finalize-month', [AttendanceController::class, 'finalizedMonth'])->name('attendance.finalize-month');
 
