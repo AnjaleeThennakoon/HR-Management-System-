@@ -4,148 +4,139 @@
 
 {{-- 1. DETAILED PAYSLIP MODAL --}}
 <div id="payslipModal"
-     class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
-    <div class="relative w-full max-w-2xl bg-white rounded-2xl shadow-xl ring-1 ring-black/5 overflow-hidden my-8 animate-[fadeIn_0.2s_ease-out]">
-
-        {{-- Header --}}
-        <div class="flex items-center justify-between p-5 border-b border-gray-100">
-            <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-lg font-bold text-gray-900">Salary Slip</h3>
-                    <p id="payslipPeriodBadge" class="text-xs text-gray-500">Monthly Compensation Details</p>
-                </div>
-            </div>
-
-            <button type="button" onclick="closePayslipModal()"
-                    class="rounded-lg p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition">
+     class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm overflow-y-auto">
+    <div class="relative my-3 flex max-h-[78vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+        <div class="screen-only flex justify-end border-b border-slate-100 px-5 py-3">
+            <button type="button" onclick="closePayslipModal()" aria-label="Close salary slip"
+                    class="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
         </div>
 
-        {{-- Slip Content --}}
-        <div id="printablePayslip" class="p-6 space-y-5 bg-white text-gray-800">
-
-            {{-- Employee Info Summary --}}
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
-                <div class="flex items-center gap-3">
-                    <div id="payslipAvatar" class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 font-semibold text-sm">
-                        EMP
-                    </div>
+        <div id="printablePayslip" class="max-h-[calc(78vh-8rem)] overflow-y-auto bg-white text-slate-800">
+            <header class="relative overflow-hidden bg-teal-900 px-7 py-7 text-white sm:px-10">
+                <div class="absolute -right-16 -top-20 h-64 w-64 rounded-full bg-white/5"></div>
+                <div class="absolute -bottom-24 right-20 h-56 w-56 rounded-full bg-teal-700/50"></div>
+                <div class="relative flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
                     <div>
-                        <h4 id="payslipEmployeeName" class="text-sm font-semibold text-gray-900">Employee Name</h4>
-                        <p class="text-xs text-gray-500 mt-0.5">
-                            <span id="payslipEmployeeId" class="font-medium text-gray-700">#000</span>
-                            <span class="mx-1">•</span>
-                            <span id="payslipDepartment">Department</span>
-                            <span class="mx-1">•</span>
-                            <span id="payslipDesignation">Designation</span>
-                        </p>
+                        <p class="text-xs font-semibold uppercase tracking-[0.25em] text-teal-100">HR System · Payroll Statement</p>
+                        <h2 class="mt-2 text-3xl font-extrabold uppercase tracking-wide sm:text-4xl">Salary Slip</h2>
+                        <p class="mt-3 text-sm text-teal-100">Pay period: <span id="payslipPeriodBadge" class="font-semibold text-white">Monthly Compensation</span></p>
+                    </div>
+                    <div class="rounded-xl border border-white/20 bg-white/10 px-5 py-4 sm:min-w-44">
+                        <p class="text-lg font-extrabold uppercase tracking-wider text-white">HR System</p>
+                        <p class="mt-1 text-xs text-teal-100">Monthly Payroll</p>
                     </div>
                 </div>
-                <div class="text-left sm:text-right">
-                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                        Processed
-                    </span>
-                </div>
-            </div>
+            </header>
 
-            {{-- Breakdown Columns --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                {{-- Earnings --}}
-                <div class="rounded-xl border border-gray-200 p-4 bg-white flex flex-col justify-between">
+            <div class="space-y-7 px-6 py-7 sm:px-10">
+                <section class="grid gap-5 rounded-xl border border-slate-200 bg-slate-50 p-5 sm:grid-cols-2">
                     <div>
-                        <div class="flex items-center justify-between pb-2.5 border-b border-gray-100">
-                            <h5 class="text-xs font-semibold uppercase tracking-wider text-gray-500">Earnings</h5>
-                            <span class="text-xs text-emerald-600 font-medium">+ Credit</span>
-                        </div>
-                        <div class="mt-3 space-y-2.5 text-sm">
-                            <div class="flex justify-between text-gray-600">
-                                <span>Basic Salary</span>
-                                <span id="payslipBasicSalary" class="font-medium text-gray-900">0.00</span>
-                            </div>
-                            <div class="flex justify-between text-gray-600">
-                                <span>Allowances / OT</span>
-                                <span id="payslipAllowances" class="font-medium text-emerald-600">0.00</span>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.18em] text-teal-800">Employee</p>
+                        <div class="mt-3 flex items-center gap-3">
+                            <div id="payslipAvatar" class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-teal-800 text-sm font-bold text-white">EMP</div>
+                            <div>
+                                <h3 id="payslipEmployeeName" class="text-base font-bold text-slate-900">Employee Name</h3>
+                                <p class="mt-0.5 text-xs text-slate-500">Employee ID <span id="payslipEmployeeId" class="font-semibold text-slate-700">#000</span></p>
                             </div>
                         </div>
                     </div>
-                    <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between font-semibold text-sm text-gray-900">
-                        <span>Total Earnings</span>
-                        <span id="payslipGrossSalary">0.00</span>
+                    <div class="grid grid-cols-2 gap-4 sm:border-l sm:border-slate-200 sm:pl-6">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">Department</p>
+                            <p id="payslipDepartment" class="mt-2 text-sm font-semibold text-slate-800">Department</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">Designation</p>
+                            <p id="payslipDesignation" class="mt-2 text-sm font-semibold text-slate-800">Designation</p>
+                        </div>
                     </div>
-                </div>
+                </section>
 
-                {{-- Deductions --}}
-                <div class="rounded-xl border border-gray-200 p-4 bg-white flex flex-col justify-between">
-                    <div>
-                        <div class="flex items-center justify-between pb-2.5 border-b border-gray-100">
-                            <h5 class="text-xs font-semibold uppercase tracking-wider text-gray-500">Deductions</h5>
-                            <span class="text-xs text-rose-600 font-medium">- Debit</span>
-                        </div>
-                        <div class="mt-3 space-y-2.5 text-sm">
-                            <div class="flex justify-between text-gray-600">
-                                <span>Late & No-Pay</span>
-                                <span id="payslipDeductions" class="font-medium text-rose-600">0.00</span>
-                            </div>
-                            <div class="flex justify-between text-gray-400 text-xs">
-                                <span>Other Deductions</span>
-                                <span>0.00</span>
-                            </div>
-                        </div>
+                <section>
+                    <h3 class="mb-3 text-sm font-extrabold uppercase tracking-wide text-teal-900">Income Details</h3>
+                    <div class="overflow-hidden rounded-lg border border-slate-200">
+                        <table class="w-full text-sm">
+                            <thead class="bg-teal-700 text-left text-[10px] font-bold uppercase tracking-wider text-white">
+                                <tr>
+                                    <th class="w-16 px-4 py-3 text-center">No.</th>
+                                    <th class="px-4 py-3">Information</th>
+                                    <th class="w-40 px-4 py-3 text-right">Amount (Rs.)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                <tr class="bg-white">
+                                    <td class="px-4 py-3 text-center text-slate-500">1</td>
+                                    <td class="px-4 py-3 font-medium">Basic Salary</td>
+                                    <td id="payslipBasicSalary" class="px-4 py-3 text-right font-semibold">0.00</td>
+                                </tr>
+                                <tr class="bg-slate-50">
+                                    <td class="px-4 py-3 text-center text-slate-500">2</td>
+                                    <td class="px-4 py-3 font-medium">Allowances / Overtime</td>
+                                    <td id="payslipAllowances" class="px-4 py-3 text-right font-semibold text-teal-800">0.00</td>
+                                </tr>
+                                <tr class="bg-teal-50 font-bold text-teal-950">
+                                    <td colspan="2" class="px-4 py-3 text-right uppercase tracking-wide">Total Income</td>
+                                    <td id="payslipGrossSalary" class="px-4 py-3 text-right">0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between font-semibold text-sm text-gray-900">
-                        <span>Total Deductions</span>
-                        <span id="payslipTotalDeductions" class="text-rose-600">0.00</span>
-                    </div>
-                </div>
+                </section>
 
+                <section>
+                    <h3 class="mb-3 text-sm font-extrabold uppercase tracking-wide text-teal-900">Deduction Details</h3>
+                    <div class="overflow-hidden rounded-lg border border-slate-200">
+                        <table class="w-full text-sm">
+                            <thead class="bg-teal-700 text-left text-[10px] font-bold uppercase tracking-wider text-white">
+                                <tr>
+                                    <th class="w-16 px-4 py-3 text-center">No.</th>
+                                    <th class="px-4 py-3">Information</th>
+                                    <th class="w-40 px-4 py-3 text-right">Amount (Rs.)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white">
+                                    <td class="px-4 py-3 text-center text-slate-500">1</td>
+                                    <td class="px-4 py-3 font-medium">Late / No-Pay Deductions</td>
+                                    <td id="payslipDeductions" class="px-4 py-3 text-right font-semibold text-rose-700">0.00</td>
+                                </tr>
+                                <tr class="bg-slate-100 font-bold text-slate-800">
+                                    <td colspan="2" class="px-4 py-3 text-right uppercase tracking-wide">Total Deductions</td>
+                                    <td id="payslipTotalDeductions" class="px-4 py-3 text-right text-rose-700">0.00</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="grid gap-0 overflow-hidden rounded-lg bg-teal-900 text-white sm:grid-cols-[1fr_auto]">
+                    <div class="px-5 py-4 text-sm font-extrabold uppercase tracking-wide sm:text-base">Net Salary Received</div>
+                    <div id="payslipNetSalary" class="border-t border-white/20 px-5 py-4 text-right text-lg font-extrabold sm:border-l sm:border-t-0">Rs. 0.00</div>
+                </section>
+
+                <p class="border-t border-slate-200 pt-4 text-xs text-slate-500">This salary slip was generated electronically by HR System.</p>
             </div>
-
-            {{-- Net Salary Card --}}
-            <div class="rounded-xl bg-gray-50 border border-gray-200 p-4 flex items-center justify-between">
-                <div>
-                    <span class="text-xs font-semibold uppercase tracking-wider text-gray-500">Take-Home Amount</span>
-                    <p class="text-sm font-medium text-gray-800">Net Payable Salary</p>
-                </div>
-                <div class="text-right">
-                    <span id="payslipNetSalary" class="text-xl font-bold text-gray-900">Rs. 0.00</span>
-                </div>
-            </div>
-
-            <p class="text-center text-xs text-gray-400 pt-1">
-                Computer-generated official salary slip.
-            </p>
-
         </div>
 
-        {{-- Footer --}}
-        <div class="bg-gray-50 px-6 py-4 border-t border-gray-100 flex items-center justify-between gap-3">
+        <div class="screen-only flex items-center justify-between gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
             <button type="button" onclick="closePayslipModal()"
-                    class="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:bg-gray-100 transition">
+                    class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100">
                 Close
             </button>
-
             <button type="button" onclick="printPayslipSlip()"
-                    class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-medium transition">
+                    class="inline-flex items-center gap-2 rounded-lg bg-teal-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-800">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.72 13.829c-.24-1.07-.642-2.115-1.2-3.089m0 0a9 9 0 0113.96 0m-13.96 0A9.01 9.01 0 003 12c0 2.5 1.01 4.76 2.64 6.38M17.28 10.74c.558.974.96 2.019 1.2 3.089m0 0A9.01 9.01 0 0121 12c0-2.5-1.01-4.76-2.64-6.38" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 9V4h12v5M6 18h12v3H6v-3zM8 14h.01M12 14h.01M16 14h.01" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 9V4h12v5M6 18h12v3H6v-3zM6.72 13.829c-.24-1.07-.642-2.115-1.2-3.089m0 0a9 9 0 0113.96 0m-13.96 0A9.01 9.01 0 003 12c0 2.5 1.01 4.76 2.64 6.38M17.28 10.74c.558.974.96 2.019 1.2 3.089" />
                 </svg>
                 Print Slip
             </button>
         </div>
-
     </div>
 </div>
-
 
 {{-- 2. GENERATE MONTHLY SALARY MODAL --}}
 <div id="generateSalaryModal"
@@ -188,9 +179,9 @@
                 @endphp
                 <select name="employee_id" id="modal_employee_id" required
                         class="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition">
-                    <option value="" disabled selected>Select an employee...</option>
+                        <option value="" disabled @selected(old('employee_id') === null)>Select an employee...</option>
                     @foreach ($formEmployees as $emp)
-                        <option value="{{ $emp->id }}">
+                        <option value="{{ $emp->id }}" @selected(old('employee_id') == $emp->id)>
                             {{ $emp->first_name }} {{ $emp->last_name }} (#{{ $emp->employee_id ?? $emp->id }})
                         </option>
                     @endforeach
@@ -206,11 +197,14 @@
                     <select name="month" id="modal_month" required
                             class="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition">
                         @foreach(range(1, 12) as $m)
-                            <option value="{{ $m }}" @selected(date('n') == $m)>
+                            <option value="{{ $m }}" @selected((int) old('month', date('n')) === $m)>
                                 {{ date('F', mktime(0, 0, 0, $m, 1)) }}
                             </option>
                         @endforeach
                     </select>
+                    @error('month')
+                        <p class="mt-1 text-xs font-medium text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div>
@@ -220,7 +214,7 @@
                     <select name="year" id="modal_year" required
                             class="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-sm text-gray-800 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition">
                         @for($y = date('Y') - 2; $y <= date('Y') + 1; $y++)
-                            <option value="{{ $y }}" @selected(date('Y') == $y)>
+                            <option value="{{ $y }}" @selected((int) old('year', date('Y')) === $y)>
                                 {{ $y }}
                             </option>
                         @endfor

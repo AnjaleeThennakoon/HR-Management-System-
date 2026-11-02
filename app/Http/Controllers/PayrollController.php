@@ -21,9 +21,9 @@ class PayrollController extends Controller
         return view('Payrolls.PayrollDashBord', compact('payrolls'));
     }
 
-    public function store(PayrollRequest $payrollRequest, StorePayrollInteractors $storePayrollInteractors): RedirectResponse
+    public function store(PayrollRequest $payrollRequest, StorePayrollInteractors $storePayrollInteractors, GeneratePayrollInteractors $generatePayrollInteractors): RedirectResponse
     {
-        $storePayrollInteractors->execute($payrollRequest);
+        $storePayrollInteractors->execute($payrollRequest, $generatePayrollInteractors);
 
         return redirect()->route('payrolls.index')
             ->with('success', 'Monthly payroll has been generated.');
@@ -35,6 +35,4 @@ class PayrollController extends Controller
 
         return view('Payrolls.PayrollDashBord');
     }
-
-
 }

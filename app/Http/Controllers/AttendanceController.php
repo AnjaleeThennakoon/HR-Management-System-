@@ -8,23 +8,41 @@ use App\UseCases\Attendance\DeleteAttendanceInteractors;
 use App\UseCases\Attendance\ListAttendanceInteractors;
 use App\UseCases\Attendance\MonthlyAttendanceFinalizedInteractors;
 use App\UseCases\Attendance\MonthlyReportInteractors;
+use App\UseCases\Attendance\Request\AttendanceCsvRequest;
 use App\UseCases\Attendance\Request\AttendanceRequest;
 use App\UseCases\Attendance\Request\MonthlyReportRequest;
 use App\UseCases\Attendance\StoreAttendanceInteractors;
 use App\UseCases\Attendance\UpdateAttendanceInteractors;
+use App\UseCases\Attendance\UploadAttendanceInteractors;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class AttendanceController extends Controller
 {
     public function index(ListAttendanceInteractors $listAttendanceInteractors): View
     {
+        $importId = request()->integer('import') ?: (int) session('attendance_import_id', 0);
         $attendances = $listAttendanceInteractors->execute(request('search'), request('per_page'));
+        $attendanceImport = $listAttendanceInteractors->getImportStatus($importId, auth()->user()?->employee_id);
 
         return view('Attendance.AttendanceDashbord', [
             'attendances' => $attendances,
             'employees' => Employee::all(),
+            'attendanceImport' => $attendanceImport,
+        ]);
+    }
+
+    public function importStatus(Request $request, int $id, ListAttendanceInteractors $listAttendanceInteractors): JsonResponse
+    {
+        $attendanceImport = $listAttendanceInteractors->getImportStatus($id, $request->user()?->employee_id);
+
+        return response()->json([
+            'status' => $attendanceImport->status,
+            'summary' => $attendanceImport->summary,
+            'rows' => $attendanceImport->rows,
+            'error_message' => $attendanceImport->error_message,
         ]);
     }
 
@@ -65,56 +83,13 @@ class AttendanceController extends Controller
             ->with('success', 'Attendance has been successfully deleted.');
     }
 
-    public function checkIn(): RedirectResponse
+    public function upload(AttendanceCsvRequest $attendanceCsvRequest, UploadAttendanceInteractors $uploadAttendanceInteractors): RedirectResponse
     {
-        $validated = request()->validate([
-            'employee_id' => ['required', 'integer', 'exists:employees,id'],
-        ]);
-
-        $alreadyCheckedIn = Attendance::query()
-            ->where('employee_id', $validated['employee_id'])
-            ->whereDate('date', now()->toDateString())
-            ->exists();
-
-        if ($alreadyCheckedIn) {
-            return redirect()->route('attendance.index')->withErrors([
-                'employee_id' => 'Attendance is already recorded for this employee today.',
-            ]);
-        }
-
-        Attendance::query()->create([
-            'employee_id' => $validated['employee_id'],
-            'date' => now()->toDateString(),
-            'in_time' => now()->format('H:i:s'),
-        ]);
+        $attendanceImport = $uploadAttendanceInteractors->upload($attendanceCsvRequest->file('csv_file'), auth()->user()?->employee_id);
 
         return redirect()->route('attendance.index')
-            ->with('success', 'Employee checked in successfully.');
-    }
-
-    public function checkOut(): RedirectResponse
-    {
-        $validated = request()->validate([
-            'employee_id' => ['required', 'integer', 'exists:employees,id'],
-        ]);
-
-        $attendance = Attendance::query()
-            ->where('employee_id', $validated['employee_id'])
-            ->whereDate('date', now()->toDateString())
-            ->whereNotNull('in_time')
-            ->whereNull('out_time')
-            ->first();
-
-        if (! $attendance) {
-            return redirect()->route('attendance.index')->withErrors([
-                'employee_id' => 'No open check-in was found for this employee today.',
-            ]);
-        }
-
-        $attendance->update(['out_time' => now()->format('H:i:s')]);
-
-        return redirect()->route('attendance.index')
-            ->with('success', 'Employee checked out successfully.');
+            ->with('attendance_import_id', $attendanceImport->id)
+            ->with('success', 'CSV is being processed in the background.');
     }
 
     public function monthlyReport(MonthlyReportRequest $monthlyReportRequest, MonthlyReportInteractors $monthlyReportInteractors): View

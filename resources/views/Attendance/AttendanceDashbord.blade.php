@@ -39,30 +39,9 @@
             {{-- ============== LEFT SIDEBAR ============== --}}
             <aside class="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar">
 
-                {{-- Daily Check-In and Check-Out --}}
-                <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/60 p-4 flex-shrink-0">
-                    <h2 class="text-sm font-extrabold text-slate-800">Daily Check-In / Check-Out</h2>
-                    <p class="mt-1 text-xs text-slate-500">Record an employee's attendance for today.</p>
-
-                    @if($errors->has('employee_id'))
-                        <p class="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{{ $errors->first('employee_id') }}</p>
-                    @endif
-
-                    <form method="POST" class="mt-3 space-y-3">
-                        @csrf
-                        <select name="employee_id" required class="w-full rounded-lg border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 focus:border-indigo-500 focus:ring-indigo-500">
-                            <option value="">Select an employee</option>
-                            @foreach($employees as $employee)
-                                <option value="{{ $employee->id }}" @selected(old('employee_id') == $employee->id)>
-                                    {{ $employee->first_name }} {{ $employee->last_name }} ({{ $employee->employee_id }})
-                                </option>
-                            @endforeach
-                        </select>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button formaction="{{ route('attendance.check-in') }}" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white hover:bg-emerald-700">Check In</button>
-                            <button formaction="{{ route('attendance.check-out') }}" class="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-bold text-white hover:bg-indigo-700">Check Out</button>
-                        </div>
-                    </form>
+                {{-- CSV Upload Section --}}
+                <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/60 overflow-hidden flex-shrink-0">
+                    @include('Attendance.CsvUpload')
                 </div>
 
                 {{-- Actions & Filter Card --}}
@@ -190,7 +169,7 @@
                                             </svg>
                                         </div>
                                         <p class="text-sm font-bold text-slate-600">No attendance records yet</p>
-                                        <p class="text-xs text-slate-400">Check employees in and out using the attendance controls.</p>
+                                        <p class="text-xs text-slate-400">Click "Add Attendance" or upload a CSV to get started.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -267,6 +246,21 @@
             });
 
             document.getElementById('noResults').classList.toggle('hidden', visibleCount !== 0 || rows.length === 0);
+        }
+
+        function toggleErrorDetails() {
+            const detailsList = document.getElementById('errorDetailsList');
+            const toggleText = document.getElementById('errorDetailsToggleText');
+
+            if (!detailsList || !toggleText) return;
+
+            if (detailsList.classList.contains('hidden')) {
+                detailsList.classList.remove('hidden');
+                toggleText.textContent = 'Hide details';
+            } else {
+                detailsList.classList.add('hidden');
+                toggleText.textContent = 'See details';
+            }
         }
 
         document.addEventListener('keydown', function (e) {

@@ -40,33 +40,6 @@
             </div>
         @endif
 
-        {{-- Simple Summary Cards --}}
-        @php
-            $totalNet = $payrolls->sum('net_salary');
-            $totalBasic = $payrolls->sum('basic_salary');
-            $totalAllowances = $payrolls->sum('allowances');
-            $totalDeductions = $payrolls->sum('deductions');
-        @endphp
-
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
-                <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Total Net Salary</p>
-                <p class="mt-1.5 text-xl font-bold text-gray-900">Rs. {{ number_format((float) $totalNet, 2) }}</p>
-            </div>
-            <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
-                <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Basic Salary</p>
-                <p class="mt-1.5 text-xl font-bold text-gray-900">Rs. {{ number_format((float) $totalBasic, 2) }}</p>
-            </div>
-            <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
-                <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Allowances (OT)</p>
-                <p class="mt-1.5 text-xl font-bold text-gray-900">Rs. {{ number_format((float) $totalAllowances, 2) }}</p>
-            </div>
-            <div class="rounded-xl bg-gray-50 border border-gray-100 p-4">
-                <p class="text-xs font-medium uppercase tracking-wide text-gray-500">Deductions</p>
-                <p class="mt-1.5 text-xl font-bold text-gray-900">Rs. {{ number_format((float) $totalDeductions, 2) }}</p>
-            </div>
-        </div>
-
         {{-- Simple Toolbar --}}
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div class="flex flex-1 flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -253,6 +226,10 @@
             if (modal) modal.classList.add('hidden');
         }
 
+        @if ($errors->has('month'))
+            openGenerateModal();
+        @endif
+
         function openPayslipModal(data) {
             const modal = document.getElementById('payslipModal');
             if (!modal) return;
@@ -339,6 +316,11 @@
     </script>
 
     <style>
+        #printablePayslip {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.97); }
             to { opacity: 1; transform: scale(1); }
@@ -361,6 +343,25 @@
             }
             #payslipModal button {
                 display: none !important;
+            }
+            #payslipModal > div > :not(#printablePayslip) {
+                display: none !important;
+            }
+            #payslipModal > div {
+                width: 100% !important;
+                max-width: none !important;
+                max-height: none !important;
+                display: block !important;
+                margin: 0 !important;
+                border: 0 !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                overflow: visible !important;
+            }
+            #printablePayslip {
+                max-height: none !important;
+                overflow: visible !important;
+                padding: 0 !important;
             }
         }
     </style>
