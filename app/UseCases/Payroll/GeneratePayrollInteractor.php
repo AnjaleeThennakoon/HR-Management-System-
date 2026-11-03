@@ -10,7 +10,7 @@ use Illuminate\Validation\ValidationException;
 class GeneratePayrollInteractor
 {
     /**
-     * @return array{employee_id: int, month: int, year: int, basic_salary: float, allowances: float, deductions: float, net_salary: float}
+     * @return array{employee_id: int, month: int, year: int, basic_salary: float, allowances: float, deductions: float, net_salary: float, EPF: float}
      */
     public function execute(PayrollRequest $payrollRequest): array
     {
@@ -48,10 +48,12 @@ class GeneratePayrollInteractor
         $totalNoPayDays = (int) $finalizedMonth->total_no_pay_days;
         $hourlyRate = $dailyRate / 8;
 
+        $epf = $basicSalary * 0.08;
+
         $allowances = ($totalOtMinutes / 60) * $hourlyRate;
         $lateDeduction = ($totalLateMinutes / 60) * $hourlyRate;
         $noPayDeduction = $totalNoPayDays * $dailyRate;
-        $deductions = $lateDeduction + $noPayDeduction;
+        $deductions = $lateDeduction + $noPayDeduction + $epf;
         $netSalary = ($basicSalary + $allowances) - $deductions;
 
         return [
@@ -62,6 +64,7 @@ class GeneratePayrollInteractor
             'allowances' => $allowances,
             'deductions' => $deductions,
             'net_salary' => $netSalary,
+            'EPF' => $epf,
         ];
     }
 }

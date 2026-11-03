@@ -26,6 +26,7 @@ class PayrollFactory extends Factory
             'allowances' => $this->faker->numberBetween(0, 5000),
             'deductions' => $this->faker->numberBetween(0, 3000),
             'net_salary' => $this->faker->numberBetween(25000, 95000),
+            'EPF'=> $this->faker->numberBetween(0, 12000),
         ];
     }
 }

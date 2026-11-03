@@ -22,6 +22,8 @@ return new class extends Migration
             $table->decimal('net_salary', 10, 2);
             $table->timestamps();
             $table->unique(['employee_id', 'month', 'year']);
+            $table->decimal('EPF');
+
         });
     }
 

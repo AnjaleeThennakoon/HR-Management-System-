@@ -176,3 +176,34 @@ test('cannot generate duplicate monthly salary for the same month and year', fun
         'month' => 'Payroll for this month has already been generated.',
     ]);
 });
+
+test('add epf to the payroll', function () {
+    $employee = Employee::factory()->create(['salary' => 50000]);
+    MonthlyAttendanceFinalized::factory()->create([
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+        'total_late_minutes' => 0,
+        'total_ot_minutes' => 0,
+        'total_no_pay_days' => 0,
+    ]);
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->post(route('payrolls.store'), $payload);
+
+    $response->assertRedirect(route('payrolls.index'))
+        ->assertSessionHas('success', 'Monthly payroll has been generated.');
+    $this->assertDatabaseHas('payrolls', [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+        'basic_salary' => 50000,
+        'allowances' => 0,
+        'deductions' => 4000,
+        'net_salary' => 46000,
+    ]);
+});

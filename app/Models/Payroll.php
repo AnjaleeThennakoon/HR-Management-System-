@@ -18,6 +18,7 @@ class Payroll extends Model
         'allowances',
         'deductions',
         'net_salary',
+        'EPF',
     ];
 
     public function employee(): BelongsTo
