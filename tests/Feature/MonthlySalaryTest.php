@@ -24,6 +24,32 @@ test('monthly salary page successfully loads', function () {
         });
 });
 
+test('monthly salary page displays payroll records with employee details', function () {
+    $employee = Employee::factory()->create([
+        'first_name' => 'Ada',
+        'last_name' => 'Lovelace',
+    ]);
+
+    Payroll::factory()->for($employee)->create([
+        'month' => 10,
+        'year' => 2026,
+        'basic_salary' => 50000,
+        'allowances' => 1000,
+        'deductions' => 500,
+        'net_salary' => 50500,
+    ]);
+
+    $response = $this->actingAs($this->user)
+        ->get(route('payrolls.index'));
+
+    $response->assertSee('Ada Lovelace')
+        ->assertSee('10/2026')
+        ->assertSee('50,000.00')
+        ->assertSee('1,000.00')
+        ->assertSee('500.00')
+        ->assertSee('50,500.00');
+});
+
 test('can generate monthly salary using Basic Salary Only', function () {
     $employee = Employee::factory()->create(['salary' => 50000]);
     MonthlyAttendanceFinalized::factory()->create([
@@ -177,7 +203,7 @@ test('cannot generate duplicate monthly salary for the same month and year', fun
     ]);
 });
 
-test('add epf to the payroll', function () {
+test('can generate epf', function () {
     $employee = Employee::factory()->create(['salary' => 50000]);
     MonthlyAttendanceFinalized::factory()->create([
         'employee_id' => $employee->id,
@@ -205,5 +231,36 @@ test('add epf to the payroll', function () {
         'allowances' => 0,
         'deductions' => 4000,
         'net_salary' => 46000,
+    ]);
+});
+
+test('can generate epf with allowances and deductions', function () {
+    $employee = Employee::factory()->create(['salary' => 50000]);
+    MonthlyAttendanceFinalized::factory()->create([
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+        'total_late_minutes' => 60,
+        'total_ot_minutes' => 120,
+        'total_no_pay_days' => 0,
+    ]);
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+    ];
+
+    $response = $this->actingAs($this->user)->post(route('payrolls.store'), $payload);
+
+    $response->assertRedirect(route('payrolls.index'))
+        ->assertSessionHas('success', 'Monthly payroll has been generated.');
+    $this->assertDatabaseHas('payrolls', [
+        'employee_id' => $employee->id,
+        'month' => 10,
+        'year' => 2026,
+        'basic_salary' => 50000,
+        'allowances' => 480.77,
+        'deductions' => 4240.38,
+        'net_salary' => 46240.38,
     ]);
 });

@@ -9,7 +9,8 @@ class ListPayrollInteractor
 {
     public function execute(?string $search = null, ?int $perPage = 10): LengthAwarePaginator
     {
-        $query = Payroll::query();
+        $query = Payroll::query()
+            ->with(['employee.department', 'employee.designation']);
 
         if ($search) {
             $query->where(function ($query) use ($search) {
