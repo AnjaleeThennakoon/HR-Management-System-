@@ -2,7 +2,6 @@
 
 namespace App\UseCases\Attendance\Request;
 
-use App\Models\Employee;
 use Illuminate\Foundation\Http\FormRequest;
 
 class MonthlyReportRequest extends FormRequest
@@ -13,7 +12,6 @@ class MonthlyReportRequest extends FormRequest
     {
         return true;
     }
-
 
     public function rules(): array
     {

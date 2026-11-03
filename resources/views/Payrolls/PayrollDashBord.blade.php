@@ -97,6 +97,7 @@
                     <th class="whitespace-nowrap px-4 py-3 text-right font-semibold">Basic salary</th>
                     <th class="whitespace-nowrap px-4 py-3 text-right font-semibold">Allowances</th>
                     <th class="whitespace-nowrap px-4 py-3 text-right font-semibold">Deductions</th>
+                    <th class="whitespace-nowrap px-4 py-3 text-right font-semibold">EPF</th>
                     <th class="whitespace-nowrap px-4 py-3 text-right font-semibold">Net salary</th>
                     <th class="whitespace-nowrap px-4 py-3 text-right font-semibold">Actions</th>
                 </tr>
@@ -130,6 +131,8 @@
                         data-basic="{{ number_format((float) $payroll->basic_salary, 2) }}"
                         data-allowances="{{ number_format((float) $payroll->allowances, 2) }}"
                         data-deductions="{{ number_format((float) $payroll->deductions, 2) }}"
+                        data-attendance-deductions="{{ number_format((float) $payroll->deductions - (float) $payroll->EPF, 2) }}"
+                        data-epf="{{ number_format((float) $payroll->EPF, 2) }}"
                         data-gross="{{ number_format((float) $grossSalary, 2) }}"
                         data-net="{{ number_format((float) $payroll->net_salary, 2) }}">
 
@@ -166,6 +169,11 @@
                             {{ number_format((float) $payroll->deductions, 2) }}
                         </td>
 
+                        {{-- EPF --}}
+                        <td class="whitespace-nowrap px-4 py-4 text-right text-gray-600">
+                            {{ number_format((float) $payroll->EPF, 2) }}
+                        </td>
+
                         {{-- Net Salary --}}
                         <td class="whitespace-nowrap px-4 py-4 text-right font-semibold text-gray-900">
                             {{ number_format((float) $payroll->net_salary, 2) }}
@@ -181,7 +189,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="px-4 py-14 text-center">
+                        <td colspan="8" class="px-4 py-14 text-center">
                             <div class="mx-auto flex max-w-sm flex-col items-center gap-2 text-gray-400">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9.75h19.5m-16.5 3h3m-3 3h3m-3 3h3m6-6h3m-3 3h3m-3 3h3M3.75 4.5h16.5A1.5 1.5 0 0121.75 6v12a1.5 1.5 0 01-1.5 1.5H3.75A1.5 1.5 0 012.25 18V6a1.5 1.5 0 011.5-1.5z" />
@@ -194,7 +202,7 @@
                 @endforelse
 
                 <tr id="noSalaryResultsRow" class="hidden">
-                    <td colspan="7" class="px-4 py-10 text-center text-sm text-gray-500">
+                    <td colspan="8" class="px-4 py-10 text-center text-sm text-gray-500">
                         No matching records found.
                     </td>
                 </tr>
@@ -245,7 +253,8 @@
             document.getElementById('payslipAllowances').textContent = data.allowances || '0.00';
             document.getElementById('payslipGrossSalary').textContent = data.gross || '0.00';
 
-            document.getElementById('payslipDeductions').textContent = data.deductions || '0.00';
+            document.getElementById('payslipDeductions').textContent = data.attendanceDeductions || '0.00';
+            document.getElementById('payslipEPF').textContent = data.epf || '0.00';
             document.getElementById('payslipTotalDeductions').textContent = data.deductions || '0.00';
 
             document.getElementById('payslipNetSalary').textContent = 'Rs. ' + (data.net || '0.00');
@@ -272,6 +281,8 @@
                 basic: row.dataset.basic,
                 allowances: row.dataset.allowances,
                 deductions: row.dataset.deductions,
+                attendanceDeductions: row.dataset.attendanceDeductions,
+                epf: row.dataset.epf,
                 gross: row.dataset.gross,
                 net: row.dataset.net
             });
