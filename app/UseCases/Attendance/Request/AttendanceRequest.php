@@ -2,8 +2,9 @@
 
 namespace App\UseCases\Attendance\Request;
 
+use App\Models\Attendance;
+use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class AttendanceRequest extends FormRequest
 {
@@ -12,31 +13,30 @@ class AttendanceRequest extends FormRequest
         return true;
     }
 
-    public function rules(): array
+    public function execute($date): array
     {
-        $attendanceId = $this->route('id');
-        $date = $this->input('date');
+        $attendances = Attendance::with('employee')->whereDate('date', $date)->get();
 
-        return [
-            'employee_id' => [
-                'required',
-                'integer',
-                'exists:employees,id',
-                Rule::unique('attendances', 'employee_id')
-                    ->where('date', $date)
-                    ->ignore($attendanceId),
-            ],
-            'date' => ['required', 'date', 'before_or_equal:today'],
-            'in_time' => ['nullable', 'date_format:H:i', 'before:out_time'],
-            'out_time' => ['nullable', 'date_format:H:i', 'after:in_time'],
-        ];
-    }
+        return $attendances->map(function ($attendance) {
 
-    public function messages(): array
-    {
-        return [
-            'employee_id.unique' => 'This employee already has an attendance record for this date.',
-            'date.before_or_equal' => 'Attendance cannot be marked for a future date.',
-        ];
+            $inTime = $attendance->in_time;
+            $outTime = $attendance->out_time;
+
+            $workingHours = ($outTime && $inTime)
+                ? Carbon::parse($inTime)->diffInHours(Carbon::parse($outTime))
+                : 0;
+
+            return [
+                'employee_id' => $attendance->employee->id,
+                'attendance_id' => $attendance->id,
+                'first_name' => $attendance->employee->first_name,
+                'last_name' => $attendance->employee->last_name,
+                'in_time' => $inTime,
+                'out_time' => $outTime,
+                'work_hours' => $workingHours,
+                'attendance_date' => $attendance->date,
+                'sending_date' => $attendance->created_at,
+            ];
+        })->toArray();
     }
 }

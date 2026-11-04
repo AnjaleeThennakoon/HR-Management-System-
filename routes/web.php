@@ -73,5 +73,6 @@ Route::middleware(['auth'])->group(function () {
     Route::Post('/Payrolls/genarate', [PayrollController::class, 'generatePayroll'])->name('payrolls.generate');
 
     Route::get('report', [ReportController::class, 'index'])->name('report.index');
-    Route::get('dailyReport/{date}', [ReportController::class, 'show'])->name('report.show');
+    Route::get('dailyReport/{date?}', [ReportController::class, 'show'])->name('report.show');
+    Route::get('monthlyReport/{month?}', [ReportController::class, 'monthlyReport'])->name('report.monthlyReport');
 });

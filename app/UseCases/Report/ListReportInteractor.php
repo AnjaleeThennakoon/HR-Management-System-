@@ -2,7 +2,7 @@
 
 namespace App\UseCases\Report;
 
-use App\Models\Report;
+use SebastianBergmann\CodeCoverage\Report\Xml\Report;
 
 class ListReportInteractor
 {
