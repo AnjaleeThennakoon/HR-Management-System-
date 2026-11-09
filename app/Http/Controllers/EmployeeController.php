@@ -5,17 +5,17 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use App\Models\Designation;
 use App\Models\Employee;
-use App\UseCases\Employee\DeleteEmployeeInteractors;
-use App\UseCases\Employee\ListEmployeeInteractors;
+use App\UseCases\Employee\DeleteEmployeeInteractor;
+use App\UseCases\Employee\ListEmployeeInteractor;
 use App\UseCases\Employee\Request\EmployeeRequest;
-use App\UseCases\Employee\StoreEmployeeInteractors;
-use App\UseCases\Employee\UpdateEmployeeInteractors;
+use App\UseCases\Employee\StoreEmployeeInteractor;
+use App\UseCases\Employee\UpdateEmployeeInteractor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
 class EmployeeController extends Controller
 {
-    public function index(ListEmployeeInteractors $listEmployeeInteractions): View
+    public function index(ListEmployeeInteractor $listEmployeeInteractions): View
     {
         $employees = $listEmployeeInteractions->execute(
             request('search'),
@@ -28,27 +28,27 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function store(EmployeeRequest $employeeRequest, StoreEmployeeInteractors $storeEmployeeInteractors): RedirectResponse
+    public function store(EmployeeRequest $employeeRequest, StoreEmployeeInteractor $storeEmployeeInteractor): RedirectResponse
     {
-        $storeEmployeeInteractors->execute($employeeRequest->validated());
+        $storeEmployeeInteractor->execute($employeeRequest->validated());
 
         return redirect()->route('employees.index')
             ->with('success', 'Employee has been successfully created.');
     }
 
-    public function update(string $id, EmployeeRequest $employeeRequest, UpdateEmployeeInteractors $updateEmployeeInteractors): RedirectResponse
+    public function update(string $id, EmployeeRequest $employeeRequest, UpdateEmployeeInteractor $updateEmployeeInteractor): RedirectResponse
     {
         $employee = Employee::findOrFail($id);
 
-        $updateEmployeeInteractors->execute($employeeRequest, $employee);
+        $updateEmployeeInteractor->execute($employeeRequest, $employee);
 
         return redirect()->route('employees.index')
             ->with('success', 'Employee has been successfully updated.');
     }
 
-    public function destroy(string $id, DeleteEmployeeInteractors $deleteEmployeeInteractors): RedirectResponse
+    public function destroy(string $id, DeleteEmployeeInteractor $deleteEmployeeInteractor): RedirectResponse
     {
-        $deleteEmployeeInteractors->execute($id);
+        $deleteEmployeeInteractor->execute($id);
 
         return redirect()->route('employees.index')
             ->with('success', 'Employee has been successfully deleted.');

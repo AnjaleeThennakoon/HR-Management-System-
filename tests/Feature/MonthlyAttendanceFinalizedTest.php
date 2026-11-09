@@ -4,6 +4,7 @@ use App\Models\Attendance;
 use App\Models\Employee;
 use App\Models\Holiday;
 use App\Models\Leave;
+use App\Models\MonthlyAttendanceFinalized;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,7 +45,7 @@ test('can finalize the month when every working day is accounted for', function 
     $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
 
     $response->assertRedirect();
-    $this->assertDatabaseHas('finalized_months', [
+    $this->assertDatabaseHas(MonthlyAttendanceFinalized::class, [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
@@ -78,7 +79,7 @@ test('cannot finalize the month when a working day is not accounted for', functi
 
     $response->assertRedirect();
     $response->assertSessionHasErrors('month');
-    $this->assertDatabaseMissing('finalized_months', [
+    $this->assertDatabaseMissing(MonthlyAttendanceFinalized::class, [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
@@ -109,7 +110,7 @@ test('cannot finalize the same month twice', function () {
 
     $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
     $response->assertSessionHasErrors('month');
-    $this->assertDatabaseCount('finalized_months', 1);
+    $this->assertDatabaseCount(MonthlyAttendanceFinalized::class, 1);
 });
 
 test('monthly report shows finalize button with month name when all days are accounted for', function () {
@@ -126,7 +127,7 @@ test('monthly report shows finalize button with month name when all days are acc
             'out_time' => '17:00',
         ]);
     }
-    $reportdata =[
+    $reportdata = [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
@@ -160,7 +161,7 @@ test('it shows as not finalized if attendance changes after finalized', function
 
     $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
 
-    $this->assertDatabaseHas('finalized_months', [
+    $this->assertDatabaseHas(MonthlyAttendanceFinalized::class, [
         'employee_id' => $employee->id,
         'month' => 10,
         'year' => 2026,
@@ -170,4 +171,23 @@ test('it shows as not finalized if attendance changes after finalized', function
 
     $response = $this->actingAs($this->user)->get(route('attendance.monthly-report', $payload));
     $response->assertViewHas('isFinalized', false);
+});
+
+test('cannot finalized next month attendance', function () {
+    $employee = Employee::factory()->create();
+    $nextMonth = now()->addMonth();
+    $payload = [
+        'employee_id' => $employee->id,
+        'month' => $nextMonth->month,
+        'year' => $nextMonth->year,
+    ];
+
+    $response = $this->actingAs($this->user)->post(route('attendance.finalize-month'), $payload);
+
+    $response->assertSessionHasErrors('month');
+    $this->assertDatabaseMissing(MonthlyAttendanceFinalized::class, [
+        'employee_id' => $employee->id,
+        'month' => $nextMonth->month,
+        'year' => $nextMonth->year,
+    ]);
 });

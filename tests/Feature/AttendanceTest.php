@@ -120,7 +120,7 @@ test('an attendance  time can not be invalid format', function () {
     $attendance = Attendance::factory()->make([
         'employee_id' => Employee::factory()->create()->id,
         'date' => '2024-06-01',
-        'in_time' => '08:30:00',
+        'in_time' => '18:00',
         'out_time' => '17:00',
     ]);
 
@@ -373,12 +373,10 @@ test('attendance cannot be updated to a duplicate employee and date', function (
         'out_time' => '18:00',
     ]);
     $attendanceData = [
-        [
-            'employee_id' => $employee->id,
-            'date' => '2026-10-15',
-            'in_time' => '09:00',
-            'out_time' => '18:00',
-        ],
+        'employee_id' => $employee->id,
+        'date' => '2026-10-15',
+        'in_time' => '09:00',
+        'out_time' => '18:00',
     ];
 
     $response = $this->actingAs($this->user)->put("/attendance/{$attendanceToUpdate->id}", $attendanceData);
@@ -788,4 +786,22 @@ test('it calculates no-pay days correctly after the leave period ends', function
 
     $response->assertOk();
     $response->assertViewHas('nonPayDays', 2);
+});
+test('attendance cannot be marked for a future date', function () {
+    $this->travelTo('2026-11-02 09:00:00');
+    $employee = Employee::factory()->create();
+    $attendanceData = [
+        'employee_id' => $employee->id,
+        'date' => now()->addDay()->toDateString(),
+        'in_time' => '08:00',
+        'out_time' => '17:00',
+    ];
+
+    $response = $this->actingAs($this->user)
+        ->post('/attendance', $attendanceData);
+
+    $response->assertSessionHasErrors([
+        'date' => 'Attendance cannot be marked for a future date.',
+    ]);
+    $this->assertDatabaseCount('attendances', 0);
 });

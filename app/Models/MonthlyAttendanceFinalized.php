@@ -4,12 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class MonthlyAttendanceFinalized extends Model
 {
     use HasFactory;
-
-    protected $table = 'finalized_months';
 
     protected $fillable = [
         'employee_id',
@@ -27,13 +26,8 @@ class MonthlyAttendanceFinalized extends Model
         'finalized_at' => 'datetime',
     ];
 
-    public function employee()
+    public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);
-    }
-
-    public function finalizer()
-    {
-        return $this->belongsTo(User::class, 'finalized_by');
     }
 }

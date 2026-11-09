@@ -8,7 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     @vite('resources/js/app.js')
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8">
 <script src="{{ asset('js/employee.js') }}"></script>
 <script src="{{ asset('js/designation.js') }}"></script>
 <script src="{{ asset('js/department.js') }}"></script>

@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Holiday;
-use App\UseCases\Holiday\DeleteHolidayInteractors;
-use App\UseCases\Holiday\ListHolidayInteractors;
+use App\UseCases\Holiday\DeleteHolidayInteractor;
+use App\UseCases\Holiday\ListHolidayInteractor;
 use App\UseCases\Holiday\Request\HolidayRequest;
-use App\UseCases\Holiday\StoreHolidayInteractors;
-use App\UseCases\Holiday\UpdateHolidayInteractors;
+use App\UseCases\Holiday\StoreHolidayInteractor;
+use App\UseCases\Holiday\UpdateHolidayInteractor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 
 class HolidayController extends Controller
 {
-    public function index(ListHolidayInteractors $listHolidayInteractor): View
+    public function index(ListHolidayInteractor $listHolidayInteractor): View
     {
         $holidays = $listHolidayInteractor->execute(
             request('search'),
@@ -23,7 +23,7 @@ class HolidayController extends Controller
         return view('Holiday.HolidayDashBord', compact('holidays'));
     }
 
-    public function store(HolidayRequest $holidayRequest, StoreHolidayInteractors $storeHolidayInteractor): RedirectResponse
+    public function store(HolidayRequest $holidayRequest, StoreHolidayInteractor $storeHolidayInteractor): RedirectResponse
     {
         $storeHolidayInteractor->execute($holidayRequest);
 
@@ -31,20 +31,20 @@ class HolidayController extends Controller
             ->with('success', 'Holiday has been successfully created.');
     }
 
-    public function update(string $id,HolidayRequest $holidayRequest, UpdateHolidayInteractors $updateHolidayInteractors): RedirectResponse
+    public function update(string $id, HolidayRequest $holidayRequest, UpdateHolidayInteractor $updateHolidayInteractor): RedirectResponse
     {
         $holiday = Holiday::findOrFail($id);
 
-        $updateHolidayInteractors->execute( $holidayRequest, $holiday);
+        $updateHolidayInteractor->execute($holidayRequest, $holiday);
 
         return redirect()
             ->route('holidays.index')
             ->with('success', 'Holiday has been successfully updated.');
     }
 
-    public function destroy(string $id, DeleteHolidayInteractors $deleteHolidayInteractors): RedirectResponse
+    public function destroy(string $id, DeleteHolidayInteractor $deleteHolidayInteractor): RedirectResponse
     {
-        $deleteHolidayInteractors->execute($id);
+        $deleteHolidayInteractor->execute($id);
 
         return redirect()->route('holidays.index')
             ->with('success', 'Holiday has been successfully deleted.');

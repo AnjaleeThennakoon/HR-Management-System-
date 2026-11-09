@@ -3,7 +3,7 @@
 use App\Jobs\ProcessAttendanceCsv;
 use App\Models\AttendanceImport;
 use App\Models\Employee;
-use App\UseCases\Attendance\UploadAttendanceInteractors;
+use App\UseCases\Attendance\UploadAttendanceInteractor;
 use Illuminate\Auth\GenericUser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -28,7 +28,7 @@ test('queued CSV processing reads files from the local disk root', function () {
     );
 
     $job = new ProcessAttendanceCsv($attendanceImport->id, $attendanceImport->file_path, $owner->id);
-    $job->handle(app(UploadAttendanceInteractors::class));
+    $job->handle(app(UploadAttendanceInteractor::class));
 
     $this->assertDatabaseHas('attendances', [
         'employee_id' => $employee->id,
@@ -70,7 +70,7 @@ test('queued CSV processing logs invalid rows without failing the job', function
                 && isset($context['errors']['row_3']))
         );
 
-    $job->handle(app(UploadAttendanceInteractors::class));
+    $job->handle(app(UploadAttendanceInteractor::class));
 
     $this->assertDatabaseCount('attendances', 1);
     $this->assertDatabaseHas('attendances', [
@@ -261,4 +261,3 @@ test('uploaded CSV rows are displayed in the table on the page', function () {
         ->assertSee('08:00:00')
         ->assertSee('17:30:00');
 });
-

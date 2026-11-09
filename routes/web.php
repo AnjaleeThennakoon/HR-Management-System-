@@ -7,6 +7,8 @@ use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LeaveController;
+use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\ReportController;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Route;
 
@@ -66,4 +68,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('leaves/balance', [LeaveController::class, 'LeaveBalance'])->name('leaves.balance');
     Route::post('leaves/approval', [LeaveController::class, 'LeaveAuthorizer'])->name('leave-approval.store');
 
-});
+    Route::get('/payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
+    Route::post('/payrolls/store', [PayrollController::class, 'store'])->name('payrolls.store');
+    Route::Post('/Payrolls/genarate', [PayrollController::class, 'generatePayroll'])->name('payrolls.generate');
+
+    Route::get('report', [ReportController::class, 'index'])->name('report.index');
+    Route::get('dailyReport/{date?}', [ReportController::class, 'show'])->name('report.show');
+    Route::get('monthlyReport/{month?}', [ReportController::class, 'monthlyReport'])->name('report.monthlyReport');
+    Route::get('leaveReport/{month?}', [ReportController::class, 'leaveReport'])->name('report.monthlyLeaveReport');});
