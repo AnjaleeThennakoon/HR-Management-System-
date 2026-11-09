@@ -34,7 +34,7 @@ class LeveMonthlyReportInteractor
 
         return Employee::orderBy('employee_id')
             ->get()
-            ->map(function (Employee $employee) use ($leavesByEmployee, $noPayDaysByEmployee): array {
+            ->map(function (Employee $employee) use ($leavesByEmployee, $noPayDaysByEmployee, $monthStart, $monthEnd): array {
                 $employeeLeaves = $leavesByEmployee->get($employee->id, collect());
 
                 return [
@@ -42,12 +42,20 @@ class LeveMonthlyReportInteractor
                     'first_name'  => $employee->first_name,
                     'last_name'   => $employee->last_name,
                     'no_pay_days' => $noPayDaysByEmployee->get($employee->id, 0),
-                    'leaves'      => $employeeLeaves->map(fn (Leave $leave) => [
-                        'start_date' => $leave->start_date,
-                        'end_date'   => $leave->end_date,
-                        'reason'     => $leave->reason,
-                        'status'     => $leave->status,
-                    ])->values()->all(),
+                    'leaves'      => $employeeLeaves->map(function (Leave $leave) use ($monthStart, $monthEnd) {
+                        $leaveStart = Carbon::parse($leave->start_date);
+                        $leaveEnd   = Carbon::parse($leave->end_date);
+
+                        $overlapStart = $leaveStart->greaterThan($monthStart) ? $leaveStart : $monthStart;
+                        $overlapEnd   = $leaveEnd->lessThan($monthEnd)       ? $leaveEnd   : $monthEnd;
+
+                        return [
+                            'start_date' => $overlapStart->toDateString(),
+                            'end_date'   => $overlapEnd->toDateString(),
+                            'reason'     => $leave->reason,
+                            'status'     => $leave->status,
+                        ];
+                    })->values()->all(),
                 ];
             });
     }

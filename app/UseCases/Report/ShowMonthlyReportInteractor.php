@@ -72,12 +72,11 @@ class ShowMonthlyReportInteractor
             'employees' => $employees->all(),
             'totals' => [
                 'present_days' => $employees->sum('present_count'),
-                'absent_days' => $employees->sum('absent_count'),
+                'absent_days'  => $employees->sum('absent_count'),
                 'late_minutes' => $attendances->flatten()->sum('late_minutes'),
-                'ot_hours' => round($attendances->flatten()->sum('ot_minutes') / 60, 2),
-                'ot_minutes' => $attendances->flatten()->sum('ot_minutes'),
-                'leave_days' => $employees->sum('leave_days'),
-                'work_hours' => $attendances->flatten()->sum(function (Attendance $a): int {
+                'ot_minutes'   => $attendances->flatten()->sum('ot_minutes'),
+                'leave_days'   => $employees->sum('leave_days'),
+                'work_hours'   => $attendances->flatten()->sum(function (Attendance $a): int {
                     if (! $a->in_time || ! $a->out_time) return 0;
                     return (int) Carbon::parse($a->in_time)->diffInHours(Carbon::parse($a->out_time));
                 }),

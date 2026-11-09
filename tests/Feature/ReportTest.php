@@ -186,3 +186,30 @@ test('show employees with leaves in the selected month', function () {
     $response->assertSeeTextInOrder(['2026-10-20', '2026-10-25', 'Alice', 'Smith', 'No Pay Leave', 'approved']);
 });
 
+test('show leave report with double month', function () {
+    $employee1 = Employee::factory()->create([
+        'first_name' => 'John',
+        'last_name'  => 'Doe',
+    ]);
+    Leave::factory()->create([
+        'employee_id' => $employee1->id,
+        'start_date'  => '2026-10-29',
+        'end_date'    => '2026-11-02',
+        'status'      => 'approved',
+        'reason'      => 'Vacation',
+    ]);
+
+    $month = '2026-11';
+
+    $response = $this->actingAs($this->user)->get(route('report.leaveReport', ['month' => $month]));
+
+    $response->assertOk();
+    $response->assertSeeTextInOrder([
+        '2026-11-01',
+        '2026-11-02',
+        'John',
+        'Doe',
+        'Vacation',
+        'approved',
+    ]);
+});
