@@ -5,12 +5,42 @@ namespace App\UseCases\Attendance\Request;
 use App\Models\Attendance;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AttendanceRequest extends FormRequest
 {
     public function authorize(): bool
     {
         return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'employee_id' => [
+                'required',
+                'integer',
+                'exists:employees,id',
+                Rule::unique('attendances', 'employee_id')
+                    ->where('date', $this->input('date'))
+                    ->ignore($this->route('id')),
+            ],
+            'date' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'],
+            'in_time' => [
+                'required',
+                'date_format:H:i',
+                ...($this->filled('out_time') ? ['before:out_time'] : []),
+            ],
+            'out_time' => ['nullable', 'date_format:H:i'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'date.before_or_equal' => 'Attendance cannot be marked for a future date.',
+            'in_time.before' => 'In time must be before out time.',
+        ];
     }
 
     public function execute($date): array

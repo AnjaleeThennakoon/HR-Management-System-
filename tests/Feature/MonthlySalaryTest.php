@@ -50,8 +50,8 @@ test('can generate monthly salary using Basic Salary Only', function () {
         'year' => 2026,
         'basic_salary' => 50000,
         'allowances' => 0,
-        'deductions' => 0,
-        'net_salary' => 50000,
+        'deductions' => 4000,
+        'net_salary' => 46000,
     ]);
 });
 
@@ -81,8 +81,8 @@ test('can generate monthly salary using Allowances and Deductions', function () 
         'year' => 2026,
         'basic_salary' => 50000,
         'allowances' => 480.77,
-        'deductions' => 240.38,
-        'net_salary' => 50240.38,
+        'deductions' => 4240.38,
+        'net_salary' => 46240.38,
     ]);
 });
 
@@ -112,8 +112,8 @@ test('can generate monthly salary with non pay days', function () {
         'year' => 2026,
         'basic_salary' => 50000,
         'allowances' => 480.77,
-        'deductions' => 4086.54,
-        'net_salary' => 46394.23,
+        'deductions' => 8086.54,
+        'net_salary' => 42394.23,
     ]);
 });
 

@@ -2,6 +2,7 @@
 
 use App\Models\Attendance;
 use App\Models\Employee;
+use App\Models\Leave;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -27,6 +28,8 @@ test('attendance report page shows all employees who attended or absent on the s
             'date' => '2026-10-15',
             'in_time' => '08:00:00',
             'out_time' => '17:00:00',
+            'late_minutes' => 15,
+            'ot_minutes' => 30,
         ]);
     }
     $employee1 = Attendance::factory()->create([
@@ -53,6 +56,8 @@ test('attendance report page shows all employees who attended or absent on the s
             'in_time' => '08:00:00',
             'out_time' => '17:00:00',
             'working_hours' => '9',
+            'ot_minutes' => 30,
+            'late_minutes' => 15,
             'status' => 'Present',
         ];
         $response->assertSeeText([
@@ -61,6 +66,8 @@ test('attendance report page shows all employees who attended or absent on the s
             $attendanceData['in_time'],
             $attendanceData['out_time'],
             $attendanceData['working_hours'],
+            $attendanceData['ot_minutes'],
+            $attendanceData['late_minutes'],
             $attendanceData['status'],
         ]);
     }
@@ -105,7 +112,7 @@ test('monthly attendance report displays all employees with correct summary coun
         'first_name' => 'NIMESH',
         'last_name' => 'Fernando',
     ]);
-    $presentEmployee = Attendance::factory()->create([
+    Attendance::factory()->create([
         'employee_id' => $presentEmployee->id,
         'date' => '2026-10-01',
         'in_time' => '08:10:00',
@@ -113,7 +120,7 @@ test('monthly attendance report displays all employees with correct summary coun
         'late_minutes' => 10,
         'ot_minutes' => 120,
     ]);
-    $presentEmployee = Attendance::factory()->create([
+    Attendance::factory()->create([
         'employee_id' => $presentEmployee->id,
         'date' => '2026-10-02',
         'in_time' => '08:05:00',
@@ -125,16 +132,57 @@ test('monthly attendance report displays all employees with correct summary coun
     $response = $this->actingAs($this->user)->get(route('report.monthlyReport', ['month' => $month]));
 
     $response->assertOk();
-    $response->assertSeeTextInOrder([
-        'Total Present Days: 2',
-        'Total Absent Days: 42',
-        'Total Late Minutes: 15',
-        'Total OT Minutes: 120',
-        'Total Work Hours: 17',
-    ]);
-    $response->assertSeeTextInOrder(['APSARA', '2', '20', 'Present']);
-    $response->assertSeeTextInOrder(['NIMESH', '0', '22', 'Absent']);
+
+    $response->assertDontSeeText('Status');
+    $response->assertSeeTextInOrder(['APSARA', '2', '20', '2.00', '15m']);
+    $response->assertSeeTextInOrder(['NIMESH', '0', '22', '0.00', '0m']);
     $response->assertViewHas('report', function ($report) {
         return count($report) === 2;
     });
 });
+
+test('show employees with leaves in the selected month', function () {
+    $employee1 = Employee::factory()->create([
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+    ]);
+    $leave = Leave::factory()->create([
+        'employee_id' => $employee1->id,
+        'start_date' => '2026-10-10',
+        'end_date' => '2026-10-15',
+        'status' => 'approved',
+        'reason' => 'Vacation',
+    ]);
+    $employee2 = Employee::factory()->create([
+        'first_name' => 'Jane',
+        'last_name' => 'fernando',
+    ]);
+    $leave = Leave::factory()->create([
+        'employee_id' => $employee2->id,
+        'start_date' => '2026-10-30',
+        'end_date' => '2026-10-30',
+        'status' => 'pending',
+        'reason' => 'Personal',
+    ]);
+    $employee3 = Employee::factory()->create([
+        'first_name' => 'Alice',
+        'last_name' => 'Smith',
+    ]);
+    $leave = Leave::factory()->create([
+        'employee_id' => $employee3->id,
+        'start_date' => '2026-10-20',
+        'end_date' => '2026-10-25',
+        'status' => 'approved',
+        'reason' => 'No Pay Leave',
+    ]);
+
+    $month = '2026-10';
+
+    $response = $this->actingAs($this->user)->get(route('report.leaveReport', ['month' => $month]));
+
+    $response->assertOk();
+    $response->assertSeeTextInOrder(['2026-10-10', '2026-10-15', 'John', 'Doe', 'Vacation', 'approved']);
+    $response->assertSeeTextInOrder(['2026-10-30', '2026-10-30', 'Jane', 'fernando', 'Personal', 'pending']);
+    $response->assertSeeTextInOrder(['2026-10-20', '2026-10-25', 'Alice', 'Smith', 'No Pay Leave', 'approved']);
+});
+

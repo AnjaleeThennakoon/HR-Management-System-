@@ -42,6 +42,8 @@
                                 <th class="px-4 py-3">In Time</th>
                                 <th class="px-4 py-3">Out Time</th>
                                 <th class="px-4 py-3 text-center">Work Hours</th>
+                                <th class="px-4 py-3 text-center">OT (mins)</th>
+                                <th class="px-4 py-3 text-center">LT (mins)</th>
                                 <th class="px-4 py-3">Status</th>
                             </tr>
                         </thead>
@@ -53,11 +55,13 @@
                                     <td class="px-4 py-3 text-slate-700">{{ $attendance['in_time'] ?? '—' }}</td>
                                     <td class="px-4 py-3 text-slate-700">{{ $attendance['out_time'] ?? '—' }}</td>
                                     <td class="px-4 py-3 text-center text-slate-700">{{ $attendance['work_hours'] ?? 0 }}</td>
+                                    <td class="px-4 py-3 text-center text-slate-700">{{ $attendance['ot_minutes'] ?? 0 }}</td>
+                                    <td class="px-4 py-3 text-center text-slate-700">{{ $attendance['late_minutes'] ?? 0 }}</td>
                                     <td class="px-4 py-3 text-slate-700">{{ $attendance['status'] === 'Incomplete' ? '—' : $attendance['status'] }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-4 py-10 text-center text-slate-500">No employees found.</td>
+                                    <td colspan="8" class="px-4 py-10 text-center text-slate-500">No employees found.</td>
                                 </tr>
                             @endforelse
                         </tbody>

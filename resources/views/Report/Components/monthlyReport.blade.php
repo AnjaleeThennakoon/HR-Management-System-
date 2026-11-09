@@ -36,37 +36,37 @@
                 <div class="mt-6 overflow-x-auto rounded-xl border border-slate-200">
                     <table class="w-full min-w-[900px] text-left text-sm">
                         <thead class="bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
-                            <tr>
-                                <th class="px-4 py-3">Employee ID</th>
-                                <th class="px-4 py-3">Employee Name</th>
-                                <th class="px-4 py-3 text-center">Present Days</th>
-                                <th class="px-4 py-3 text-center">Absent Days</th>
-                                <th class="px-4 py-3 text-right">OT Hours</th>
-                                <th class="px-4 py-3 text-right">Late Time</th>
-                                <th class="px-4 py-3 text-center">Leave Days</th>
-                            </tr>
+                        <tr>
+                            <th class="px-4 py-3">Employee ID</th>
+                            <th class="px-4 py-3">Employee Name</th>
+                            <th class="px-4 py-3 text-center">Present Days</th>
+                            <th class="px-4 py-3 text-center">Absent Days</th>
+                            <th class="px-4 py-3 text-right">OT Hours</th>
+                            <th class="px-4 py-3 text-right">Late Time</th>
+                            <th class="px-4 py-3 text-center">Leave Days</th>
+                        </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            @forelse ($report as $employee)
-                                @php
-                                    $lateMinutes = (int) $employee['late_minutes'];
-                                    $lateHours = intdiv($lateMinutes, 60);
-                                    $remainingLateMinutes = $lateMinutes % 60;
-                                @endphp
-                                <tr class="hover:bg-slate-50">
-                                    <td class="px-4 py-3 font-medium text-slate-900">{{ $employee['employee_id'] }}</td>
-                                    <td class="px-4 py-3 text-slate-700">{{ $employee['first_name'] }} {{ $employee['last_name'] }}</td>
-                                    <td class="px-4 py-3 text-center text-slate-700">{{ $employee['present_count'] }}</td>
-                                    <td class="px-4 py-3 text-center text-slate-700">{{ $employee['absent_count'] }}</td>
-                                    <td class="px-4 py-3 text-right text-slate-700">{{ number_format((float) $employee['ot_hours'], 2) }}</td>
-                                    <td class="px-4 py-3 text-right text-slate-700">{{ $lateHours > 0 ? $lateHours.'h ' : '' }}{{ $remainingLateMinutes }}m</td>
-                                    <td class="px-4 py-3 text-center text-slate-700">{{ $employee['leave_days'] }}</td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="7" class="px-4 py-10 text-center text-slate-500">No employees found.</td>
-                                </tr>
-                            @endforelse
+                        @forelse ($report as $employee)
+                            @php
+                                $lateMinutes = (int) $employee['late_minutes'];
+                                $lateHours = intdiv($lateMinutes, 60);
+                                $remainingLateMinutes = $lateMinutes % 60;
+                            @endphp
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-4 py-3 font-medium text-slate-900">{{ $employee['employee_id'] }}</td>
+                                <td class="px-4 py-3 text-slate-700">{{ $employee['first_name'] }} {{ $employee['last_name'] }}</td>
+                                <td class="px-4 py-3 text-center text-slate-700">{{ $employee['present_count'] }}</td>
+                                <td class="px-4 py-3 text-center text-slate-700">{{ $employee['absent_count'] }}</td>
+                                <td class="px-4 py-3 text-right text-slate-700">{{ number_format((float) $employee['ot_hours'], 2) }}</td>
+                                <td class="px-4 py-3 text-right text-slate-700">{{ $lateHours > 0 ? $lateHours.'h ' : '' }}{{ $remainingLateMinutes }}m</td>
+                                <td class="px-4 py-3 text-center text-slate-700">{{ $employee['leave_days'] }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="7" class="px-4 py-10 text-center text-slate-500">No employees found.</td>
+                            </tr>
+                        @endforelse
                         </tbody>
                     </table>
                 </div>
