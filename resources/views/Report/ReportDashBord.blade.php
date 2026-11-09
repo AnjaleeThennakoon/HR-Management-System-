@@ -19,6 +19,9 @@
                 <a href="{{ route('report.monthlyReport') }}" class="border-b-2 border-transparent px-5 py-3 text-sm font-semibold text-slate-500 transition hover:border-indigo-300 hover:text-indigo-700">
                     Monthly Report
                 </a>
+                <a href="{{ route('report.monthlyLeaveReport') }}" class="border-b-2 border-transparent px-5 py-3 text-sm font-semibold text-slate-500 transition hover:border-indigo-300 hover:text-indigo-700">
+                    Monthly Leave Report
+                </a>
             </nav>
 
             <p class="mt-6 rounded-xl bg-slate-50 p-5 text-sm text-slate-600">Use the tabs above to open the daily or monthly attendance report.</p>

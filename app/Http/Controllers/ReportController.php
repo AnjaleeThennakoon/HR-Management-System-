@@ -61,7 +61,7 @@ class ReportController extends Controller
 
         $leaveReport = $LeveMonthlyReportInteractor->execute($selectedMonth);
 
-        return view('Report.Components.LeaveReport', [
+        return view('Report.Components.monthlyLeaveReport', [
             'report' => $leaveReport,
             'month'  => $selectedMonth,
         ]);

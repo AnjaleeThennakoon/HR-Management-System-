@@ -213,3 +213,42 @@ test('show leave report with double month', function () {
         'approved',
     ]);
 });
+
+
+test('show leave report merges consecutive leave days of same employee and reason', function () {
+    $employee = Employee::factory()->create([
+        'first_name' => 'John',
+        'last_name'  => 'Doe',
+    ]);
+    Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'start_date'  => '2026-10-02',
+        'end_date'    => '2026-10-02',
+        'status'      => 'approved',
+        'reason'      => 'Vacation',
+    ]);
+    Leave::factory()->create([
+        'employee_id' => $employee->id,
+        'start_date'  => '2026-10-03',
+        'end_date'    => '2026-10-03',
+        'status'      => 'approved',
+        'reason'      => 'Vacation',
+    ]);
+    $month = '2026-10';
+
+    $response = $this->actingAs($this->user)->get(route('report.leaveReport', ['month' => $month]));
+
+    $response->assertOk();
+    $response->assertSeeTextInOrder([
+        '2026-10-02',
+        '2026-10-03',
+        'John',
+        'Doe',
+        'Vacation',
+        'approved',
+    ]);
+    $response->assertViewHas('report', function ($report) use ($employee) {
+        $emp = $report->firstWhere('employee_id', $employee->employee_id);
+        return count($emp['leaves']) === 1;
+    });
+});

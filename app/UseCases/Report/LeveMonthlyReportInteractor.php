@@ -42,21 +42,41 @@ class LeveMonthlyReportInteractor
                     'first_name'  => $employee->first_name,
                     'last_name'   => $employee->last_name,
                     'no_pay_days' => $noPayDaysByEmployee->get($employee->id, 0),
-                    'leaves'      => $employeeLeaves->map(function (Leave $leave) use ($monthStart, $monthEnd) {
-                        $leaveStart = Carbon::parse($leave->start_date);
-                        $leaveEnd   = Carbon::parse($leave->end_date);
-
-                        $overlapStart = $leaveStart->greaterThan($monthStart) ? $leaveStart : $monthStart;
-                        $overlapEnd   = $leaveEnd->lessThan($monthEnd)       ? $leaveEnd   : $monthEnd;
-
-                        return [
-                            'start_date' => $overlapStart->toDateString(),
-                            'end_date'   => $overlapEnd->toDateString(),
-                            'reason'     => $leave->reason,
-                            'status'     => $leave->status,
-                        ];
-                    })->values()->all(),
+                    'leaves'      => $this->mergeConsecutiveLeaves($employeeLeaves, $monthStart, $monthEnd),
                 ];
             });
     }
+    private function mergeConsecutiveLeaves(Collection $leaves, Carbon $monthStart, Carbon $monthEnd): array
+    {
+        $normalized = $leaves->map(function (Leave $leave) use ($monthStart, $monthEnd) {
+            $leaveStart = Carbon::parse($leave->start_date);
+            $leaveEnd   = Carbon::parse($leave->end_date);
+            $overlapStart = $leaveStart->greaterThan($monthStart) ? $leaveStart : $monthStart;
+            $overlapEnd   = $leaveEnd->lessThan($monthEnd)       ? $leaveEnd   : $monthEnd;
+
+            return [
+                'start_date' => $overlapStart->toDateString(),
+                'end_date'   => $overlapEnd->toDateString(),
+                'reason'     => $leave->reason,
+                'status'     => $leave->status,
+            ];
+        })->sortBy('start_date')->values();
+
+        $merged = [];
+        foreach ($normalized as $leave) {
+            $i = count($merged) - 1;
+            if ($i >= 0
+                && $merged[$i]['reason'] === $leave['reason']
+                && $merged[$i]['status'] === $leave['status']
+                && Carbon::parse($merged[$i]['end_date'])->addDay()->toDateString() === $leave['start_date']
+            ) {
+                $merged[$i]['end_date'] = $leave['end_date'];
+            } else {
+                $merged[] = $leave;
+            }
+        }
+
+        return $merged;
+    }
+
 }
