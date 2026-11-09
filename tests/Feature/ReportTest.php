@@ -214,7 +214,6 @@ test('show leave report with double month', function () {
     ]);
 });
 
-
 test('show leave report merges consecutive leave days of same employee and reason', function () {
     $employee = Employee::factory()->create([
         'first_name' => 'John',
