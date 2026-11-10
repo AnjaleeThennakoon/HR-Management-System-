@@ -75,4 +75,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('report', [ReportController::class, 'index'])->name('report.index');
     Route::get('dailyReport/{date?}', [ReportController::class, 'show'])->name('report.show');
     Route::get('monthlyReport/{month?}', [ReportController::class, 'monthlyReport'])->name('report.monthlyReport');
-    Route::get('leaveReport/{month?}', [ReportController::class, 'leaveReport'])->name('report.monthlyLeaveReport');});
+    Route::get('leaveReport/{month?}', [ReportController::class, 'leaveMonthlyReport'])->name('report.monthlyLeaveReport');
+    Route::get('lateHoursReport/{dateRange?}', [ReportController::class, 'lateHoursReport'])->name('report.lateHoursReport');
+    Route::get('/report/late-hours', [ReportController::class, 'lateHoursReport'])->name('report.LateHoursReport');
+});

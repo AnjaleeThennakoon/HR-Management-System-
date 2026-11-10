@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\UseCases\Report\LeveMonthlyReportInteractor;
+use App\UseCases\Report\Request\DateReportRequest;
+use App\UseCases\Report\Request\LateHoursReportRequest;
 use App\UseCases\Report\Request\ReportRequest;
 use App\UseCases\Report\ShowDailyReportInteractor;
+use App\UseCases\Report\ShowLateHoursReportInteractor;
 use App\UseCases\Report\ShowMonthlyReportInteractor;
 use Illuminate\View\View;
 
@@ -19,15 +22,15 @@ class ReportController extends Controller
      * Daily report
      * Route: dailyReport/{date?}
      */
-    public function show(ReportRequest $reportRequest, ShowDailyReportInteractor $showDailyReportInteractor): View
+    public function show(ReportRequest $ReportRequest, ShowDailyReportInteractor $showDailyReportInteractor): View
     {
-        $date = $reportRequest->query('date') ?: $reportRequest->route('date');
+        $date = $ReportRequest->query('date') ?: $ReportRequest->route('date');
         $reportDate = $date ?: now()->toDateString();
 
         $attendances = $showDailyReportInteractor->execute($reportDate);
 
         return view('Report.Components.DailyReport', [
-            'reportDate'  => $reportDate,
+            'reportDate' => $reportDate,
             'attendances' => $attendances,
         ]);
     }
@@ -36,9 +39,9 @@ class ReportController extends Controller
      * Monthly attendance report
      * Route: monthlyReport/{month?}
      */
-    public function monthlyReport(ReportRequest $reportRequest, ShowMonthlyReportInteractor $showMonthlyReportInteractor): View
+    public function monthlyReport(datereportRequest $dateReportRequest, ShowMonthlyReportInteractor $showMonthlyReportInteractor): View
     {
-        $selectedMonth = $reportRequest->query('month') ?: $reportRequest->route('month');
+        $selectedMonth = $dateReportRequest->query('month') ?: $dateReportRequest->route('month');
         $selectedMonth = $selectedMonth ?: now()->format('Y-m');
 
         $monthlyReport = $showMonthlyReportInteractor->execute($selectedMonth);
@@ -46,7 +49,7 @@ class ReportController extends Controller
         return view('Report.Components.monthlyReport', [
             'report' => $monthlyReport['employees'],
             'totals' => $monthlyReport['totals'],
-            'month'  => $selectedMonth,
+            'month' => $selectedMonth,
         ]);
     }
 
@@ -54,16 +57,30 @@ class ReportController extends Controller
      * Monthly LEAVE report
      * Route: leaveReport/{month?}
      */
-    public function leaveReport(ReportRequest $reportRequest, LeveMonthlyReportInteractor $LeveMonthlyReportInteractor): View
+    public function leaveMonthlyReport(datereportRequest $dateReportRequest, LeveMonthlyReportInteractor $LeveMonthlyReportInteractor): View
     {
-        $selectedMonth = $reportRequest->query('month') ?: $reportRequest->route('month');
+        $selectedMonth = $dateReportRequest->query('month') ?: $dateReportRequest->route('month');
         $selectedMonth = $selectedMonth ?: now()->format('Y-m');
 
         $leaveReport = $LeveMonthlyReportInteractor->execute($selectedMonth);
 
         return view('Report.Components.monthlyLeaveReport', [
             'report' => $leaveReport,
-            'month'  => $selectedMonth,
+            'month' => $selectedMonth,
+        ]);
+    }
+
+    public function lateHoursReport(LateHoursReportRequest $request, ShowLateHoursReportInteractor $interactor): View {
+        $data = $request->validated();
+
+        $start = $data['start'] ?? now()->subDays(30)->toDateString();
+        $end   = $data['end']   ?? now()->toDateString();
+
+        $result = $interactor->execute(['start' => $start, 'end' => $end]);
+
+        return view('Report.Components.lateHoursReport', [
+            'report'    => $result['lateHours'],
+            'dateRange' => $result['dateRange'],
         ]);
     }
 }
