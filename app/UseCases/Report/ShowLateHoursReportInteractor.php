@@ -39,6 +39,7 @@ class ShowLateHoursReportInteractor
                     'scheduled_in' => $scheduledIn->format('H:i'),
                     'actual_in'    => $actualIn->format('H:i'),
                     'late_minutes' => $lateMinutes,
+                    'employee_id'  => $attendance->employee->id,
                 ];
 
                 $attendance->update(['late_minutes' => $lateMinutes]);

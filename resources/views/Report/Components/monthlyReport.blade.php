@@ -25,14 +25,14 @@
             <form method="GET" action="{{ route('report.monthlyReport') }}" class="mt-6 flex flex-wrap items-end gap-3">
                 <div>
                     <label for="reportMonth" class="mb-1 block text-sm font-semibold text-slate-700">Select month</label>
-                    <input id="reportMonth" name="month" type="month" value="{{ $month ?? '' }}" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-indigo-500">
+                    <input id="reportMonth" name="month" type="month" value="{{ request()->query('month') ?? request()->route('month') ?? '' }}" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-indigo-500">
                 </div>
                 <button type="submit" class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">
                     View Monthly Report
                 </button>
             </form>
 
-            @if ($month)
+            @if (request()->filled('month') || request()->route('month'))
                 <div class="mt-6 overflow-x-auto rounded-xl border border-slate-200">
                     <table class="w-full min-w-[900px] text-left text-sm">
                         <thead class="bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
