@@ -25,14 +25,14 @@
             <form method="GET" action="{{ route('report.show') }}" class="mt-6 flex flex-wrap items-end gap-3">
                 <div>
                     <label for="reportDate" class="mb-1 block text-sm font-semibold text-slate-700">Select date</label>
-                    <input id="reportDate" name="date" type="date" value="{{ $reportDate ?? '' }}" max="{{ now()->toDateString() }}" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-indigo-500">
+                    <input id="reportDate" name="date" type="date" value="{{ request()->query('date') ?? request()->route('date') ?? '' }}" max="{{ now()->toDateString() }}" required class="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-indigo-500">
                 </div>
                 <button type="submit" class="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700">
                     View Daily Report
                 </button>
             </form>
 
-            @if ($reportDate)
+            @if (request()->filled('date') || request()->route('date'))
                 <div class="mt-6 overflow-x-auto rounded-xl border border-slate-200">
                     <table class="w-full min-w-[760px] text-left text-sm">
                         <thead class="bg-slate-100 text-xs uppercase tracking-wide text-slate-600">
