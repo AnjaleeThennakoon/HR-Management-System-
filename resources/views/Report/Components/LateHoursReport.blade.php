@@ -49,6 +49,11 @@
                             @forelse (collect($report)->sortBy('date') as $lateArrival)
                                 @php
                                     $lateMinutes = (int) ($lateArrival['late_minutes'] ?? 0);
+                                    $lateHours = intdiv($lateMinutes, 60);
+                                    $remainingLateMinutes = $lateMinutes % 60;
+                                    $lateDuration = $lateHours > 0
+                                        ? $lateHours.' hours'.($remainingLateMinutes > 0 ? ' '.$remainingLateMinutes.' min' : '')
+                                        : $lateMinutes.' min';
                                 @endphp
                                 <tr class="hover:bg-slate-50">
                                     <td class="whitespace-nowrap px-4 py-3 text-slate-700">{{ $lateArrival['date'] }}</td>
@@ -56,7 +61,7 @@
                                     <td class="px-4 py-3 text-slate-700">{{ $lateArrival['employee'] }}</td>
                                     <td class="px-4 py-3 text-slate-700">{{ $lateArrival['scheduled_in'] }}</td>
                                     <td class="px-4 py-3 text-slate-700">{{ $lateArrival['actual_in'] }}</td>
-                                    <td class="px-4 py-3 text-right font-medium text-amber-700">{{ number_format($lateMinutes / 60, 2) }}</td>
+                                    <td class="px-4 py-3 text-right font-medium text-amber-700">{{ $lateDuration }}</td>
                                 </tr>
                             @empty
                                 <tr>
