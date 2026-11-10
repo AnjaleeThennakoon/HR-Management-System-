@@ -2,44 +2,30 @@
 
 namespace Database\Seeders;
 
-use App\Models\Department;
-use App\Models\user;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        user::create([
+        Role::create(['name' => 'admin']);
+        Role::create(['name' => 'employee']);
+
+        $admin = User::create([
             'name' => 'Admin User',
             'email' => 'admin@hr.com',
             'password' => Hash::make('password123'),
-            'role' => 'admin',
         ]);
+        $admin->assignRole('admin');
 
-        // Departments
-        $departments = [
-            'Human Resources',
-            'Information Technology',
-            'Finance',
-            'Marketing',
-            'Sales',
-            'Operations',
-            'Customer Service',
-            'Research & Development',
-            'Legal',
-            'Administration',
-        ];
-
-        foreach ($departments as $name) {
-            Department::create(['name' => $name]);
-        }
+        $employee = User::create([
+            'name' => 'John Employee',
+            'email' => 'employee@hr.com',
+            'password' => Hash::make('password123'),
+        ]);
+        $employee->assignRole('employee');
     }
 }

@@ -1,5 +1,6 @@
 <x-layout title="Login - HR System">
-    <x-form title="Log in to your account" description="Welcome back! Please enter your details.">
+    <main class="flex min-h-screen items-center justify-center px-4 py-8">
+        <x-form title="Log in to your account" description="Welcome back! Please enter your details.">
 
         <form action="{{ route('login') }}" method="POST" class="mt-8 space-y-5">
             @csrf
@@ -50,5 +51,6 @@
             </a>
         </p>
 
-    </x-form>
+        </x-form>
+    </main>
 </x-layout>

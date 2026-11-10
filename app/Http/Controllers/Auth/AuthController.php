@@ -17,17 +17,14 @@ class AuthController extends Controller
     {
         return view('Auth.Login');
     }
-
-    public function login(LoginRequest $request, LoginInteractor $loginInteractor): RedirectResponse
+    public function login(LoginRequest $loginRequest, LoginInteractor $loginInteractor): RedirectResponse
     {
-        if ($loginInteractor->execute($request->toArray())) {
-            $request->session()->regenerate();
-            $user = auth()->user();
-            if ($user->role === 'admin') {
-                return redirect('/dashboard');
-            }
+        $redirectUrl = $loginInteractor->execute($loginRequest->toArray());
 
-            return redirect('/employee/dashboard');
+        if ($redirectUrl) {
+            $loginRequest->session()->regenerate();
+
+            return redirect($redirectUrl);
         }
 
         return back()->withErrors([

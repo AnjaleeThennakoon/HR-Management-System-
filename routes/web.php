@@ -24,13 +24,14 @@ Route::middleware('guest')->group(function () {
     })->name('register');
 });
 
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
 
-Route::middleware(['auth'])->group(function () {
 
-    Route::get('/dashboard', function () {
-        return view('AdminDashboard', ['employees' => Employee::all()]);
-    })->name('dashboard');
+Route::middleware(['auth', 'role:admin'])->group(function () {
+
+    Route::get('/dashboard', function () {return view('AdminDashboard', ['employees' => Employee::all()]);})->name('dashboard');
 
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
@@ -79,3 +80,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('lateHoursReport/{dateRange?}', [ReportController::class, 'lateHoursReport'])->name('report.lateHoursReport');
     Route::get('/report/late-hours', [ReportController::class, 'lateHoursReport'])->name('report.LateHoursReport');
 });
+
+
+Route::middleware(['auth', 'role:employee'])->group(function () {Route::get('/employee/dashboard', function () {return view('EmployeeDashboard');})->name('employee.dashboard');});

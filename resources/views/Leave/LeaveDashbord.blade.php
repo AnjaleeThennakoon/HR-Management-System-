@@ -1,5 +1,5 @@
-<x-layout title="Leaves - HR System">
-    <div class="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 p-8 max-w-6xl w-full">
+<x-app-layout title="Leaves - HR System">
+    <div class="p-6"><div class="bg-white border border-gray-200 rounded-xl p-6">
 
         <x-page-header title="Leaves" description="Manage employee leave requests">
             <x-slot:icon>
@@ -172,6 +172,7 @@
         </p>
 
         <input type="hidden" id="edit_leave_id">
+        </div>
     </div>
 
     {{-- Modals --}}
@@ -507,4 +508,4 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
     </style>
-</x-layout>
+</x-app-layout>

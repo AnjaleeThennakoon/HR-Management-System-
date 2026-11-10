@@ -1,5 +1,6 @@
-<x-layout title="Employees - HR System">
-    <div class="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 p-8 max-w-6xl w-full">
+<x-app-layout title="Employees - HR System">
+    <div class="p-6">
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
 
         <x-page-header title="Employees" description="Manage your organization's employees">
             <x-slot:icon>
@@ -108,8 +109,9 @@
             No employees match your search.
         </p>
 
+        </div>
     </div>
 
     @include('Employee.partials.employee-modal')
 
-</x-layout>
+</x-app-layout>

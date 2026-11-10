@@ -1,5 +1,6 @@
 <x-layout title="Register - HR System">
-    <x-form title="Register an account" description="Start tracking today.">
+    <main class="flex min-h-screen items-center justify-center px-4 py-8">
+        <x-form title="Register an account" description="Start tracking today.">
 
         <form action="#" method="POST" class="mt-10 space-y-5">
             @csrf
@@ -33,5 +34,6 @@
             </a>
         </p>
 
-    </x-form>
+        </x-form>
+    </main>
 </x-layout>

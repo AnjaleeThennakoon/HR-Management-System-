@@ -1,6 +1,6 @@
 
-<x-layout title="Holidays - HR System">
-    <div class="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 p-8 max-w-4xl w-full">
+<x-app-layout title="Holidays - HR System">
+    <div class="p-6"><div class="bg-white border border-gray-200 rounded-xl p-6">
 
         <x-page-header title="Holidays" description="Manage your organization's holidays">
             <x-slot:icon>
@@ -80,6 +80,7 @@
             No holidays match your search.
         </p>
 
+        </div>
     </div>
 
     @include('Holiday.partials.holiday-modal')
@@ -160,4 +161,4 @@
         }
     </style>
 
-</x-layout>
+</x-app-layout>

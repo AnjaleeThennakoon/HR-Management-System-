@@ -1,32 +1,24 @@
-<x-layout title="Monthly Salary - HR System">
-    <div class="mx-auto w-full max-w-7xl rounded-2xl bg-white p-6 shadow-lg ring-1 ring-black/5 sm:p-8 space-y-6">
+<x-app-layout title="Monthly Salary - HR System">
+    <div class="p-6"><div class="bg-white border border-gray-200 rounded-xl p-6 space-y-6">
 
-        {{-- Header Section (Consistent with HR System style) --}}
-        <div class="flex flex-col gap-4 border-b border-gray-100 pb-6 sm:flex-row sm:items-center sm:justify-between">
+        {{-- Header Section --}}
+        <div class="flex flex-col gap-4 border-b border-gray-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-4">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9.75h19.5m-16.5 3h3m-3 3h3m-3 3h3m6-6h3m-3 3h3m-3 3h3M3.75 4.5h16.5A1.5 1.5 0 0121.75 6v12a1.5 1.5 0 01-1.5 1.5H3.75A1.5 1.5 0 012.25 18V6a1.5 1.5 0 011.5-1.5z" />
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight text-gray-900">Monthly Salary</h1>
-                    <p class="mt-1 text-sm text-gray-500">Review generated payroll records and salary breakdowns.</p>
+                    <h1 class="text-xl font-bold tracking-tight text-gray-900">Monthly Salary</h1>
+                    <p class="mt-0.5 text-sm text-gray-500">Review generated payroll records and salary breakdowns.</p>
                 </div>
             </div>
 
             <div class="flex items-center gap-3">
-                <a href="/dashboard"
-                   class="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-900 transition">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                    </svg>
-                    Dashboard
-                </a>
-
-                <div class="rounded-xl bg-indigo-50 px-5 py-3">
-                    <p class="text-xs font-medium uppercase tracking-wide text-indigo-600">Payroll records</p>
-                    <p class="mt-1 text-2xl font-bold text-indigo-900">{{ $payrolls->total() }}</p>
+                <div class="rounded-xl bg-gray-100 px-5 py-3">
+                    <p class="text-xs font-medium uppercase tracking-wide text-gray-600">Payroll records</p>
+                    <p class="mt-1 text-2xl font-bold text-gray-900">{{ $payrolls->total() }}</p>
                 </div>
             </div>
         </div>
@@ -217,7 +209,7 @@
             </div>
         @endif
 
-    </div>
+    </div></div>
 
     {{-- Modals --}}
     @include('Payrolls.Partials.Payroll-modal')
@@ -376,4 +368,4 @@
             }
         }
     </style>
-</x-layout>
+</x-app-layout>

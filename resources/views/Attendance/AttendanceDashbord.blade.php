@@ -1,10 +1,10 @@
-<x-layout title="Attendance - HR System">
-    <div class="w-full h-[calc(100vh-65px)] flex flex-col p-4 overflow-hidden bg-slate-50/50">
+<x-app-layout title="Attendance - HR System">
+    <div class="w-full h-screen flex flex-col p-4 overflow-hidden bg-gray-50">
 
         {{-- Top Header --}}
         <div class="flex items-center justify-between mb-3 flex-shrink-0">
             <div class="flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-md shadow-indigo-200">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-900 text-white">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -65,7 +65,7 @@
                         <input type="text" id="searchInput" onkeyup="filterAttendances()" placeholder="Search attendance..." class="w-full pl-9 pr-3 py-2 text-xs font-semibold border-slate-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-slate-50 text-slate-700 placeholder-slate-400">
                     </div>
 
-                    <button type="button" onclick="openAddModal()" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-slate-800 to-slate-900 text-white text-xs font-bold rounded-lg shadow-md hover:from-slate-700 hover:to-slate-800 transition-all whitespace-nowrap">
+                    <button type="button" onclick="openAddModal()" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 whitespace-nowrap">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
@@ -276,4 +276,4 @@
         });
         @endif
     </script>
-</x-layout>
+</x-app-layout>

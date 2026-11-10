@@ -1,5 +1,6 @@
-<x-layout title="Departments - HR System">
-    <div class="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 p-8 max-w-4xl w-full">
+<x-app-layout title="Departments - HR System">
+    <div class="p-6">
+        <div class="bg-white border border-gray-200 rounded-xl p-6">
 
         <x-page-header title="Departments" description="Manage your organization's departments">
             <x-slot:icon>
@@ -74,21 +75,9 @@
             No departments match your search.
         </p>
 
+        </div>
     </div>
 
     @include('Department.partials.department-modal')
 
-    <style>
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.96) translateY(4px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-    </style>
-
-</x-layout>
+</x-app-layout>
