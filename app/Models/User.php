@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password', 'role', 'department_id'])]
@@ -16,7 +17,20 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, HasRoles, Notifiable;
+
+    public function hasApplicationRole(string $role): bool
+    {
+        try {
+            if ($this->hasRole($role)) {
+                return true;
+            }
+        } catch (RoleDoesNotExist) {
+            // Fall back to column role if role not seeded
+        }
+
+        return ! $this->roles()->exists() && $this->role === $role;
+    }
 
     /**
      * Get the attributes that should be cast.

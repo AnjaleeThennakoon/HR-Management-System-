@@ -32,6 +32,4 @@ class Payroll extends Model
             ->where('month', $this->month)
             ->where('year', $this->year);
     }
-
-
 }

@@ -3,11 +3,14 @@
 use App\Models\Designation;
 use App\Models\user;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Role::create(['name' => 'admin']);
     $this->user = user::factory()->create();
+    $this->user->assignRole('admin');
 });
 
 test('designation list page loads successfully', function () {
@@ -117,35 +120,35 @@ test('designation name cannot be duplicated.', function () {
 });
 
 test('level is updated when a designation upper level is changed', function () {
-    $ceo = Designation::factory()->create(['name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1,]);
-    $cfo = Designation::factory()->create(['name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
-    $db = Designation::factory()->create(['name' => 'Database Administrator', 'upper_level' => null, 'level' => 3,]);
-    $network = Designation::factory()->create(['name' => 'Network Engineer', 'upper_level' => null, 'level' => 4,]);
-    $newDesignation = ['name' => 'Intern Software Engineer', 'upper_level' => $cfo->id,];
+    $ceo = Designation::factory()->create(['name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1]);
+    $cfo = Designation::factory()->create(['name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2]);
+    $db = Designation::factory()->create(['name' => 'Database Administrator', 'upper_level' => null, 'level' => 3]);
+    $network = Designation::factory()->create(['name' => 'Network Engineer', 'upper_level' => null, 'level' => 4]);
+    $newDesignation = ['name' => 'Intern Software Engineer', 'upper_level' => $cfo->id];
 
     $response = $this->actingAs($this->user)->post('/designations', $newDesignation);
 
     $response->assertStatus(302);
     $response->assertRedirect('/designations');
     $this->assertDatabaseHas('designations',
-        ['id' => $ceo->id, 'name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1,]);
+        ['id' => $ceo->id, 'name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1]);
     $this->assertDatabaseHas('designations',
-        ['id' => $cfo->id, 'name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
+        ['id' => $cfo->id, 'name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2]);
     $intern = Designation::where('name', 'Intern Software Engineer')->first();
     $this->assertDatabaseHas('designations',
-        ['id' => $intern->id, 'name' => 'Intern Software Engineer', 'upper_level' => $cfo->id, 'level' => 3,]);
+        ['id' => $intern->id, 'name' => 'Intern Software Engineer', 'upper_level' => $cfo->id, 'level' => 3]);
     $this->assertDatabaseHas('designations',
-        ['id' => $db->id, 'name' => 'Database Administrator', 'upper_level' => null, 'level' => 4,]);
+        ['id' => $db->id, 'name' => 'Database Administrator', 'upper_level' => null, 'level' => 4]);
     $this->assertDatabaseHas('designations',
-        ['id' => $network->id, 'name' => 'Network Engineer', 'upper_level' => null, 'level' => 5,]);
+        ['id' => $network->id, 'name' => 'Network Engineer', 'upper_level' => null, 'level' => 5]);
 });
 
 test('a designation gets the same level as existing siblings', function () {
-    $ceo = Designation::factory()->create(['name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1,]);
-    $cfo = Designation::factory()->create(['name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
-    $db = Designation::factory()->create(['name' => 'Database Administrator', 'upper_level' => $ceo->id, 'level' => 2,]);
-    $network = Designation::factory()->create(['name' => 'Network Engineer', 'upper_level' => null, 'level' => 3,]);
-    $newDesignation = ['name' => 'Intern Software Engineer', 'upper_level' => $ceo->id,];
+    $ceo = Designation::factory()->create(['name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1]);
+    $cfo = Designation::factory()->create(['name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2]);
+    $db = Designation::factory()->create(['name' => 'Database Administrator', 'upper_level' => $ceo->id, 'level' => 2]);
+    $network = Designation::factory()->create(['name' => 'Network Engineer', 'upper_level' => null, 'level' => 3]);
+    $newDesignation = ['name' => 'Intern Software Engineer', 'upper_level' => $ceo->id];
 
     $response = $this->actingAs($this->user)->post('/designations', $newDesignation);
 
@@ -153,13 +156,13 @@ test('a designation gets the same level as existing siblings', function () {
     $response->assertStatus(302);
     $response->assertRedirect('/designations');
     $this->assertDatabaseHas('designations',
-        ['id' => $ceo->id, 'name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1,]);
+        ['id' => $ceo->id, 'name' => 'Chief Executive Officer', 'upper_level' => null, 'level' => 1]);
     $this->assertDatabaseHas('designations',
-        ['id' => $cfo->id, 'name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2,]);
+        ['id' => $cfo->id, 'name' => 'Chief Financial Officer', 'upper_level' => $ceo->id, 'level' => 2]);
     $this->assertDatabaseHas('designations',
-        ['id' => $db->id, 'name' => 'Database Administrator', 'upper_level' => $ceo->id, 'level' => 2,]);
+        ['id' => $db->id, 'name' => 'Database Administrator', 'upper_level' => $ceo->id, 'level' => 2]);
     $this->assertDatabaseHas('designations',
-        ['id' => $intern->id, 'name' => 'Intern Software Engineer', 'upper_level' => $ceo->id, 'level' => 2,]);
+        ['id' => $intern->id, 'name' => 'Intern Software Engineer', 'upper_level' => $ceo->id, 'level' => 2]);
     $this->assertDatabaseHas('designations',
-        ['id' => $network->id, 'name' => 'Network Engineer', 'upper_level' => null, 'level' => 3,]);
+        ['id' => $network->id, 'name' => 'Network Engineer', 'upper_level' => null, 'level' => 3]);
 });

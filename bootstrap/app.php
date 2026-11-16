@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'role' =>RoleMiddleware::class,
+            'role' => RoleMiddleware::class,
         ]);
         $middleware->redirectUsersTo('/dashboard');
         $middleware->redirectGuestsTo('/login');
@@ -29,5 +29,3 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
     })->create();
-
-

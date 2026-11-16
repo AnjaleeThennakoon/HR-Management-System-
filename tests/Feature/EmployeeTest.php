@@ -5,11 +5,14 @@ use App\Models\Designation;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Role::create(['name' => 'admin']);
     $this->user = User::factory()->create();
+    $this->user->assignRole('admin');
 });
 
 test('employee list page loads successfully', function () {

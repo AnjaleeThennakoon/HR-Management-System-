@@ -1,15 +1,12 @@
 <?php
 
-
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-
 use App\UseCases\Auth\LoginInteractor;
 use App\UseCases\Auth\LogoutInteractor;
 use App\UseCases\Auth\Requests\LoginRequest;
 use Illuminate\Http\RedirectResponse;
-
 
 class AuthController extends Controller
 {
@@ -17,6 +14,7 @@ class AuthController extends Controller
     {
         return view('Auth.Login');
     }
+
     public function login(LoginRequest $loginRequest, LoginInteractor $loginInteractor): RedirectResponse
     {
         $redirectUrl = $loginInteractor->execute($loginRequest->toArray());
@@ -28,13 +26,14 @@ class AuthController extends Controller
         }
 
         return back()->withErrors([
-            'email' => 'Invalid email or password.',
+            'email' => 'Invalid username or password.',
         ])->onlyInput('email');
     }
 
     public function logout(LogoutInteractor $logoutInteractor): RedirectResponse
     {
         $logoutInteractor->execute();
+
         return redirect('/');
     }
 }

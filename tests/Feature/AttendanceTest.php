@@ -11,11 +11,14 @@ use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Role::create(['name' => 'admin']);
     $this->user = User::factory()->create();
+    $this->user->assignRole('admin');
 });
 
 test('attendance list loads successfully', function () {

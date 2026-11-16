@@ -17,7 +17,7 @@ class DateReportRequest extends FormRequest
             'date' => ['nullable', 'date_format:Y-m-d'],
             'month' => ['nullable', 'date_format:Y-m'],
             'employee_name' => ['nullable', 'string'],
-            'year'        => ['nullable', 'digits:4'],
+            'year' => ['nullable', 'digits:4'],
 
         ];
     }

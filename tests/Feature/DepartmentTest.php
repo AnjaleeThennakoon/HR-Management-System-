@@ -3,11 +3,14 @@
 use App\Models\Department;
 use App\Models\user;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Role::create(['name' => 'admin']);
     $this->user = user::factory()->create();
+    $this->user->assignRole('admin');
 });
 
 test('department list page loads successfully', function () {

@@ -15,7 +15,7 @@ class LateHoursReportRequest extends FormRequest
     {
         return [
             'start' => ['nullable', 'date_format:Y-m-d'],
-            'end'   => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start'],
+            'end' => ['nullable', 'date_format:Y-m-d', 'after_or_equal:start'],
 
         ];
     }

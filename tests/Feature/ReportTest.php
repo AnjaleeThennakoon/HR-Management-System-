@@ -5,11 +5,14 @@ use App\Models\Employee;
 use App\Models\Leave;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Role::create(['name' => 'admin']);
     $this->user = User::factory()->create();
+    $this->user->assignRole('admin');
 });
 
 test('report page loads successfully', function () {
@@ -189,14 +192,14 @@ test('show employees with leaves in the selected month', function () {
 test('show leave report with double month', function () {
     $employee1 = Employee::factory()->create([
         'first_name' => 'John',
-        'last_name'  => 'Doe',
+        'last_name' => 'Doe',
     ]);
     Leave::factory()->create([
         'employee_id' => $employee1->id,
-        'start_date'  => '2026-10-29',
-        'end_date'    => '2026-11-02',
-        'status'      => 'approved',
-        'reason'      => 'Vacation',
+        'start_date' => '2026-10-29',
+        'end_date' => '2026-11-02',
+        'status' => 'approved',
+        'reason' => 'Vacation',
     ]);
 
     $month = '2026-11';
@@ -217,30 +220,31 @@ test('show leave report with double month', function () {
 test('show leave report merges consecutive leave days of same employee and reason', function () {
     $employee = Employee::factory()->create([
         'first_name' => 'John',
-        'last_name'  => 'Doe',
+        'last_name' => 'Doe',
     ]);
     Leave::factory()->create([
         'employee_id' => $employee->id,
-        'start_date'  => '2026-10-02',
-        'end_date'    => '2026-10-02',
-        'status'      => 'approved',
-        'reason'      => 'Vacation',
+        'start_date' => '2026-10-02',
+        'end_date' => '2026-10-02',
+        'status' => 'approved',
+        'reason' => 'Vacation',
     ]);
     Leave::factory()->create([
         'employee_id' => $employee->id,
-        'start_date'  => '2026-10-03',
-        'end_date'    => '2026-10-03',
-        'status'      => 'approved',
-        'reason'      => 'Vacation',
+        'start_date' => '2026-10-03',
+        'end_date' => '2026-10-03',
+        'status' => 'approved',
+        'reason' => 'Vacation',
     ]);
     $month = '2026-10';
 
     $response = $this->actingAs($this->user)->get(route('report.monthlyLeaveReport', ['month' => $month]));
 
     $response->assertOk();
-    $response->assertSeeTextInOrder(['2026-10-02', '2026-10-03', 'John', 'Doe', 'Vacation', 'approved',]);
+    $response->assertSeeTextInOrder(['2026-10-02', '2026-10-03', 'John', 'Doe', 'Vacation', 'approved']);
     $response->assertViewHas('report', function ($report) use ($employee) {
         $emp = $report->firstWhere('employee_id', $employee->employee_id);
+
         return count($emp['leaves']) === 1;
     });
 });
@@ -248,21 +252,21 @@ test('show leave report merges consecutive leave days of same employee and reaso
 test('show one employee get the more leaves', function () {
     $employee = Employee::factory()->create([
         'first_name' => 'John',
-        'last_name'  => 'Doe',
+        'last_name' => 'Doe',
     ]);
     Leave::factory()->create([
         'employee_id' => $employee->id,
-        'start_date'  => '2026-10-01',
-        'end_date'    => '2026-10-01',
-        'status'      => 'approved',
-        'reason'      => 'Vacation',
+        'start_date' => '2026-10-01',
+        'end_date' => '2026-10-01',
+        'status' => 'approved',
+        'reason' => 'Vacation',
     ]);
     Leave::factory()->create([
         'employee_id' => $employee->id,
-        'start_date'  => '2026-10-29',
-        'end_date'    => '2026-10-29',
-        'status'      => 'approved',
-        'reason'      => 'Vacation',
+        'start_date' => '2026-10-29',
+        'end_date' => '2026-10-29',
+        'status' => 'approved',
+        'reason' => 'Vacation',
     ]);
     $month = '2026-10';
 
@@ -273,6 +277,7 @@ test('show one employee get the more leaves', function () {
     $response->assertSeeTextInOrder(['2026-10-29', '2026-10-29', 'John', 'Doe', 'Vacation', 'approved']);
     $response->assertViewHas('report', function ($report) use ($employee) {
         $emp = $report->firstWhere('employee_id', $employee->employee_id);
+
         return count($emp['leaves']) === 2;
     });
 });
@@ -280,36 +285,36 @@ test('show one employee get the more leaves', function () {
 test('show late hours picking data range', function () {
     $employee = Employee::factory()->create([
         'employee_id' => 'EMP1',
-        'first_name'  => 'John',
-        'last_name'   => 'Doe',
-        'shift_in'    => '08:30',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'shift_in' => '08:30',
     ]);
     Attendance::factory()->create([
         'employee_id' => $employee->id,
-        'date'        => '2026-10-02',
-        'in_time'     => '09:00',
+        'date' => '2026-10-02',
+        'in_time' => '09:00',
     ]);
     Attendance::factory()->create([
         'employee_id' => $employee->id,
-        'date'        => '2026-10-29',
-        'in_time'     => '10:30',
+        'date' => '2026-10-29',
+        'in_time' => '10:30',
     ]);
     $dataRange = [
         'start' => '2026-10-02',
-        'end'   => '2026-10-29',
+        'end' => '2026-10-29',
     ];
 
     $response = $this->actingAs($this->user)->get(route('report.LateHoursReport', $dataRange));
 
     $response->assertOk();
     $this->assertDatabaseHas('attendances', [
-        'employee_id'  => $employee->id,
-        'date'         => '2026-10-02',
+        'employee_id' => $employee->id,
+        'date' => '2026-10-02',
         'late_minutes' => 30,
     ]);
     $this->assertDatabaseHas('attendances', [
-        'employee_id'  => $employee->id,
-        'date'         => '2026-10-29',
+        'employee_id' => $employee->id,
+        'date' => '2026-10-29',
         'late_minutes' => 120,
     ]);
 });
@@ -317,43 +322,42 @@ test('show late hours picking data range', function () {
 test('show late hours picking data range in different employee ', function () {
     $employee = Employee::factory()->create([
         'employee_id' => 'EMP1',
-        'first_name'  => 'John',
-        'last_name'   => 'Doe',
-        'shift_in'    => '08:30',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'shift_in' => '08:30',
     ]);
     Attendance::factory()->create([
         'employee_id' => $employee->id,
-        'date'        => '2026-10-02',
-        'in_time'     => '09:00',
+        'date' => '2026-10-02',
+        'in_time' => '09:00',
     ]);
     $employee2 = Employee::factory()->create([
         'employee_id' => 'EMP2',
-        'first_name'  => 'Jane',
-        'last_name'   => 'Smith',
-        'shift_in'    => '09:00',
+        'first_name' => 'Jane',
+        'last_name' => 'Smith',
+        'shift_in' => '09:00',
     ]);
     Attendance::factory()->create([
         'employee_id' => $employee2->id,
-        'date'        => '2026-10-29',
-        'in_time'     => '10:30',
+        'date' => '2026-10-29',
+        'in_time' => '10:30',
     ]);
     $dataRange = [
         'start' => '2026-10-02',
-        'end'   => '2026-10-29',
+        'end' => '2026-10-29',
     ];
 
     $response = $this->actingAs($this->user)->get(route('report.LateHoursReport', $dataRange));
 
     $response->assertOk();
     $this->assertDatabaseHas('attendances', [
-        'employee_id'  => $employee->id,
-        'date'         => '2026-10-02',
+        'employee_id' => $employee->id,
+        'date' => '2026-10-02',
         'late_minutes' => 30,
     ]);
     $this->assertDatabaseHas('attendances', [
-        'employee_id'  => $employee2->id,
-        'date'         => '2026-10-29',
+        'employee_id' => $employee2->id,
+        'date' => '2026-10-29',
         'late_minutes' => 90,
     ]);
 });
-

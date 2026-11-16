@@ -8,11 +8,14 @@ use App\Models\MonthlyAttendanceFinalized;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Role::create(['name' => 'admin']);
     $this->user = User::factory()->create();
+    $this->user->assignRole('admin');
 });
 
 test('can finalize the month when every working day is accounted for', function () {

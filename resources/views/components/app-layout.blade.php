@@ -38,35 +38,45 @@
             Dashboard
         </a>
 
-        {{-- People Section --}}
-        <div class="mt-4 mb-1 px-3">
+        @if (auth()->user() && method_exists(auth()->user(), 'hasApplicationRole') && auth()->user()->hasApplicationRole('admin'))
+            {{-- People Section --}}
+            <div class="mt-4 mb-1 px-3">
             <span class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">People</span>
-        </div>
+            </div>
 
-        <a href="{{ route('employees.index') }}"
+            <a href="{{ route('employees.index') }}"
            class="flex items-center gap-3 px-3 py-2 rounded-md mb-1 text-sm font-medium {{ request()->routeIs('employees.*') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
             </svg>
             Employees
-        </a>
+            </a>
 
-        <a href="{{ route('departments.index') }}"
+            <a href="{{ route('users.index') }}"
+           class="flex items-center gap-3 px-3 py-2 rounded-md mb-1 text-sm font-medium {{ request()->routeIs('users.*') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100' }}">
+            <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+            </svg>
+            User Accounts
+            </a>
+
+            <a href="{{ route('departments.index') }}"
            class="flex items-center gap-3 px-3 py-2 rounded-md mb-1 text-sm font-medium {{ request()->routeIs('departments.*') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75"/>
             </svg>
             Departments
-        </a>
+            </a>
 
-        <a href="{{ route('designations.index') }}"
+            <a href="{{ route('designations.index') }}"
            class="flex items-center gap-3 px-3 py-2 rounded-md mb-1 text-sm font-medium {{ request()->routeIs('designations.*') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z"/>
             </svg>
             Designations
-        </a>
+            </a>
+        @endif
 
         {{-- Time & Leave Section --}}
         <div class="mt-4 mb-1 px-3">
@@ -81,47 +91,51 @@
             Attendance
         </a>
 
-        <a href="{{ route('leaves.index') }}"
+        @if (auth()->user() && method_exists(auth()->user(), 'hasApplicationRole') && auth()->user()->hasApplicationRole('admin'))
+            <a href="{{ route('leaves.index') }}"
            class="flex items-center gap-3 px-3 py-2 rounded-md mb-1 text-sm font-medium {{ request()->routeIs('leaves.*') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/>
             </svg>
             Leaves
-        </a>
+            </a>
 
-        <a href="{{ route('holidays.index') }}"
+            <a href="{{ route('holidays.index') }}"
            class="flex items-center gap-3 px-3 py-2 rounded-md mb-1 text-sm font-medium {{ request()->routeIs('holidays.*') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-13.5-6h.008v.008h-.008V12.75zm0 3h.008v.008h-.008V15.75zm3-3h.008v.008h-.008V12.75zm0 3h.008v.008h-.008V15.75zm3-3h.008v.008h-.008V12.75zm0 3h.008v.008h-.008V15.75z"/>
             </svg>
             Holidays
-        </a>
+            </a>
+        @endif
 
         {{-- Finance Section --}}
-        <div class="mt-4 mb-1 px-3">
+        @if (auth()->user() && method_exists(auth()->user(), 'hasApplicationRole') && auth()->user()->hasApplicationRole('admin'))
+            <div class="mt-4 mb-1 px-3">
             <span class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Finance</span>
-        </div>
+            </div>
 
-        <a href="{{ route('payrolls.index') }}"
+            <a href="{{ route('payrolls.index') }}"
            class="flex items-center gap-3 px-3 py-2 rounded-md mb-1 text-sm font-medium {{ request()->routeIs('payrolls.*') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9.75h19.5m-16.5 3h3m-3 3h3m-3 3h3m6-6h3m-3 3h3m-3 3h3M3.75 4.5h16.5A1.5 1.5 0 0121.75 6v12a1.5 1.5 0 01-1.5 1.5H3.75A1.5 1.5 0 012.25 18V6a1.5 1.5 0 011.5-1.5z"/>
             </svg>
             Payroll
-        </a>
+            </a>
 
-        {{-- Reports Section --}}
-        <div class="mt-4 mb-1 px-3">
+            {{-- Reports Section --}}
+            <div class="mt-4 mb-1 px-3">
             <span class="text-[10px] font-semibold uppercase tracking-widest text-gray-400">Analytics</span>
-        </div>
+            </div>
 
-        <a href="{{ route('report.index') }}"
+            <a href="{{ route('report.index') }}"
            class="flex items-center gap-3 px-3 py-2 rounded-md mb-1 text-sm font-medium {{ request()->routeIs('report.*') ? 'bg-gray-900 text-white' : 'text-gray-700 hover:bg-gray-100' }}">
             <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7.5 14.25l3-3 3 3 5.25-6"/>
             </svg>
             Reports
-        </a>
+            </a>
+        @endif
 
     </nav>
 
@@ -133,7 +147,9 @@
             </div>
             <div class="min-w-0 flex-1">
                 <p class="text-xs font-semibold text-gray-900 truncate">{{ auth()->user()->name ?? 'User' }}</p>
-                <p class="text-[10px] text-gray-500 truncate">Admin</p>
+                <p class="text-[10px] text-gray-500 truncate">
+                    {{ (auth()->user() && method_exists(auth()->user(), 'hasApplicationRole') && auth()->user()->hasApplicationRole('admin')) ? 'Admin' : 'Employee' }}
+                </p>
             </div>
         </div>
         <form method="POST" action="{{ route('logout') }}">

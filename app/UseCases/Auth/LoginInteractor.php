@@ -2,6 +2,7 @@
 
 namespace App\UseCases\Auth;
 
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class LoginInteractor
@@ -14,11 +15,17 @@ class LoginInteractor
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
 
-            if ($user->hasRole('admin')) {
+            if (! $user instanceof User) {
+                return null;
+            }
+
+            if ($user->hasApplicationRole('admin')) {
                 return '/dashboard';
             }
+
             return '/employee/dashboard';
         }
+
         return null;
     }
 }

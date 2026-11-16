@@ -13,10 +13,10 @@ class LeveMonthlyReportInteractor
     public function execute(string $month): Collection
     {
         $monthStart = Carbon::parse($month)->startOfMonth();
-        $monthEnd   = $monthStart->copy()->endOfMonth();
+        $monthEnd = $monthStart->copy()->endOfMonth();
 
         $monthNumber = (int) $monthStart->month;
-        $year        = (int) $monthStart->year;
+        $year = (int) $monthStart->year;
 
         $noPayDaysByEmployee = MonthlyAttendanceFinalized::query()
             ->where('month', $monthNumber)
@@ -39,26 +39,27 @@ class LeveMonthlyReportInteractor
 
                 return [
                     'employee_id' => $employee->employee_id,
-                    'first_name'  => $employee->first_name,
-                    'last_name'   => $employee->last_name,
+                    'first_name' => $employee->first_name,
+                    'last_name' => $employee->last_name,
                     'no_pay_days' => $noPayDaysByEmployee->get($employee->id, 0),
-                    'leaves'      => $this->mergeConsecutiveLeaves($employeeLeaves, $monthStart, $monthEnd),
+                    'leaves' => $this->mergeConsecutiveLeaves($employeeLeaves, $monthStart, $monthEnd),
                 ];
             });
     }
+
     private function mergeConsecutiveLeaves(Collection $leaves, Carbon $monthStart, Carbon $monthEnd): array
     {
         $normalized = $leaves->map(function (Leave $leave) use ($monthStart, $monthEnd) {
             $leaveStart = Carbon::parse($leave->start_date);
-            $leaveEnd   = Carbon::parse($leave->end_date);
+            $leaveEnd = Carbon::parse($leave->end_date);
             $overlapStart = $leaveStart->greaterThan($monthStart) ? $leaveStart : $monthStart;
-            $overlapEnd   = $leaveEnd->lessThan($monthEnd)       ? $leaveEnd   : $monthEnd;
+            $overlapEnd = $leaveEnd->lessThan($monthEnd) ? $leaveEnd : $monthEnd;
 
             return [
                 'start_date' => $overlapStart->toDateString(),
-                'end_date'   => $overlapEnd->toDateString(),
-                'reason'     => $leave->reason,
-                'status'     => $leave->status,
+                'end_date' => $overlapEnd->toDateString(),
+                'reason' => $leave->reason,
+                'status' => $leave->status,
             ];
         })->sortBy('start_date')->values();
 
@@ -78,5 +79,4 @@ class LeveMonthlyReportInteractor
 
         return $merged;
     }
-
 }

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\EmployeeController;
@@ -9,7 +10,7 @@ use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ReportController;
-use App\Models\Employee;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -24,14 +25,22 @@ Route::middleware('guest')->group(function () {
     })->name('register');
 });
 
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->middleware('auth')
-    ->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', DashboardController::class)->name('dashboard');
+
+    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('/attendance/upload', [AttendanceController::class, 'upload'])->name('attendance.upload');
+    Route::get('/attendance/imports/{id}/statuseus', [AttendanceController::class, 'importStatus'])->name('attendance.imports.status');
+    Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
+});
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
 
-    Route::get('/dashboard', function () {return view('AdminDashboard', ['employees' => Employee::all()]);})->name('dashboard');
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
     Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
     Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
@@ -53,12 +62,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::put('/holidays/{id}', [HolidayController::class, 'update'])->name('holidays.update');
     Route::delete('/holidays/{id}', [HolidayController::class, 'destroy'])->name('holidays.destroy');
 
-    Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     Route::post('/attendance', [AttendanceController::class, 'store'])->name('attendance.store');
     Route::put('/attendance/{id}', [AttendanceController::class, 'update'])->name('attendance.update');
     Route::delete('/attendance/{id}', [AttendanceController::class, 'destroy'])->name('attendance.destroy');
-    Route::post('/attendance/upload', [AttendanceController::class, 'upload'])->name('attendance.upload');
-    Route::get('/attendance/imports/{id}/status', [AttendanceController::class, 'importStatus'])->name('attendance.imports.status');
     Route::get('/attendance/monthly-report', [AttendanceController::class, 'monthlyReport'])->name('attendance.monthly-report');
     Route::post('/attendance/finalize-month', [AttendanceController::class, 'finalizedMonth'])->name('attendance.finalize-month');
 
@@ -81,5 +87,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/report/late-hours', [ReportController::class, 'lateHoursReport'])->name('report.LateHoursReport');
 });
 
+Route::middleware(['auth', 'role:employee'])->group(function () {
+    Route::get('/employee/dashboard', function () {
+        return view('EmployeeDashboard');
+    })->name('employee.dashboard');
 
-Route::middleware(['auth', 'role:employee'])->group(function () {Route::get('/employee/dashboard', function () {return view('EmployeeDashboard');})->name('employee.dashboard');});
+});

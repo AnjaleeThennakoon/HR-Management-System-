@@ -6,11 +6,14 @@ use App\Models\Support\LeaveSupport;
 use App\Models\SystemConfiguration;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Spatie\Permission\Models\Role;
 
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    Role::create(['name' => 'admin']);
     $this->user = User::factory()->create();
+    $this->user->assignRole('admin');
 });
 
 test('leave list page successfully loads', function () {
@@ -30,6 +33,7 @@ test('leave list page successfully loads', function () {
 
 test('leave list displays the name of the user who approved it', function () {
     $approver = User::factory()->create(['name' => 'Leave Approver']);
+    $approver->assignRole('admin');
     Leave::factory()->create([
         'status' => 'approved',
         'user_id' => $approver->id,

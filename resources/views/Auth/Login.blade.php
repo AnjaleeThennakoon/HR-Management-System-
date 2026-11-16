@@ -5,7 +5,7 @@
         <form action="{{ route('login') }}" method="POST" class="mt-8 space-y-5">
             @csrf
 
-            <x-form.field name="email" label="Email" type="email" placeholder="you@company.com" autofocus />
+            <x-form.field name="email" label="Username or Email" type="text" placeholder="Enter username or email" autofocus />
             <x-form.field name="password" label="Password" type="password" placeholder="••••••••" />
 
             <div class="flex items-center justify-between text-sm">

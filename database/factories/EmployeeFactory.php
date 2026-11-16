@@ -30,7 +30,7 @@ class EmployeeFactory extends Factory
             'address' => $this->faker->address(),
             'department_id' => Department::factory(),
             'designation_id' => Designation::factory(),
-            'salary' => $this->faker->randomFloat(2, 10000, 350000),
+            'salary' => $this->faker->randomFloat(2, 15000, 350000),
             'shift_in' => '08:00',
             'shift_out' => '17:00',
         ];
