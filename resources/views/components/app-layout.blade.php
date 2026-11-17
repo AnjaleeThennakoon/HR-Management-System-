@@ -141,17 +141,18 @@
 
     {{-- User + Logout --}}
     <div class="border-t border-gray-200 p-3">
-        <div class="flex items-center gap-2.5 px-2 py-1.5 mb-1">
+        <a href="{{ auth()->user()->hasApplicationRole('admin') ? route('admin.profile') : route('employee.profile') }}"
+           class="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <div class="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center flex-shrink-0">
                 <span class="text-xs font-bold text-gray-700">{{ strtoupper(substr(auth()->user()->name ?? 'U', 0, 1)) }}</span>
             </div>
             <div class="min-w-0 flex-1">
                 <p class="text-xs font-semibold text-gray-900 truncate">{{ auth()->user()->name ?? 'User' }}</p>
                 <p class="text-[10px] text-gray-500 truncate">
-                    {{ (auth()->user() && method_exists(auth()->user(), 'hasApplicationRole') && auth()->user()->hasApplicationRole('admin')) ? 'Admin' : 'Employee' }}
+                    {{ auth()->user()->hasApplicationRole('admin') ? 'Admin · View profile' : 'Employee · View profile' }}
                 </p>
             </div>
-        </div>
+        </a>
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit" class="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">

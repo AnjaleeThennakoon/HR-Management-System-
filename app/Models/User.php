@@ -11,7 +11,7 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'email', 'password', 'role', 'department_id'])]
+#[Fillable(['name', 'email', 'password', 'role', 'department_id', 'employee_id'])]
 #[Hidden(['password', 'remember_token'])]
 
 class User extends Authenticatable

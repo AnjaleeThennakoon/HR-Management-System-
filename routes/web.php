@@ -9,6 +9,7 @@ use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +39,7 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
 
+    Route::get('/profile', [ProfileController::class, 'admin'])->name('admin.profile');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
@@ -88,6 +90,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 });
 
 Route::middleware(['auth', 'role:employee'])->group(function () {
+    Route::get('/employee/profile', [ProfileController::class, 'employee'])->name('employee.profile');
     Route::get('/employee/dashboard', function () {
         return view('EmployeeDashboard');
     })->name('employee.dashboard');

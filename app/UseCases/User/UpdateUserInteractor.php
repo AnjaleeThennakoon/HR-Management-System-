@@ -19,6 +19,10 @@ class UpdateUserInteractor
                 'email' => $data['email'],
             ];
 
+            if (! empty($data['employee_id'])) {
+                $updateData['employee_id'] = $data['employee_id'];
+            }
+
             if (! empty($data['password'])) {
                 $updateData['password'] = Hash::make($data['password']);
             }
