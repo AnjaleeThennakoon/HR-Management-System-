@@ -1,9 +1,7 @@
 <x-app-layout title="Employee Dashboard - HR System">
     @php
         $user = auth()->user();
-        $employee = \App\Models\Employee::whereRaw("CONCAT(first_name, ' ', last_name) = ?", [$user->name])
-            ->orWhere('employee_id', $user->email)
-            ->first();
+        $employee = $user->employee;
         $upcomingHolidays = \App\Models\Holiday::where('date', '>=', now()->toDateString())
             ->orderBy('date')
             ->take(3)

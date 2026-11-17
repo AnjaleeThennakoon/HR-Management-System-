@@ -5,9 +5,13 @@ namespace App\UseCases\User;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Throwable;
 
 class UpdateUserInteractor
 {
+    /**
+     * @throws Throwable
+     */
     public function execute(array $data): User
     {
         return DB::transaction(function () use ($data) {
@@ -15,7 +19,6 @@ class UpdateUserInteractor
             $user = User::findOrFail($data['id']);
 
             $updateData = [
-                'name' => $data['name'],
                 'email' => $data['email'],
             ];
 

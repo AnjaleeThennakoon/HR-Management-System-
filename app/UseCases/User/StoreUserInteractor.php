@@ -6,18 +6,18 @@ use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Throwable;
 
 class StoreUserInteractor
 {
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function execute(array $data): User
     {
         return DB::transaction(function () use ($data) {
 
             $user = User::create([
-                'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
                 'employee_id' => $data['employee_id'],

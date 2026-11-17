@@ -26,7 +26,6 @@ class UserRequest extends FormRequest
         }
 
         $rules = [
-            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'max:255', 'unique:users,email,'.$this->route('id')],
             'password' => [$isUpdate ? 'nullable' : 'required', 'string', 'min:8'],
             'employee_id' => [
@@ -47,9 +46,6 @@ class UserRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'Please select an employee.',
-            'name.string' => 'The name must be a valid text string.',
-            'name.max' => 'The name may not be greater than 255 characters.',
             'email.required' => 'The username field is required.',
             'email.unique' => 'This username is already taken. Please choose another.',
             'email.max' => 'The username may not be greater than 255 characters.',

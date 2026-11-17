@@ -4,11 +4,12 @@ namespace App\UseCases\User;
 
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class DeleteUserInteractor
 {
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function execute(string $id): void
     {

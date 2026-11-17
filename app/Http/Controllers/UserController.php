@@ -11,6 +11,7 @@ use App\UseCases\User\StoreUserInteractor;
 use App\UseCases\User\UpdateUserInteractor;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Throwable;
 
 class UserController extends Controller
 {
@@ -33,9 +34,8 @@ class UserController extends Controller
             'assignedEmployeeIds' => $assignedEmployeeIds,
         ]);
     }
-
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function store(UserRequest $userRequest, StoreUserInteractor $storeUserInteractor): RedirectResponse
     {
@@ -43,26 +43,17 @@ class UserController extends Controller
 
         return redirect()->back()->with('success', 'Employee account created successfully.');
     }
-
-    public function edit(UserRequest $userRequest, UpdateUserInteractor $editUserInteractor): RedirectResponse
-    {
-        $editUserInteractor->execute($userRequest->validated());
-
-        return redirect()->back()->with('success', 'Employee account updated successfully.');
-    }
-
     public function update(string $id, UserRequest $userRequest, UpdateUserInteractor $updateUserInteractor): RedirectResponse
     {
-        $updateUserInteractor->execute([
-            'id' => $id,
-            ...$userRequest->validated(),
-        ]);
+        $data = $userRequest->validated();
+        $data['id'] = $id;
+
+        $updateUserInteractor->execute($data);
 
         return redirect()->back()->with('success', 'Employee account updated successfully.');
     }
-
     /**
-     * @throws \Throwable
+     * @throws Throwable
      */
     public function destroy(string $id, DeleteUserInteractor $deleteUserInteractor): RedirectResponse
     {

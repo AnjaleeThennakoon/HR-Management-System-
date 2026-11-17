@@ -91,8 +91,6 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
 Route::middleware(['auth', 'role:employee'])->group(function () {
     Route::get('/employee/profile', [ProfileController::class, 'employee'])->name('employee.profile');
-    Route::get('/employee/dashboard', function () {
-        return view('EmployeeDashboard');
-    })->name('employee.dashboard');
+    Route::get('/employee/dashboard', function () {return view('EmployeeDashboard');})->name('employee.dashboard');
 
 });
