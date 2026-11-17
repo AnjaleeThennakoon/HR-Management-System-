@@ -11,19 +11,10 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        Role::create(['name' => 'admin']);
-        Role::create(['name' => 'employee']);
+        $this->call([
+            AdminRoleSeeder::class,
+            InitialUsersSeeder::class,
 
-        $admin = User::create([
-            'email' => 'admin@hr.com',
-            'password' => Hash::make('password123'),
         ]);
-        $admin->assignRole('admin');
-
-        $employee = User::create([
-            'email' => 'employee@hr.com',
-            'password' => Hash::make('password123'),
-        ]);
-        $employee->assignRole('employee');
     }
 }

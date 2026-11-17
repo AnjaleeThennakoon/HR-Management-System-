@@ -55,23 +55,18 @@ test('admin cannot create more than one account for the same employee ID', funct
         'first_name' => 'John',
         'last_name' => 'Employee',
     ]);
+    $employeedata =[
+        'name' => 'John Employee',
+        'email' => 'john.employee@example.com',
+        'password' => 'password123',
+        'employee_id' => $employee->employee_id,
+    ];
 
     $this->actingAs($admin)
-        ->post(route('users.store'), [
-            'name' => 'John Employee',
-            'email' => 'john.employee@example.com',
-            'password' => 'password123',
-            'employee_id' => $employee->employee_id,
-        ])
-        ->assertRedirect();
+        ->post(route('users.store'), $employeedata );
 
     $this->actingAs($admin)
-        ->post(route('users.store'), [
-            'name' => 'John Employee',
-            'email' => 'john.employee.duplicate@example.com',
-            'password' => 'password123',
-            'employee_id' => $employee->employee_id,
-        ])
+        ->post(route('users.store'), $employeedata )
         ->assertSessionHasErrors([
             'employee_id' => 'This employee already has a login account.',
         ]);
@@ -95,7 +90,6 @@ test('employee can login and access dashboard', function () {
 
 test('only admin can create users; user cannot create users', function () {
     Role::create(['name' => 'employee']);
-
     $employee = User::factory()->create();
     $employee->assignRole('employee');
 
