@@ -24,18 +24,18 @@ class AttendanceController extends Controller
     public function index(ListAttendanceInteractor $listAttendanceInteractor): View
     {
         $importId = request()->integer('import') ?: (int) session('attendance_import_id', 0);
-
         $user = auth()->user();
-        $userEmployeeId = $user->hasApplicationRole('admin') ? null : $user->employee_id;
+
+        $userEmployeeId = $user->hasApplicationRole('admin') ? null : $user->id;
 
         $attendances = $listAttendanceInteractor->execute(
             search: request('search'),
             perPage: request('per_page'),
             importId: $importId,
-            userEmployeeId: $userEmployeeId
+            userEmployeeId: $userEmployeeId ? (string)$userEmployeeId : null
         );
 
-        $attendanceImport = $listAttendanceInteractor->getImportStatus($importId, $userEmployeeId);
+        $attendanceImport = $listAttendanceInteractor->getImportStatus($importId, $userEmployeeId ? (string)$userEmployeeId : null);
 
         return view('Attendance.AttendanceDashbord', [
             'attendances' => $attendances,

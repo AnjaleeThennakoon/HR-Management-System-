@@ -39,7 +39,7 @@
             {{-- ============== LEFT SIDEBAR ============== --}}
             <aside class="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-3 h-full overflow-y-auto custom-scrollbar">
 
-                {{-- CSV Upload Section --}}
+                {{-- CSV Upload Section (Admin Only) --}}
                 <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/60 overflow-hidden flex-shrink-0">
                     @include('Attendance.CsvUpload')
                 </div>
@@ -111,50 +111,51 @@
                                 <td class="py-2 px-3 view-cell w-[30%]">
                                     <div class="flex items-center gap-2.5">
                                         <div class="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-100 text-indigo-700 font-bold text-[10px] shadow-sm flex-shrink-0">
-                                            {{ strtoupper(substr($attendance->employee->first_name ?? '', 0, 1).substr($attendance->employee->last_name ?? '', 0, 1)) ?: 'NA' }}
+                                            {{ strtoupper(substr($attendance->employee->first_name ?? 'N', 0, 1).substr($attendance->employee->last_name ?? 'A', 0, 1)) }}
                                         </div>
                                         <div class="overflow-hidden">
-                                            <span class="attendance-employee text-slate-700 font-bold truncate block">
-                                                {{ $attendance->employee ? $attendance->employee->first_name.' '.$attendance->employee->last_name : 'N/A' }}
-                                            </span>
-                                            <p class="text-[10px] text-slate-400 font-semibold truncate">ID: {{ $attendance->employee->employee_id ?? $attendance->employee_id }}</p>
+                            <span class="attendance-employee text-slate-700 font-bold truncate block">
+                                {{ $attendance->employee ? $attendance->employee->first_name.' '.$attendance->employee->last_name : 'N/A' }}
+                            </span>
+                                            <p class="text-[10px] text-slate-400 font-semibold truncate">
+                                                ID: {{ $attendance->employee->employee_id ?? $attendance->employee_id }}
+                                            </p>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="py-2 px-3 view-cell w-[18%]">
-                                    <span class="attendance-date inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100">
-                                        {{ \Carbon\Carbon::parse($attendance->date)->format('d M Y') }}
-                                    </span>
+                    <span class="attendance-date inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-100">
+                        {{ \Carbon\Carbon::parse($attendance->date)->format('d M Y') }}
+                    </span>
                                 </td>
                                 <td class="py-2 px-3 view-cell w-[15%]">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                                        {{ $attendance->in_time }}
-                                    </span>
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                        {{ $attendance->in_time }}
+                    </span>
                                 </td>
                                 <td class="py-2 px-3 view-cell w-[15%]">
                                     @if($attendance->out_time)
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-100">
-                                            {{ $attendance->out_time }}
-                                        </span>
+                            {{ $attendance->out_time }}
+                        </span>
                                     @else
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
-                                            Not marked
-                                        </span>
+                            Not marked
+                        </span>
                                     @endif
                                 </td>
 
-                                {{-- Edit/Delete (Admin Only) --}}
                                 <td class="py-2 px-3 text-right edit-controls w-[14%]">
                                     @if(auth()->user()->hasApplicationRole('admin'))
                                         <div class="inline-flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button type="button"
                                                     onclick="openEditModal(
-                                                    {{ $attendance->id }},
-                                                    {{ $attendance->employee_id }},
-                                                    '{{ $attendance->date }}',
-                                                    '{{ $attendance->in_time }}',
-                                                    '{{ $attendance->out_time ?? '' }}'
-                                                )"
+                                    {{ $attendance->id }},
+                                    {{ $attendance->employee_id }},
+                                    '{{ $attendance->date }}',
+                                    '{{ $attendance->in_time }}',
+                                    '{{ $attendance->out_time ?? '' }}'
+                                )"
                                                     class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition" title="Edit">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
@@ -191,8 +192,7 @@
                     <p id="noResults" class="hidden text-center text-sm font-semibold text-slate-400 py-8">
                         No attendance records match your search.
                     </p>
-                </div>
-            </main>
+                </div>            </main>
         </div>
     </div>
 
@@ -214,6 +214,8 @@
             const form = document.getElementById('attendanceForm');
             form.reset();
             form.action = "{{ route('attendance.store') }}";
+
+            form.querySelector('input[name="_token"]').value = "{{ csrf_token() }}";
 
             document.getElementById('attendanceMethod').value = '';
             document.getElementById('attendanceEditAction').value = '';
