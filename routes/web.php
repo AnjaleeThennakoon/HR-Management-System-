@@ -28,18 +28,26 @@ Route::middleware('guest')->group(function () {
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
+
 Route::middleware('auth')->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');
 
     Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
     Route::post('/attendance/upload', [AttendanceController::class, 'upload'])->name('attendance.upload');
     Route::get('/attendance/imports/{id}/statuseus', [AttendanceController::class, 'importStatus'])->name('attendance.imports.status');
+
+    Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
+    Route::post('leaves', [LeaveController::class, 'store'])->name('leaves.store');
+    Route::put('leaves/{id}', [LeaveController::class, 'update'])->name('leaves.update');
+    Route::get('leaves/balance', [LeaveController::class, 'LeaveBalance'])->name('leaves.balance');
+
+    Route::get('/profile', [ProfileController::class, 'admin'])->name('admin.profile');
     Route::put('/users/{id}', [UserController::class, 'update'])->name('users.update');
 });
 
+
 Route::middleware(['auth', 'role:admin'])->group(function () {
 
-    Route::get('/profile', [ProfileController::class, 'admin'])->name('admin.profile');
     Route::get('/users', [UserController::class, 'index'])->name('users.index');
     Route::post('/users', [UserController::class, 'store'])->name('users.store');
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
@@ -70,11 +78,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/attendance/monthly-report', [AttendanceController::class, 'monthlyReport'])->name('attendance.monthly-report');
     Route::post('/attendance/finalize-month', [AttendanceController::class, 'finalizedMonth'])->name('attendance.finalize-month');
 
-    Route::get('leaves', [LeaveController::class, 'index'])->name('leaves.index');
-    Route::post('leaves', [LeaveController::class, 'store'])->name('leaves.store');
-    Route::put('leaves/{id}', [LeaveController::class, 'update'])->name('leaves.update');
     Route::delete('leaves/{id}', [LeaveController::class, 'destroy'])->name('leaves.destroy');
-    Route::get('leaves/balance', [LeaveController::class, 'LeaveBalance'])->name('leaves.balance');
     Route::post('leaves/approval', [LeaveController::class, 'LeaveAuthorizer'])->name('leave-approval.store');
 
     Route::get('/payrolls', [PayrollController::class, 'index'])->name('payrolls.index');
