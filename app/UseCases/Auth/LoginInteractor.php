@@ -23,7 +23,7 @@ class LoginInteractor
                 return '/dashboard';
             }
 
-            return '/employee/dashboard';
+            return '/dashboard';
         }
 
         return null;

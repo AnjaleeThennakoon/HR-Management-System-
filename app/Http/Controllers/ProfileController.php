@@ -21,6 +21,6 @@ class ProfileController extends Controller
         $user = $request->user();
         abort_unless($user instanceof User, 403);
 
-        return view('profile.employee', ['user' => $user]);
+        return view('profile.admin', ['user' => $user]);
     }
 }
