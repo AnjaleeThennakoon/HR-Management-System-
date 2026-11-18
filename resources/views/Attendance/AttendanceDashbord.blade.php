@@ -46,18 +46,23 @@
 
                 {{-- Actions & Filter Card --}}
                 <div class="bg-white rounded-xl shadow-sm ring-1 ring-slate-200/60 p-4 flex flex-col gap-3 flex-shrink-0">
-                    <a href="{{ $employees->isNotEmpty() ? route('attendance.monthly-report', [
+
+                    {{-- View Monthly Report (Admin Only) --}}
+                    @if(auth()->user()->hasApplicationRole('admin'))
+                        <a href="{{ $employees->isNotEmpty() ? route('attendance.monthly-report', [
                             'employee_id' => $employees->first()->id,
                             'month'       => now()->month,
                             'year'        => now()->year,
                         ]) : route('attendance.monthly-report') }}"
-                       class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition-colors border border-indigo-100 shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
-                        </svg>
-                        View Monthly Report
-                    </a>
+                           class="w-full inline-flex justify-center items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-lg transition-colors border border-indigo-100 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+                            </svg>
+                            View Monthly Report
+                        </a>
+                    @endif
 
+                    {{-- Search Bar --}}
                     <div class="relative w-full">
                         <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -65,12 +70,15 @@
                         <input type="text" id="searchInput" onkeyup="filterAttendances()" placeholder="Search attendance..." class="w-full pl-9 pr-3 py-2 text-xs font-semibold border-slate-200 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 bg-slate-50 text-slate-700 placeholder-slate-400">
                     </div>
 
-                    <button type="button" onclick="openAddModal()" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 whitespace-nowrap">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        Add Attendance
-                    </button>
+                    {{-- Add Attendance (Admin Only) --}}
+                    @if(auth()->user()->hasApplicationRole('admin'))
+                        <button type="button" onclick="openAddModal()" class="w-full inline-flex justify-center items-center gap-2 px-4 py-2.5 bg-gray-900 text-white text-xs font-bold rounded-lg hover:bg-gray-800 whitespace-nowrap">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Add Attendance
+                        </button>
+                    @endif
                 </div>
             </aside>
 
@@ -134,29 +142,33 @@
                                         </span>
                                     @endif
                                 </td>
+
+                                {{-- Edit/Delete (Admin Only) --}}
                                 <td class="py-2 px-3 text-right edit-controls w-[14%]">
-                                    <div class="inline-flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button type="button"
-                                                onclick="openEditModal(
+                                    @if(auth()->user()->hasApplicationRole('admin'))
+                                        <div class="inline-flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button type="button"
+                                                    onclick="openEditModal(
                                                     {{ $attendance->id }},
                                                     {{ $attendance->employee_id }},
                                                     '{{ $attendance->date }}',
                                                     '{{ $attendance->in_time }}',
                                                     '{{ $attendance->out_time ?? '' }}'
                                                 )"
-                                                class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition" title="Edit">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
-                                            </svg>
-                                        </button>
+                                                    class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded transition" title="Edit">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                                                </svg>
+                                            </button>
 
-                                        <div class="scale-90">
-                                            <x-Form.deletebutton
-                                                :action="route('attendance.destroy', $attendance->id)"
-                                                confirmation-message="Are you sure you want to delete this record?"
-                                            />
+                                            <div class="scale-90">
+                                                <x-Form.deletebutton
+                                                    :action="route('attendance.destroy', $attendance->id)"
+                                                    confirmation-message="Are you sure you want to delete this record?"
+                                                />
+                                            </div>
                                         </div>
-                                    </div>
+                                    @endif
                                 </td>
                             </tr>
                         @empty

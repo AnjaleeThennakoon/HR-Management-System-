@@ -15,7 +15,7 @@ test('employee role has only the configured permissions', function () {
     $role = Role::findByName('employee', 'web');
 
     expect($role->permissions->pluck('name')->sort()->values()->all())->toBe([
-        'attendance.view-own',
+        'attendance.view-own-attendDays',
         'departments.view-own',
         'designations.view-own',
         'employees.view-own',

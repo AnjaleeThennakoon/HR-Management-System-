@@ -13,7 +13,7 @@ class ListAttendanceInteractor
         ?string $search = null,
         ?int $perPage = null,
         ?int $importId = null,
-        ?string $userEmployeeId = null // 👈 මෙතන int වෙනුවට string දාන්න
+        ?string $userEmployeeId = null
     ): LengthAwarePaginator|Collection {
         $query = Attendance::with('employee');
 
