@@ -16,12 +16,8 @@ class DashboardController extends Controller
 
         abort_unless($user instanceof User, 403, 'Unauthorized access');
 
-        if ($user->hasApplicationRole('admin')) {
+        if ($user->hasApplicationRole('admin') || $user->hasApplicationRole('employee')) {
             return view('AdminDashboard', ['employees' => Employee::all()]);
-        }
-
-        if ($user->hasApplicationRole('employee')) {
-            return redirect()->route('employee.dashboard');
         }
 
         abort(403, 'Unauthorized access');

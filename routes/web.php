@@ -88,9 +88,3 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('lateHoursReport/{dateRange?}', [ReportController::class, 'lateHoursReport'])->name('report.lateHoursReport');
     Route::get('/report/late-hours', [ReportController::class, 'lateHoursReport'])->name('report.LateHoursReport');
 });
-
-Route::middleware(['auth', 'role:employee'])->group(function () {
-    Route::get('/employee/profile', [ProfileController::class, 'employee'])->name('employee.profile');
-    Route::get('/employee/dashboard', function () {return view('EmployeeDashboard');})->name('employee.dashboard');
-
-});
