@@ -13,9 +13,13 @@ class ListAttendanceInteractor
         ?string $search = null,
         ?int $perPage = null,
         ?int $importId = null,
-        ?int $userEmployeeId = null
+        ?string $userEmployeeId = null // 👈 මෙතන int වෙනුවට string දාන්න
     ): LengthAwarePaginator|Collection {
         $query = Attendance::with('employee');
+
+        if ($userEmployeeId) {
+            $query->where('employee_id', $userEmployeeId);
+        }
 
         if ($search) {
             $query->where(function ($query) use ($search) {
@@ -27,12 +31,18 @@ class ListAttendanceInteractor
             });
         }
 
+        if ($importId) {
+            $query->where('import_id', $importId);
+        }
+
+        $query->latest('date');
+
         return $perPage
             ? $query->paginate($perPage)
             : $query->get();
     }
 
-    public function getImportStatus(?int $importId, ?int $userEmployeeId = null): ?AttendanceImport
+    public function getImportStatus(?int $importId, ?string $userEmployeeId = null): ?AttendanceImport
     {
         if (! $importId || $importId <= 0) {
             return null;

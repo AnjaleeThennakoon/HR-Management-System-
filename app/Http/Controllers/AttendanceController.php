@@ -34,16 +34,15 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function importStatus(Request $request, int $id, ListAttendanceInteractor $listAttendanceInteractor): JsonResponse
+    public function importStatus(Request $request, $id, ListAttendanceInteractor $interactor)
     {
-        $attendanceImport = $listAttendanceInteractor->getImportStatus($id, $request->user()?->employee_id);
+        $user = auth()->user();
 
-        return response()->json([
-            'status' => $attendanceImport->status,
-            'summary' => $attendanceImport->summary,
-            'rows' => $attendanceImport->rows,
-            'error_message' => $attendanceImport->error_message,
-        ]);
+        $userEmployeeId = $user->hasApplicationRole('admin') ? null : $user->employee_id;
+
+        $status = $interactor->getImportStatus((int) $id, $userEmployeeId);
+
+        return response()->json($status);
     }
 
     public function store(AttendanceRequest $attendanceRequest, StoreAttendanceInteractor $storeAttendanceInteractor): RedirectResponse|JsonResponse
